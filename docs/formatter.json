@@ -1,0 +1,326 @@
+{
+  "results": [
+    {
+      "columns": [
+        "n",
+        "r"
+      ],
+      "data": [
+        {
+          "row": [
+            {
+              "name": "Lamp1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "4",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Lamp1"
+                }
+              },
+              {
+                "id": "5",
+                "labels": [
+                  "Thing",
+                  "Agregate"
+                ],
+                "properties": {
+                  "name": "Info"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "2",
+                "type": "CHILD",
+                "startNode": "4",
+                "endNode": "5",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Lamp1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "4",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Lamp1"
+                }
+              },
+              {
+                "id": "6",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Led1"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "3",
+                "type": "CHILD",
+                "startNode": "4",
+                "endNode": "6",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Lamp1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "4",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Lamp1"
+                }
+              },
+              {
+                "id": "7",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Led2"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "4",
+                "type": "CHILD",
+                "startNode": "4",
+                "endNode": "7",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Lamp1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "4",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Lamp1"
+                }
+              },
+              {
+                "id": "8",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume1"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "7",
+                "type": "CHILD",
+                "startNode": "4",
+                "endNode": "8",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Consume1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "8",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume1"
+                }
+              },
+              {
+                "id": "9",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume2"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "9",
+                "type": "CHILD",
+                "startNode": "8",
+                "endNode": "9",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Led1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "6",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Led1"
+                }
+              },
+              {
+                "id": "9",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume2"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "6",
+                "type": "CHILD",
+                "startNode": "6",
+                "endNode": "9",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Consume1"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "8",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume1"
+                }
+              },
+              {
+                "id": "10",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume3"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "10",
+                "type": "CHILD",
+                "startNode": "8",
+                "endNode": "10",
+                "properties": {}
+              }
+            ]
+          }
+        },
+        {
+          "row": [
+            {
+              "name": "Led2"
+            },
+            {}
+          ],
+          "graph": {
+            "nodes": [
+              {
+                "id": "7",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Led2"
+                }
+              },
+              {
+                "id": "10",
+                "labels": [
+                  "Thing"
+                ],
+                "properties": {
+                  "name": "Consume3"
+                }
+              }
+            ],
+            "relationships": [
+              {
+                "id": "5",
+                "type": "CHILD",
+                "startNode": "7",
+                "endNode": "10",
+                "properties": {}
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "errors": []
+}
