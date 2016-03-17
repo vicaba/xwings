@@ -1,4 +1,4 @@
-package domain.thing
+package domain.thinga
 
 import java.util.UUID
 
