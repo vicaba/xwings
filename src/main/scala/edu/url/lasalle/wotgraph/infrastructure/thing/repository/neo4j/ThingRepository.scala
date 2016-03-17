@@ -6,7 +6,7 @@ import application.Thing
 import domain.thing.repository.ThingRepository
 import play.api.libs.json.Json
 import play.api.libs.ws.ning.NingWSClient
-import play.api.libs.ws.{WSAuthScheme, WSClient, WSRequest}
+import play.api.libs.ws.{WSResponse, WSAuthScheme, WSClient, WSRequest}
 
 import infrastructure.repository.neo4j._
 
@@ -25,13 +25,13 @@ trait Neo4jWebServiceRepository {
 
   val request = createRequestForNeo4j()
 
-  def createRequestForNeo4j(wsClient: WSClient = this.wsClient): WSRequest = {
+  def createRequestForNeo4j(wsClient: WSClient = wsClient): WSRequest = {
     val request = wsClient
-      .url(s"$httpProtocol://$domain/db/data/transaction/commit")
+      .url("http://192.168.22.19:7474/db/data/transaction/commit")
       .withHeaders(
-        "Accept" -> "edu/url/lasalle/wotgraph/application/json; charset=UTF-8"
-        , "Content-Type" -> "edu/url/lasalle/wotgraph/application/json")
-      .withAuth(user, password, WSAuthScheme.BASIC)
+        "Accept" -> "application/json; charset=UTF-8"
+        , "Content-Type" -> "application/json")
+      .withAuth("neo4j", "xneo4j", WSAuthScheme.BASIC)
     request
   }
 
@@ -60,8 +60,8 @@ case class ThingNeo4jWebServiceRepository(
 
   import Neo4jHelper._
 
-  override val wsClient: WSClient = client
-  override val domain: String = "192.168..."
+  override lazy val wsClient: WSClient = client
+  override val domain: String = "192.168.22.19:7474"
   override val httpProtocol: String = "http"
   override val user: String = "neo4j"
   override val password: String = "xneo4j"
@@ -71,7 +71,13 @@ case class ThingNeo4jWebServiceRepository(
     val Thing = "Thing"
   }
 
-  override def getThingAndChildren(id: UUID, depth: Int = 1): Future[List[Thing]] = {
+  def neo4jToListOfThing(unparsedJson: String): List[Thing] = {
+    val jsValue = Json.parse(unparsedJson)
+    val nodes = (jsValue \ "results")(0) \ "data" \\ "row"
+    nodes.map (n => n(0).validate[Thing].get).toList
+  }
+
+  override def getThingGraph(id: UUID, depth: Int = 1): Future[List[Thing]] = {
     val labels = List(Label.Thing).toLabels
     val query =
       Json.obj(
@@ -81,9 +87,10 @@ case class ThingNeo4jWebServiceRepository(
             , "resultDataContents" -> List("row", "graph")
           )))
 
-    request
+    val queryRequest = request
       .withMethod("POST")
       .withBody(query)
+    queryRequest.execute().map(response => neo4jToListOfThing(response.body))
   }
 
   override def getThingInfo(id: UUID): Future[List[Thing]] = ???
@@ -95,6 +102,21 @@ case class ThingNeo4jWebServiceRepository(
   override def getThingActions(id: UUID): Future[List[Thing]] = ???
 
   override def getThing(id: UUID): Future[Option[Thing]] = ???
+
+  override def getAll(skip: Int, limit: Int): Future[List[Thing]] = {
+    val query =
+      Json.obj(
+        "statements" -> List(
+          Json.obj(
+            "statement" -> "MATCH (n) OPTIONAL MATCH (n)-[r]->() RETURN n,r"
+            , "resultDataContents" -> List("row")
+          )))
+
+    val queryRequest = request
+      .withMethod("POST")
+      .withBody(query)
+    queryRequest.execute().map(response => neo4jToListOfThing(response.body))
+  }
 }
 
 class ThingRepositoryForNeo4j(wsClient: WSClient) {
@@ -107,22 +129,27 @@ object Main {
 
   def createRequestForNeo4j(wsClient: WSClient): WSRequest = {
     val request = wsClient
-      .url("http://192.168.44.13:7474/db/data/transaction/commit")
+      .url("http://192.168.22.19:7474/db/data/transaction/commit")
       .withHeaders(
-        "Accept" -> "edu/url/lasalle/wotgraph/application/json; charset=UTF-8"
-        , "Content-Type" -> "edu/url/lasalle/wotgraph/application/json")
+        "Accept" -> "application/json; charset=UTF-8"
+        , "Content-Type" -> "application/json")
       .withAuth("neo4j", "xneo4j", WSAuthScheme.BASIC)
     request
   }
 
   def createNodeTest(request: WSRequest): WSRequest = {
+    val id = UUID.randomUUID()
+    val name = "Test"
+    val action = s"""{"actionName":"getConsume", "contextId":"$id", "contextValue": ""}"""
     val json =
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> "CREATE (n) RETURN n"
+            "statement" -> s"CREATE (n: Thing {_id: '$id', hName: '$name', action: '$action'}) RETURN n"
             , "resultDataContents" -> List("graph")
           )))
+
+    println(json)
 
     request
       .withMethod("POST")
@@ -134,8 +161,8 @@ object Main {
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> "MATCH (n)-[r]->() RETURN n,r"
-            , "resultDataContents" -> List("row", "graph")
+            "statement" -> "MATCH (n) OPTIONAL MATCH (n)-[r]->() RETURN n,r"
+            , "resultDataContents" -> List("row")
           )))
 
     request
@@ -145,10 +172,16 @@ object Main {
 
   def main(args: Array[String]) {
     val wsClient = NingWSClient()
+    val neo4j = ThingNeo4jWebServiceRepository(wsClient)
 
-    val f = (createRequestForNeo4j _).andThen(getAllNodes)(wsClient).execute()
+//    val f = (createRequestForNeo4j _).andThen(getAllNodes)(wsClient).execute()
+//    f.map {
+//      r =>
+//        println(r.body)
+//        val result = neo4j.neo4jToListOfThing(r.body)
+//        println(result)
+//    }
 
-    f.map(r => println(r.body))
-
+    neo4j.getAll().map(r => println(r))
   }
 }

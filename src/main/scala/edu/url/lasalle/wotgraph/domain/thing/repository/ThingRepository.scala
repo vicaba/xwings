@@ -8,6 +8,8 @@ import scala.concurrent.Future
 
 trait ThingRepository {
 
+  def getAll(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
+
   def getThing(id: UUID): Future[Option[Thing]]
 
   def getThingInfo(id: UUID): Future[List[Thing]]
@@ -16,7 +18,7 @@ trait ThingRepository {
 
   def getThingRelations(id: UUID): Future[String]
 
-  def getThingAndChildren(id: UUID, depth: Int = 1): Future[List[Thing]]
+  def getThingGraph(id: UUID, depth: Int = 1): Future[List[Thing]]
 
   def getThingChildren(id: UUID): Future[List[Thing]]
 

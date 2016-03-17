@@ -18,12 +18,19 @@ object Action {
 }
 
 
-case class Thing(id: UUID, humanName: String, action: Action)
+case class Thing(id: UUID, humanName: String, action: Action, labels: List[String], relations: List[String])
 
 object Thing {
-  implicit val thingReads: Reads[Thing] = (
-    (__ \ "id").read[UUID] and
-      (__ \ "hName").read[String] and
-      (__ \ "action").read[Action]
-    ) (Thing.apply _)
+
+  implicit object ThingReads extends Reads[Thing] {
+    override def reads(json: JsValue): JsResult[Thing] = {
+      val id = (json \ "_id").as[UUID]
+      val name = (json \ "hName").as[String]
+      val action = Json.parse((json \ "action").as[String].replace("\\\"","\"")).validate[Action].get
+      val labels = Nil
+      val relations = Nil
+      val result = Thing(id,name,action,labels,relations)
+      JsSuccess(result)
+    }
+  }
 }
