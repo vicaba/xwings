@@ -10,6 +10,7 @@ import play.api.libs.ws.{WSResponse, WSAuthScheme, WSClient, WSRequest}
 
 import infrastructure.repository.neo4j._
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -137,15 +138,36 @@ object Main {
     request
   }
 
-  def createNodeTest(request: WSRequest): WSRequest = {
-    val id = UUID.randomUUID()
-    val name = "Test"
-    val action = s"""{"actionName":"getConsume", "contextId":"$id", "contextValue": ""}"""
+  def createNodeTest(request: WSRequest, id: Int, list: mutable.ListBuffer[UUID]): WSRequest = {
+    val name = s"Thing_$id"
+    val thingId = UUID.randomUUID()
+    list.+=(thingId)
+    val actionId = UUID.randomUUID()
+    val action = s"""{"actionName":"getAction", "contextId":"$actionId", "contextValue": "graph_recursive"}"""
     val json =
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> s"CREATE (n: Thing {_id: '$id', hName: '$name', action: '$action'}) RETURN n"
+            "statement" -> s"CREATE (n: Thing {_id: '$thingId', hName: '$name', action: '$action'}) RETURN n"
+            , "resultDataContents" -> List("graph")
+          )))
+
+    println(json)
+
+    request
+      .withMethod("POST")
+      .withBody(json)
+  }
+
+  def createRelationTest(request: WSRequest, list: mutable.ListBuffer[UUID]): WSRequest = {
+    val relation = "CHILD"
+    val id1 = list.head
+    val id2 = list.last
+    val json =
+      Json.obj(
+        "statements" -> List(
+          Json.obj(
+            "statement" -> s"MATCH (n),(m) WHERE n._id = '$id1' AND m._id = '$id2' CREATE (n)-[r:$relation]->(m) RETURN n,r,m"
             , "resultDataContents" -> List("graph")
           )))
 
@@ -173,6 +195,14 @@ object Main {
   def main(args: Array[String]) {
     val wsClient = NingWSClient()
     val neo4j = ThingNeo4jWebServiceRepository(wsClient)
+
+//    (createRequestForNeo4j _).andThen(createNodeTest)(wsClient).execute()
+
+    val list = mutable.ListBuffer[UUID]()
+    val request = createRequestForNeo4j(wsClient)
+    (1 to 15).map(createNodeTest(request,_,list).execute())
+    println(list)
+    createRelationTest(request,list).execute()
 
 //    val f = (createRequestForNeo4j _).andThen(getAllNodes)(wsClient).execute()
 //    f.map {
