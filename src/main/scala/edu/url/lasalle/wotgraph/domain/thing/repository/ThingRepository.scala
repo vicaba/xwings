@@ -8,11 +8,13 @@ import scala.concurrent.Future
 
 trait ThingRepository {
 
-  def getAll(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
+  def createThing(thing: Thing): Future[Thing]
+
+  def getAllThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
 
   def getThing(id: UUID): Future[Option[Thing]]
 
-  def getThingInfo(id: UUID): Future[List[Thing]]
+  def getThingInfo(id: UUID): Future[String]
 
   def getThingActions(id: UUID): Future[List[Thing]]
 
