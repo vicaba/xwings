@@ -45,7 +45,7 @@ public class Thing {
     }
 
     public String toString() {
-        return hName;
+        return _id;
     }
 
 }

@@ -81,24 +81,29 @@ object Main {
       .withBody(json)
   }
 
-  def getSomeThings(): util.Collection[Thing] = {
-
+  def getSession(): org.neo4j.ogm.session.Session = {
     val sessionFactory = new SessionFactory("edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings")
-    val session = sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
-    val t = new Thing("a", "hName", "action")
-    //session.save(t)
+    sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
+  }
+
+  def getSomeThings(): util.Collection[Thing] = {
+    val session = getSession()
     session.loadAll(classOf[Thing], new Filter("_id", "87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3"))
   }
 
-  def main(args: Array[String]) {
-/*  val wsClient = NingWSClient()
+  def testInit() = {
+    val wsClient = NingWSClient()
 
     val list = ListBuffer[UUID]()
     val request = createRequestForNeo4j(wsClient)
     (1 to 15).map(createNodeTest(request, _, list).execute())
     println(list)
     createRelationTest("CHILD", request, (list.head, list.last)).execute()
-    createRelationTest("ACTION", request, (list.head, list(list.length - 2))).execute()*/
+    createRelationTest("ACTION", request, (list.head, list(list.length - 2))).execute()
+  }
+
+  def main(args: Array[String]) {
+//    testInit()
 
     val things = getSomeThings().toArray()
     for (t <- things) {

@@ -1,18 +1,21 @@
 package edu.url.lasalle.wotgraph.infrastructure.thing.repository
 
+import java.util
 import java.util.UUID
 
-import application.{Action, Thing}
 import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingsMongoEnvironment}
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.{Neo4jConfig, Neo4jWebServiceRepository}
+import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
-import play.api.libs.json.{JsValue, Json}
+import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
+import org.neo4j.ogm.cypher.query.Pagination
+import org.neo4j.ogm.cypher.{Filter, Filters}
+import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Reads._
-import play.modules.reactivemongo.json._
-import play.api.libs.ws.WSRequest
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.ning.NingWSClient
+import play.modules.reactivemongo.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,131 +26,38 @@ case class ThingRepositoryImpl(
                               (implicit ec: ExecutionContext)
   extends ThingRepository
 {
-
-  import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Implicits._
-
-  val neo4jPreparedRequest: WSRequest = Neo4jWebServiceRepository.createPreparedRequest(neo4jConfig)
-
   val mongoDbCollection = mongoDbConfig.collection
 
-  object Label {
-    val Thing = "Thing"
-    val Action = "Action"
-    val Child = "Child"
+  def getSession(): org.neo4j.ogm.session.Session = {
+    val sessionFactory = new SessionFactory("edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings")
+    sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
   }
 
-  private def neo4jToListOfThing(unparsedJson: String): List[Thing] = {
-    println(unparsedJson)
-    println()
-    val jsValue = Json.parse(unparsedJson)
-    val nodes = (jsValue \ "results") (0) \ "data" \\ "row"
-    nodes.map(n => n(0).validate[Thing].get).toList
-  }
-
-  private def addThingLabelToThing(thing: Thing): Thing =
-    if (thing.labels.contains(Label.Thing)) thing
-    else thing.copy(labels = thing.labels.+:(Label.Thing))
-
-  override def getThingGraph(id: UUID, depth: Int = 1): Future[List[Thing]] = {
-    val labels = List(Label.Thing).toLabels
-    val query =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"MATCH (n:$labels ({id: $id}))-[r*0..$depth]->(n2) RETURN n,r,n2"
-            , "resultDataContents" -> List("row")
-          )))
-
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(query)
-    queryRequest.execute().map(r => neo4jToListOfThing(r.body))
-  }
-
-  override def getThingInfo(id: UUID): Future[Option[JsValue]] = {
-    mongoDbCollection.find(Json.obj("id" -> id)).one[JsValue]
-  }
-
-  override def getThingChildren(id: UUID): Future[List[Thing]] = {
-    val relationLabels = List(Label.Child).toLabels
-    val query =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"MATCH (n ({id: $id}))-[r:$relationLabels]->(n2) RETURN n2,r"
-            , "resultDataContents" -> List("row")
-          )))
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(query)
-    queryRequest.execute().map(r => neo4jToListOfThing(r.body))
-  }
-
-  override def getThingRelations(id: UUID): Future[String] = ???
-
-  override def getThingActions(id: UUID): Future[List[Thing]] = {
-    val relationLabels = List(Label.Action).toLabels
-    val query =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"MATCH (n ({id: $id}))-[r:$relationLabels]->() RETURN n,r"
-            , "resultDataContents" -> List("row")
-          )))
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(query)
-    queryRequest.execute().map(r => neo4jToListOfThing(r.body))
+  def colletionToList(coll: util.Collection[Thing]): List[Thing] = {
+    coll.toArray.toList.asInstanceOf[List[Thing]]
   }
 
   override def getThing(id: UUID): Future[Option[Thing]] = {
-    val relationLabels = List(Label.Action).toLabels
-    val query =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"MATCH (n:Thing {_id: '$id'})-[r:${Label.Action}|:${Label.Child}]->(n2) RETURN {_id:n._id, hName:n.hName, action:n.action, relations:type(r)} AS Thing, n2"
-            , "resultDataContents" -> List("row")
-          )))
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(query)
-    queryRequest.execute().map(r => neo4jToListOfThing(r.body).headOption)
-  }
-
-  override def getAllThings(skip: Int, limit: Int): Future[List[Thing]] = {
-    val labels = List(Label.Thing).toLabels
-    val query =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"MATCH (n:$labels) OPTIONAL MATCH (n)-[r]->() RETURN n,r"
-              , "resultDataContents" -> List("row")
-          )))
-
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(query)
-    queryRequest.execute().map(response => neo4jToListOfThing(response.body))
-  }
-
-  override def createThing(thing: Thing): Future[Thing] = {
-    val _thing =  addThingLabelToThing(thing)
-    val action = actionJsonSerializer.writes(thing.action).toString
-    val labels = if (_thing.labels.isEmpty) "" else ":" + _thing.labels.mkString(":")
-    val json =
-      Json.obj(
-        "statements" -> List(
-          Json.obj(
-            "statement" -> s"CREATE (n$labels {_id: '${_thing.id}', hName: '${_thing.humanName}', action: '${action}'}) RETURN n"
-            , "resultDataContents" -> List("graph")
-          )))
-    val queryRequest = neo4jPreparedRequest
-      .withMethod("POST")
-      .withBody(json)
-    queryRequest.execute().map { r =>
-      thing
+    val session = getSession()
+    Future {
+      val result = session.loadAll(classOf[Thing], new Filter("_id", id.toString))
+      colletionToList(result).headOption
     }
+  }
+
+
+  override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] = {
+    val session = getSession()
+    Future {
+      val result = session.loadAll(classOf[Thing], new Pagination(skip,limit))
+      colletionToList(result)
+    }
+  }
+
+  override def createThing(thing: Thing): Future[Thing] = ???
+
+  override def getThingInfo(id: UUID): Future[Option[JsValue]] = {
+    mongoDbCollection.find(Json.obj("id" -> id)).one[JsValue]
   }
 
 }
@@ -173,8 +83,7 @@ object Main {
     ).map(r => println(r))*/
 
     //repo.getAllThings(1, 1).map(r => println(r))
-    repo.getThing(UUID.fromString("3efa83e8-c5cb-4322-a188-bba2051ab580")).map(r => println(r))
-
+    repo.getThing(UUID.fromString("b0edce59-74b4-4324-aa4f-47468dbae332")).map(_.map(println))
   }
 }
 
