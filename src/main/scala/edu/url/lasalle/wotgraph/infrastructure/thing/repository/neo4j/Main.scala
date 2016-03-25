@@ -2,6 +2,7 @@ package infrastructure.thing.repository.neo4j
 
 import java.util.UUID
 
+import edu.url.lasalle.wotgraph.infrastructure.AppConfig
 import play.api.libs.json.Json
 import play.api.libs.ws.ning.NingWSClient
 import play.api.libs.ws.{WSAuthScheme, WSClient, WSRequest}
@@ -11,12 +12,16 @@ import scala.collection.mutable._
 object Main {
 
   def createRequestForNeo4j(wsClient: WSClient): WSRequest = {
+    val domain = AppConfig.defaultConf.getString("neo4j.server")
+    val username = AppConfig.defaultConf.getString("neo4j.user")
+    val password = AppConfig.defaultConf.getString("neo4j.password")
+
     val request = wsClient
-      .url("http://192.168.22.19:7474/db/data/transaction/commit")
+      .url(s"http://$domain/db/data/transaction/commit")
       .withHeaders(
         "Accept" -> "application/json; charset=UTF-8"
         , "Content-Type" -> "application/json")
-      .withAuth("neo4j", "xneo4j", WSAuthScheme.BASIC)
+      .withAuth(username, password, WSAuthScheme.BASIC)
     request
   }
 

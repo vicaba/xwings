@@ -2,6 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.mongodb
 import com.typesafe.config.Config
 import reactivemongo.api.{DB, MongoConnectionOptions, MongoDriver}
 import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class MongoEnvironmentImpl(config: Config) extends MongoEnvironment{
   override lazy val driver: MongoDriver = MongoDriver()

@@ -9,6 +9,8 @@ import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.{Neo4jConfig, Neo4jWebServiceRepository}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
 import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Reads._
+import play.modules.reactivemongo.json._
 import play.api.libs.ws.WSRequest
 import play.api.libs.ws.ning.NingWSClient
 
@@ -18,12 +20,11 @@ case class ThingRepositoryImpl(
                                 neo4jConfig: Neo4jConfig,
                                 mongoDbConfig: MongoDbConfig
                               )
+                              (implicit ec: ExecutionContext)
   extends ThingRepository
 {
 
   import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Implicits._
-
-  implicit val executionContext = implicitly[ExecutionContext]
 
   val neo4jPreparedRequest: WSRequest = Neo4jWebServiceRepository.createPreparedRequest(neo4jConfig)
 
@@ -104,7 +105,7 @@ case class ThingRepositoryImpl(
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> s"MATCH (n ({id: $id}))-[r]->() RETURN n,r"
+            "statement" -> s"MATCH (n ({id: $id}))-[r:${Label.Action}|${Label.Child}]->() RETURN n,r"
             , "resultDataContents" -> List("row")
           )))
     val queryRequest = neo4jPreparedRequest
@@ -157,6 +158,7 @@ object Main {
     val conf = AppConfig.defaultConf
     val neo4jConfig = Neo4jConfig(wsClient, conf.getString("neo4j.server"), "http", "neo4j", "xneo4j")
     val mongoDbConfig = MongoDbConfig(MongoEnvironmentImpl(AppConfig.defaultConf).db.collection("metadata"))
+    implicit val ec = scala.concurrent.ExecutionContext.global
     val repo = ThingRepositoryImpl(neo4jConfig, mongoDbConfig)
 
     //(createRequestForNeo4j _ andThen createNodesTest)(wsClient).execute().map(r => println(r))
@@ -169,7 +171,7 @@ object Main {
         , relations = Nil)
     ).map(r => println(r))
 
-    repo.getAllThings().map(r => println(r))
+    repo.getAllThings(1, 1).map(r => println(r))
 
   }
 }

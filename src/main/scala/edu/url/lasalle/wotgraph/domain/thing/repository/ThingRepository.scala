@@ -3,6 +3,7 @@ package domain.thing.repository
 import java.util.UUID
 
 import application.Thing
+import play.api.libs.json.JsValue
 
 import scala.concurrent.Future
 
@@ -14,7 +15,7 @@ trait ThingRepository {
 
   def getThing(id: UUID): Future[Option[Thing]]
 
-  def getThingInfo(id: UUID): Future[String]
+  def getThingInfo(id: UUID): Future[Option[JsValue]]
 
   def getThingActions(id: UUID): Future[List[Thing]]
 
