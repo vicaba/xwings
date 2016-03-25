@@ -4,5 +4,5 @@ import com.typesafe.config.ConfigFactory
 
 
 object AppConfig {
-  val defaultConf = ConfigFactory.load("application.conf")
+  val defaultConf = ConfigFactory.load("reference.conf")
 }

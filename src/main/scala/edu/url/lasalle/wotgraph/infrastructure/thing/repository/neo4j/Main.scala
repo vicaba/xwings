@@ -1,8 +1,12 @@
 package infrastructure.thing.repository.neo4j
 
+import java.util
 import java.util.UUID
 
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
+import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
+import org.neo4j.ogm.cypher.Filter
+import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Json
 import play.api.libs.ws.ning.NingWSClient
 import play.api.libs.ws.{WSAuthScheme, WSClient, WSRequest}
@@ -46,10 +50,8 @@ object Main {
       .withBody(json)
   }
 
-  def createRelationTest(request: WSRequest, list: ListBuffer[UUID]): WSRequest = {
-    val relation = "CHILD"
-    val id1 = list.head
-    val id2 = list.last
+  def createRelationTest(relation: String, request: WSRequest, ids: (UUID, UUID)): WSRequest = {
+    val (id1, id2) = ids
     val json =
       Json.obj(
         "statements" -> List(
@@ -79,16 +81,28 @@ object Main {
       .withBody(json)
   }
 
-  def main(args: Array[String]) {
-    val wsClient = NingWSClient()
+  def getSomeThings(): util.Collection[Thing] = {
 
-//    (createRequestForNeo4j _).andThen(createNodeTest)(wsClient).execute()
+    val sessionFactory = new SessionFactory("edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings")
+    val session = sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
+    val t = new Thing("a", "hName", "action")
+    //session.save(t)
+    session.loadAll(classOf[Thing], new Filter("_id", "87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3"))
+  }
+
+  def main(args: Array[String]) {
+/*  val wsClient = NingWSClient()
 
     val list = ListBuffer[UUID]()
     val request = createRequestForNeo4j(wsClient)
-    (1 to 15).map(createNodeTest(request,_,list).execute())
+    (1 to 15).map(createNodeTest(request, _, list).execute())
     println(list)
-    createRelationTest(request,list).execute()
+    createRelationTest("CHILD", request, (list.head, list.last)).execute()
+    createRelationTest("ACTION", request, (list.head, list(list.length - 2))).execute()*/
 
+    val things = getSomeThings().toArray()
+    for (t <- things) {
+      println(t.asInstanceOf[Thing].actions)
+    }
   }
 }

@@ -5,7 +5,7 @@ import java.util.UUID
 import application.{Action, Thing}
 import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
-import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, MongoEnvironmentImpl}
+import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingsMongoEnvironment}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.{Neo4jConfig, Neo4jWebServiceRepository}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
 import play.api.libs.json.{JsValue, Json}
@@ -33,11 +33,12 @@ case class ThingRepositoryImpl(
   object Label {
     val Thing = "Thing"
     val Action = "Action"
-    val Info = "Info"
     val Child = "Child"
   }
 
   private def neo4jToListOfThing(unparsedJson: String): List[Thing] = {
+    println(unparsedJson)
+    println()
     val jsValue = Json.parse(unparsedJson)
     val nodes = (jsValue \ "results") (0) \ "data" \\ "row"
     nodes.map(n => n(0).validate[Thing].get).toList
@@ -105,7 +106,7 @@ case class ThingRepositoryImpl(
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> s"MATCH (n ({id: $id}))-[r:${Label.Action}|${Label.Child}]->() RETURN n,r"
+            "statement" -> s"MATCH (n:Thing {_id: '$id'})-[r:${Label.Action}|:${Label.Child}]->(n2) RETURN {_id:n._id, hName:n.hName, action:n.action, relations:type(r)} AS Thing, n2"
             , "resultDataContents" -> List("row")
           )))
     val queryRequest = neo4jPreparedRequest
@@ -121,7 +122,7 @@ case class ThingRepositoryImpl(
         "statements" -> List(
           Json.obj(
             "statement" -> s"MATCH (n:$labels) OPTIONAL MATCH (n)-[r]->() RETURN n,r"
-            , "resultDataContents" -> List("row")
+              , "resultDataContents" -> List("row")
           )))
 
     val queryRequest = neo4jPreparedRequest
@@ -157,21 +158,22 @@ object Main {
     val wsClient = NingWSClient()
     val conf = AppConfig.defaultConf
     val neo4jConfig = Neo4jConfig(wsClient, conf.getString("neo4j.server"), "http", "neo4j", "xneo4j")
-    val mongoDbConfig = MongoDbConfig(MongoEnvironmentImpl(AppConfig.defaultConf).db.collection("metadata"))
+    val mongoDbConfig = MongoDbConfig(ThingsMongoEnvironment(AppConfig.defaultConf).db.collection("metadata"))
     implicit val ec = scala.concurrent.ExecutionContext.global
     val repo = ThingRepositoryImpl(neo4jConfig, mongoDbConfig)
 
     //(createRequestForNeo4j _ andThen createNodesTest)(wsClient).execute().map(r => println(r))
 
-    repo.createThing(
+/*    repo.createThing(
       Thing(
         humanName = "SomeThing"
         , action = Action("", UUID.randomUUID(), "")
         , labels = Nil
         , relations = Nil)
-    ).map(r => println(r))
+    ).map(r => println(r))*/
 
-    repo.getAllThings(1, 1).map(r => println(r))
+    //repo.getAllThings(1, 1).map(r => println(r))
+    repo.getThing(UUID.fromString("3efa83e8-c5cb-4322-a188-bba2051ab580")).map(r => println(r))
 
   }
 }
