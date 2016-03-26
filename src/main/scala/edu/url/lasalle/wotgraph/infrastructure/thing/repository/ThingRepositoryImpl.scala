@@ -13,7 +13,7 @@ import org.neo4j.ogm.cypher.query.Pagination
 import org.neo4j.ogm.cypher.{Filter, Filters}
 import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Reads._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 import play.api.libs.ws.ning.NingWSClient
 import play.modules.reactivemongo.json._
 
@@ -33,7 +33,7 @@ case class ThingRepositoryImpl(
     sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
   }
 
-  def colletionToList(coll: util.Collection[Thing]): List[Thing] = {
+  def collectionToList(coll: util.Collection[Thing]): List[Thing] = {
     coll.toArray.toList.asInstanceOf[List[Thing]]
   }
 
@@ -41,7 +41,7 @@ case class ThingRepositoryImpl(
     val session = getSession()
     Future {
       val result = session.loadAll(classOf[Thing], new Filter("_id", id.toString))
-      colletionToList(result).headOption
+      collectionToList(result).headOption
     }
   }
 
@@ -50,14 +50,14 @@ case class ThingRepositoryImpl(
     val session = getSession()
     Future {
       val result = session.loadAll(classOf[Thing], new Pagination(skip,limit))
-      colletionToList(result)
+      collectionToList(result)
     }
   }
 
   override def createThing(thing: Thing): Future[Thing] = ???
 
   override def getThingInfo(id: UUID): Future[Option[JsValue]] = {
-    mongoDbCollection.find(Json.obj("id" -> id)).one[JsValue]
+    mongoDbCollection.find(Json.obj("_id" -> id)).one[JsValue]
   }
 
 }
@@ -82,8 +82,38 @@ object Main {
         , relations = Nil)
     ).map(r => println(r))*/
 
-    //repo.getAllThings(1, 1).map(r => println(r))
-    repo.getThing(UUID.fromString("b0edce59-74b4-4324-aa4f-47468dbae332")).map(_.map(println))
+    import scala.collection.JavaConverters._
+
+
+    def removeActions(leftSet: Set[Thing], rightSet: Set[Thing]): Set[Thing] = {
+      val current = leftSet.headOption
+      current match {
+        case Some(c) =>
+          val actions = c.actions.asScala
+          val remaining = leftSet.tail
+          val parsed = rightSet.+(c).diff(actions)
+          removeActions(remaining, parsed)
+        case None => rightSet
+      }
+    }
+
+/*    val res = repo.getThings().map(_.map { t =>
+      ThingSerializer.ThingWrites.writes(t)
+    })*/
+
+    val res = repo.getThings()
+
+    res.map { listOfThings =>
+      val result = removeActions(listOfThings.toSet, Set.empty)
+      val json = Writes.set[Thing].writes(result).toString
+      json
+    }
+
+/*    repo.getThing(UUID.fromString("87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3")).map(_.foreach { t =>
+      val res = ThingSerializer.ThingWrites.writes(t)
+      println(res)
+    })*/
+
   }
 }
 
