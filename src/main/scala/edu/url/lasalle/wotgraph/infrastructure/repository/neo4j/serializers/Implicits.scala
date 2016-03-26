@@ -9,7 +9,7 @@ import play.api.libs.json.{OFormat, OWrites, _}
 
 object Implicits {
 
-  implicit val thingJsonSerializer = ThingSerializer.ThingReads
+  implicit val thingJsonSerializer = ThingSerializer.ThingWrites
 
   implicit val actionJsonSerializer = ActionSerializer.actionFormat
 
@@ -28,7 +28,22 @@ object Implicits {
 
     object ThingWrites extends OWrites[Thing] {
       override def writes(o: Thing): JsObject = {
-        Json.obj("_id" -> o._id, "hName" -> o.hName, "actions" -> 
+
+        import scala.collection.JavaConverters._
+
+        def parseActionFromString(action: String): Action =
+          Json.parse(action.replace("\\\"", "\"")).validate[Action].get
+
+        def createActionJson(t: Thing): JsObject = {
+          val actionName = parseActionFromString(t.action).actionName
+          Json.obj("actionName" -> actionName, "thingId" -> t._id)
+        }
+
+        val children = o.children.asScala.map(_._id)
+
+        val actions = o.actions.asScala.map(createActionJson) + createActionJson(o)
+
+        Json.obj("_id" -> o._id, "hName" -> o.hName, "actions" -> actions, "children" -> children)
       }
     }
   }
