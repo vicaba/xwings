@@ -4,8 +4,8 @@ import org.neo4j.ogm.annotation.GraphId;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @NodeEntity(label = "Thing")
 public class Thing {
@@ -31,10 +31,10 @@ public class Thing {
     }
 
     @Relationship(type = Thing.CHILD_RELATION)
-    public Set<Thing> children;
+    public Set<Thing> children = new HashSet<>();
 
     @Relationship(type = Thing.ACTION_RELATION)
-    public Set<Thing> actions;
+    public Set<Thing> actions = new HashSet<>();
 
     public void child(Thing thing) {
         children.add(thing);
@@ -44,6 +44,21 @@ public class Thing {
         actions.add(thing);
     }
 
+    @Override
+    public boolean equals(Object arg0) {
+        if (arg0 instanceof Thing) {
+            int comp = ((Thing)arg0)._id.compareTo(this._id);
+            if (comp == 0) return true;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return _id.hashCode();
+    }
+
+    @Override
     public String toString() {
         return _id;
     }
