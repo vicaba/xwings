@@ -20,7 +20,6 @@ import play.modules.reactivemongo.json._
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
-                                neo4jConfig: Neo4jConfig,
                                 mongoDbConfig: MongoDbConfig
                               )
                               (implicit ec: ExecutionContext)
@@ -70,7 +69,7 @@ object Main {
     val neo4jConfig = Neo4jConfig(wsClient, conf.getString("neo4j.server"), "http", "neo4j", "xneo4j")
     val mongoDbConfig = MongoDbConfig(ThingsMongoEnvironment(AppConfig.defaultConf).db.collection("metadata"))
     implicit val ec = scala.concurrent.ExecutionContext.global
-    val repo = ThingRepositoryImpl(neo4jConfig, mongoDbConfig)
+    val repo = ThingRepositoryImpl(mongoDbConfig)
 
     //(createRequestForNeo4j _ andThen createNodesTest)(wsClient).execute().map(r => println(r))
 
