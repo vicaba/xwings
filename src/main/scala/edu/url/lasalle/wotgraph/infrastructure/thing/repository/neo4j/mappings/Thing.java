@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @NodeEntity(label = "Thing")
-public class Thing extends edu.url.lasalle.wotgraph.application.Thing {
+public class Thing {
 
     final static private String CHILD_RELATION = "CHILD";
     final static private String ACTION_RELATION = "ACTION";

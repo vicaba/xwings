@@ -2,7 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.Action
+import application.Action
 import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, OWrites, _}
