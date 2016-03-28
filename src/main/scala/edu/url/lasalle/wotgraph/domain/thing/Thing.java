@@ -1,4 +1,5 @@
-package edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings;
+package edu.url.lasalle.wotgraph.domain.thing;
+
 
 import org.neo4j.ogm.annotation.GraphId;
 import org.neo4j.ogm.annotation.NodeEntity;

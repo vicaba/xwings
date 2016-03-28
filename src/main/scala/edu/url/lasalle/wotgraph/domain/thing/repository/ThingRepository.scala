@@ -2,8 +2,8 @@ package domain.thing.repository
 
 import java.util.UUID
 
+import edu.url.lasalle.wotgraph.domain.thing.Thing
 import play.api.libs.json.JsValue
-import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
 
 import scala.concurrent.Future
 

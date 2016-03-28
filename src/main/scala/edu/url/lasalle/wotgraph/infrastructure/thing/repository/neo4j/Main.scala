@@ -3,8 +3,8 @@ package infrastructure.thing.repository.neo4j
 import java.util
 import java.util.UUID
 
+import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
-import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
 import org.neo4j.ogm.cypher.Filter
 import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Json

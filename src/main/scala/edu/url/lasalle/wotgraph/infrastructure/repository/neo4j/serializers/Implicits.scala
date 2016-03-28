@@ -2,8 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers
 
 import java.util.UUID
 
-import application.Action
-import edu.url.lasalle.wotgraph.infrastructure.thing.repository.neo4j.mappings.Thing
+import edu.url.lasalle.wotgraph.domain.thing.{Action, Thing}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, OWrites, _}
 
@@ -14,17 +13,6 @@ object Implicits {
   implicit val actionJsonSerializer = ActionSerializer.actionFormat
 
   object ThingSerializer {
-//    object ThingReads extends Reads[Thing] {
-//      override def reads(json: JsValue): JsResult[Thing] = {
-//        val id = (json \ "_id").as[UUID]
-//        val name = (json \ "hName").as[String]
-//        val action = Json.parse((json \ "action").as[String].replace("\\\"", "\"")).validate[Action].get
-//        val labels = Nil
-//        val relations = Nil
-//        val result = Thing(id, name, action, labels, relations)
-//        JsSuccess(result)
-//      }
-//    }
 
     object ThingWrites extends OWrites[Thing] {
       override def writes(o: Thing): JsObject = {
