@@ -17,26 +17,19 @@ import play.modules.reactivemongo.json._
 import scaldi.Injectable._
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
+import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
-                                neo4jconf: Neo4jConf.Config,
+                                override val neo4jconf: Neo4jConf.Config,
                                 mongoDbConfig: MongoDbConfig
                               )
                               (implicit ec: ExecutionContext)
   extends ThingRepository
-{
+    with Neo4jOGMHelper {
+
   val mongoDbCollection = mongoDbConfig.collection
-
-  def getSession(): org.neo4j.ogm.session.Session = {
-    val sessionFactory = new SessionFactory(neo4jconf.packages:_*)
-    sessionFactory.openSession(neo4jconf.server.toString, neo4jconf.credentials.username, neo4jconf.credentials.password)
-  }
-
-  def collectionToList(coll: util.Collection[Thing]): List[Thing] = {
-    coll.toArray.toList.asInstanceOf[List[Thing]]
-  }
 
   override def getThing(id: UUID): Future[Option[Thing]] = {
     val session = getSession()
@@ -49,7 +42,7 @@ case class ThingRepositoryImpl(
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] = {
     val session = getSession()
     Future {
-      val result = session.loadAll(classOf[Thing], new Pagination(skip,limit))
+      val result = session.loadAll(classOf[Thing], new Pagination(skip, limit))
       collectionToList(result)
     }
   }
@@ -83,9 +76,9 @@ object Main {
       }
     }
 
-/*    val res = repo.getThings().map(_.map { t =>
-      ThingSerializer.ThingWrites.writes(t)
-    })*/
+    /*    val res = repo.getThings().map(_.map { t =>
+          ThingSerializer.ThingWrites.writes(t)
+        })*/
 
     val res = repo.getThings()
 
@@ -95,10 +88,10 @@ object Main {
       json
     }
 
-/*    repo.getThing(UUID.fromString("87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3")).map(_.foreach { t =>
-      val res = ThingSerializer.ThingWrites.writes(t)
-      println(res)
-    })*/
+    /*    repo.getThing(UUID.fromString("87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3")).map(_.foreach { t =>
+          val res = ThingSerializer.ThingWrites.writes(t)
+          println(res)
+        })*/
 
   }
 }

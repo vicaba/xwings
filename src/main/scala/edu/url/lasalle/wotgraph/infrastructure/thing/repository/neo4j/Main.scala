@@ -3,6 +3,7 @@ package infrastructure.thing.repository.neo4j
 import java.util
 import java.util.UUID
 
+import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
 import org.neo4j.ogm.cypher.Filter
@@ -10,6 +11,8 @@ import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Json
 import play.api.libs.ws.ning.NingWSClient
 import play.api.libs.ws.{WSAuthScheme, WSClient, WSRequest}
+import scaldi.Injectable._
+import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 
 import scala.collection.mutable._
 
@@ -92,6 +95,12 @@ object Main {
   }
 
   def testInit() = {
+    implicit val ec = scala.concurrent.ExecutionContext.global
+
+    val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
+
+
+
     val wsClient = NingWSClient()
 
     val list = ListBuffer[UUID]()
