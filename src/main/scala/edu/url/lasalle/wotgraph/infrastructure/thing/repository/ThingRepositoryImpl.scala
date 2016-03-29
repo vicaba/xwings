@@ -6,20 +6,22 @@ import java.util.UUID
 import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
-import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingsMongoEnvironment}
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConfig
+import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoDbConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
 import org.neo4j.ogm.cypher.query.Pagination
-import org.neo4j.ogm.cypher.{Filter, Filters}
+import org.neo4j.ogm.cypher.Filter
 import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Reads._
-import play.api.libs.json.{JsValue, Json, Writes}
-import play.api.libs.ws.ning.NingWSClient
+import play.api.libs.json.{JsObject, Json, Writes}
 import play.modules.reactivemongo.json._
+import scaldi.Injectable._
+import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
+import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
+                                neo4jconf: Neo4jConf.Config,
                                 mongoDbConfig: MongoDbConfig
                               )
                               (implicit ec: ExecutionContext)
@@ -28,8 +30,8 @@ case class ThingRepositoryImpl(
   val mongoDbCollection = mongoDbConfig.collection
 
   def getSession(): org.neo4j.ogm.session.Session = {
-    val sessionFactory = new SessionFactory("edu.url.lasalle.wotgraph.domain.thing")
-    sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
+    val sessionFactory = new SessionFactory(neo4jconf.packages:_*)
+    sessionFactory.openSession(neo4jconf.server.toString, neo4jconf.credentials.username, neo4jconf.credentials.password)
   }
 
   def collectionToList(coll: util.Collection[Thing]): List[Thing] = {
@@ -44,7 +46,6 @@ case class ThingRepositoryImpl(
     }
   }
 
-
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] = {
     val session = getSession()
     Future {
@@ -55,8 +56,8 @@ case class ThingRepositoryImpl(
 
   override def createThing(thing: Thing): Future[Thing] = ???
 
-  override def getThingInfo(id: UUID): Future[Option[JsValue]] = {
-    mongoDbCollection.find(Json.obj("_id" -> id)).one[JsValue]
+  override def getThingInfo(id: UUID): Future[Option[JsObject]] = {
+    mongoDbCollection.find(Json.obj("_id" -> id)).one[JsObject]
   }
 
 }
@@ -64,25 +65,11 @@ case class ThingRepositoryImpl(
 object Main {
 
   def main(args: Array[String]) {
-    val wsClient = NingWSClient()
-    val conf = AppConfig.defaultConf
-    val neo4jConfig = Neo4jConfig(wsClient, conf.getString("neo4j.server"), "http", "neo4j", "xneo4j")
-    val mongoDbConfig = MongoDbConfig(ThingsMongoEnvironment(AppConfig.defaultConf).db.collection("metadata"))
     implicit val ec = scala.concurrent.ExecutionContext.global
-    val repo = ThingRepositoryImpl(mongoDbConfig)
 
-    //(createRequestForNeo4j _ andThen createNodesTest)(wsClient).execute().map(r => println(r))
-
-/*    repo.createThing(
-      Thing(
-        humanName = "SomeThing"
-        , action = Action("", UUID.randomUUID(), "")
-        , labels = Nil
-        , relations = Nil)
-    ).map(r => println(r))*/
+    val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
     import scala.collection.JavaConverters._
-
 
     def removeActions(leftSet: Set[Thing], rightSet: Set[Thing]): Set[Thing] = {
       val current = leftSet.headOption

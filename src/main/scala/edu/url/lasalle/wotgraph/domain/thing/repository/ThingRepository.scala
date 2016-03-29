@@ -3,7 +3,7 @@ package domain.thing.repository
 import java.util.UUID
 
 import edu.url.lasalle.wotgraph.domain.thing.Thing
-import play.api.libs.json.JsValue
+import play.api.libs.json.JsObject
 
 import scala.concurrent.Future
 
@@ -15,6 +15,6 @@ trait ThingRepository {
 
   def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
 
-  def getThingInfo(id: UUID): Future[Option[JsValue]]
+  def getThingInfo(id: UUID): Future[Option[JsObject]]
 
 }
