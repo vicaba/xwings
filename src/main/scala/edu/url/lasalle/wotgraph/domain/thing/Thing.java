@@ -20,6 +20,7 @@ public class Thing {
     public String _id;
     public String hName;
     public String action;
+    public Metadata metadata;
 
     public Thing() {
 
@@ -43,6 +44,10 @@ public class Thing {
 
     public void action(Thing thing) {
         actions.add(thing);
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
     }
 
     @Override
