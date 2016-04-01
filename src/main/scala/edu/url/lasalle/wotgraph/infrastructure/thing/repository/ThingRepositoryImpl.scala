@@ -3,10 +3,11 @@ package edu.url.lasalle.wotgraph.infrastructure.thing.repository
 import java.util.UUID
 
 import domain.thing.repository.ThingRepository
+import edu.url.lasalle.infrastructure.serializers.json.Implicits
 import edu.url.lasalle.wotgraph.application.exceptions.ServiceUnavailableException
-import edu.url.lasalle.wotgraph.domain.thing.Thing
+import edu.url.lasalle.wotgraph.domain.thing.{Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoDbConfig
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
+import Implicits._
 import org.neo4j.ogm.cypher.query.Pagination
 import org.neo4j.ogm.cypher.Filter
 import play.api.libs.json.Reads._
@@ -17,7 +18,7 @@ import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 case class ThingRepositoryImpl(
@@ -47,12 +48,14 @@ case class ThingRepositoryImpl(
     }
   }
 
-  override def createThing(thing: Thing): Future[Thing] = ???
 
   override def getThingInfo(id: UUID): Future[Option[JsObject]] = {
     mongoDbCollection.find(Json.obj("_id" -> id)).one[JsObject]
   }
 
+  override def createThing(hName: String, metadata: Metadata, children: Set[UUID]): Future[Thing] = {
+
+  }
 }
 
 object Main {

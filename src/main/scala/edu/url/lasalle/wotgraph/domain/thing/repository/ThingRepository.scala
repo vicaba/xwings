@@ -2,14 +2,19 @@ package domain.thing.repository
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.domain.thing.Thing
+import edu.url.lasalle.wotgraph.domain.thing.{Metadata, Thing}
 import play.api.libs.json.JsObject
 
 import scala.concurrent.Future
 
 trait ThingRepository {
 
-  def createThing(thing: Thing): Future[Thing]
+  def createThing(
+                 hName: String,
+                 metadata: Metadata,
+                 children: Set[UUID]
+                 )
+  : Future[Thing]
 
   def getThing(id: UUID): Future[Option[Thing]]
 
