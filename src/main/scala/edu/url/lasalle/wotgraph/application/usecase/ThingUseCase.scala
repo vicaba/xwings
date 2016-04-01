@@ -30,7 +30,7 @@ case class ThingUseCase(repo: ThingRepository) {
 
     allThings.map { listOfThings =>
       removeActions(listOfThings.toSet, Set.empty)
-    }
+    } recover { case _ => throw new ServiceUnavailableException() }
 
   }
 
@@ -49,7 +49,7 @@ case class ThingUseCase(repo: ThingRepository) {
               case None => thing
             } recover { case _ => thing } map { t => Some(thing) }
           case None => Future.successful(None)
-        } recover { case _ => throw new ServiceUnavailableException("Service unavailable") }
+        } recover { case _ => throw new ServiceUnavailableException() }
     }
   }
 }
