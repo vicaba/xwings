@@ -3,9 +3,11 @@ package edu.url.lasalle.wotgraph.infrastructure
 import java.net.URI
 
 import domain.thing.repository.ThingRepository
+import edu.url.lasalle.wotgraph.application.usecase.ThingUseCase
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingsMongoEnvironment}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 import edu.url.lasalle.wotgraph.infrastructure.thing.repository.ThingRepositoryImpl
+import scaldi.Injectable._
 import scaldi.Module
 
 object DependencyInjector {
@@ -25,7 +27,9 @@ object DependencyInjector {
   }
 
   implicit val injector = new Module {
+
     bind [ThingRepository] identifiedBy 'ThingRepository to thingRepository
+    bind [ThingUseCase] identifiedBy 'ThingUseCase to ThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
   }
 
 }
