@@ -1,16 +1,14 @@
 package edu.url.lasalle.wotgraph.infrastructure.thing.repository
 
-import java.util
 import java.util.UUID
 
 import domain.thing.repository.ThingRepository
+import edu.url.lasalle.wotgraph.application.exceptions.ServiceUnavailableException
 import edu.url.lasalle.wotgraph.domain.thing.Thing
-import edu.url.lasalle.wotgraph.infrastructure.AppConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoDbConfig
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.serializers.Implicits._
 import org.neo4j.ogm.cypher.query.Pagination
 import org.neo4j.ogm.cypher.Filter
-import org.neo4j.ogm.session.SessionFactory
 import play.api.libs.json.Reads._
 import play.api.libs.json.{JsObject, Json, Writes}
 import play.modules.reactivemongo.json._
@@ -19,7 +17,8 @@ import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success, Try}
 
 case class ThingRepositoryImpl(
                                 override val neo4jconf: Neo4jConf.Config,
@@ -41,9 +40,10 @@ case class ThingRepositoryImpl(
 
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] = {
     val session = getSession()
-    Future {
-      val result = session.loadAll(classOf[Thing], new Pagination(skip, limit))
-      collectionToList(result)
+
+    Try(session.loadAll(classOf[Thing], new Pagination(skip, limit))) match {
+      case Failure(e) => Future.failed(new ServiceUnavailableException())
+      case Success(collection) => Future.successful(collectionToList(collection))
     }
   }
 
