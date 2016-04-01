@@ -15,6 +15,8 @@ object ThingSerializer {
 
   val Action$ThingId = "thingId"
 
+  val MetadataKey = "metadata"
+
   object ThingWrites extends OWrites[Thing] {
     override def writes(o: Thing): JsObject = {
 
@@ -32,7 +34,11 @@ object ThingSerializer {
 
       val actions = o.actions.asScala.map(createActionJson) + createActionJson(o)
 
-      Json.obj(IdKey -> o._id, HNameKey -> o.hName, ActionsKey -> actions, ChildrenKey -> children)
+      val metadata = Option(o.metadata)
+
+      Json.obj(IdKey -> o._id, HNameKey -> o.hName, ActionsKey -> actions, ChildrenKey -> children) ++
+        metadata.fold(Json.obj())(m => Json.obj(MetadataKey -> m.data))
     }
   }
+
 }

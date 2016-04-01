@@ -1,6 +1,6 @@
 package edu.url.lasalle.infrastructure.serializers.json
 
-import edu.url.lasalle.infrastructure.serializers.json.dto.CreateThingSerializer
+import edu.url.lasalle.infrastructure.serializers.json.dto.{CreateThingSerializer, GetThingsSerializer}
 
 object Implicits {
 
@@ -9,4 +9,6 @@ object Implicits {
   implicit val actionJsonSerializer = ActionSerializer.actionFormat
 
   implicit val createThingSerializer = CreateThingSerializer.createThingReads
+
+  implicit val getThingsSerializer = GetThingsSerializer.getThingsThingReads
 }

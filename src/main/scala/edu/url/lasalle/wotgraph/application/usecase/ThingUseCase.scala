@@ -1,11 +1,9 @@
 package edu.url.lasalle.wotgraph.application.usecase
 
 import java.util.UUID
-
 import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.application.exceptions._
 import edu.url.lasalle.wotgraph.domain.thing.{Metadata, Thing}
-import play.api.libs.json.JsObject
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -13,13 +11,15 @@ import scala.collection.JavaConverters._
 
 case class CreateThing(hName: String, metadata: Metadata, children: Set[UUID])
 
+case class GetThings(pageNumber: Int, itemPerPage: Int)
+
 case class ThingUseCase(repo: ThingRepository) {
 
   def createThing(c: CreateThing): Future[Thing] = {
     repo.createThing(c.hName, c.metadata, c.children)
   }
 
-  def getThings()(implicit ec: ExecutionContext): Future[Set[Thing]] = {
+  def getThings(g: GetThings)(implicit ec: ExecutionContext): Future[Set[Thing]] = {
 
     def removeActions(leftSet: Set[Thing], rightSet: Set[Thing]): Set[Thing] = {
       val current = leftSet.headOption
@@ -33,7 +33,7 @@ case class ThingUseCase(repo: ThingRepository) {
       }
     }
 
-    val allThings = repo.getThings()
+    val allThings = repo.getThings(g.itemPerPage * g.pageNumber, g.itemPerPage)
 
     allThings.map { listOfThings =>
       removeActions(listOfThings.toSet, Set.empty)
