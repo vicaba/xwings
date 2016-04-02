@@ -53,9 +53,7 @@ case class ThingRepositoryImpl(
     mongoDbCollection.find(Json.obj("_id" -> id)).one[JsObject]
   }
 
-  override def createThing(hName: String, metadata: Metadata, children: Set[UUID]): Future[Thing] = {
-
-  }
+  override def createThing(hName: String, metadata: Metadata, children: Set[UUID]): Future[Thing] = ???
 }
 
 object Main {

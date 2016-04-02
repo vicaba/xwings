@@ -19,7 +19,7 @@ case class ThingUseCase(repo: ThingRepository) {
     repo.createThing(c.hName, c.metadata, c.children)
   }
 
-  def getThings(g: GetThings)(implicit ec: ExecutionContext): Future[Set[Thing]] = {
+  def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[Set[Thing]] = {
 
     def removeActions(leftSet: Set[Thing], rightSet: Set[Thing]): Set[Thing] = {
       val current = leftSet.headOption

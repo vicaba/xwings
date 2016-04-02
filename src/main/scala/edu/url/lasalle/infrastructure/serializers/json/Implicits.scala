@@ -10,5 +10,5 @@ object Implicits {
 
   implicit val createThingSerializer = CreateThingSerializer.createThingReads
 
-  implicit val getThingsSerializer = GetThingsSerializer.getThingsThingReads
+  implicit val getThingsSerializer = GetThingsSerializer.getThingsReads
 }
