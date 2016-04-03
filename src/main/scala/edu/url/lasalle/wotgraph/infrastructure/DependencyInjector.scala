@@ -2,27 +2,40 @@ package edu.url.lasalle.wotgraph.infrastructure
 
 import java.net.URI
 
-import domain.thing.repository.ThingRepository
 import edu.url.lasalle.wotgraph.application.usecase.ThingUseCase
+import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
+import edu.url.lasalle.wotgraph.infrastructure.repository.action.ActionMongoRepository
+import edu.url.lasalle.wotgraph.infrastructure.repository.metadata.MetadataMongoRepository
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingsMongoEnvironment}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
-import edu.url.lasalle.wotgraph.infrastructure.thing.repository.ThingRepositoryImpl
+import edu.url.lasalle.wotgraph.infrastructure.repository.thing.ThingRepositoryImpl
 import scaldi.Injectable._
 import scaldi.Module
 
 object DependencyInjector {
 
+  val thingsMongoEnvironment = ThingsMongoEnvironment(AppConfig.defaultConf)
+
+  val metadataMongoRepository = {
+    implicit val ec = scala.concurrent.ExecutionContext.global
+    MetadataMongoRepository(thingsMongoEnvironment.db)
+  }
+
+  val actionMongoRepository = {
+    implicit val ec = scala.concurrent.ExecutionContext.global
+    ActionMongoRepository(thingsMongoEnvironment.db)
+  }
+
   val thingRepository: ThingRepository = {
     val conf = AppConfig.defaultConf
-    val mongoDbConfig = MongoDbConfig(ThingsMongoEnvironment(AppConfig.defaultConf).db.collection("metadata"))
     val neo4jConfig = Neo4jConf.Config(
       Neo4jConf.Credentials(conf.getString("neo4j.user"), conf.getString("neo4j.password")),
       URI.create(s"http://${conf.getString("neo4j.server")}"),
-      List("edu.url.lasalle.wotgraph.domain.thing")
+      List("edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j")
     )
     implicit val ec = scala.concurrent.ExecutionContext.global
 
-    val repo = ThingRepositoryImpl(neo4jConfig, mongoDbConfig)
+    val repo = ThingRepositoryImpl(neo4jConfig, metadataMongoRepository, actionMongoRepository)
     repo
   }
 

@@ -1,4 +1,4 @@
-package edu.url.lasalle.infrastructure.serializers.json.dto
+package edu.url.lasalle.wotgraph.infrastructure.serializers.json.dto
 
 import edu.url.lasalle.wotgraph.application.usecase.GetThings
 import play.api.libs.json._

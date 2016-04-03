@@ -1,12 +1,14 @@
-package edu.url.lasalle.infrastructure.serializers.json
+package edu.url.lasalle.wotgraph.infrastructure.serializers.json
 
-import edu.url.lasalle.infrastructure.serializers.json.dto.{CreateThingSerializer, GetThingsSerializer}
+import edu.url.lasalle.wotgraph.infrastructure.serializers.json.dto.{CreateThingSerializer, GetThingsSerializer}
 
 object Implicits {
 
   implicit val thingJsonSerializer = ThingSerializer.ThingWrites
 
   implicit val actionJsonSerializer = ActionSerializer.actionFormat
+
+  implicit val metadataSerializer = MetadataSerializer.metadataFormat
 
   implicit val createThingSerializer = CreateThingSerializer.createThingReads
 

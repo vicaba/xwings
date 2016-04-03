@@ -1,4 +1,4 @@
-package domain.thing.repository
+package edu.url.lasalle.wotgraph.domain.repository.thing
 
 import java.util.UUID
 
@@ -9,17 +9,12 @@ import scala.concurrent.Future
 
 trait ThingRepository {
 
-  def createThing(
-                 hName: String,
-                 metadata: Metadata,
-                 children: Set[UUID]
-                 )
-  : Future[Thing]
+  def createThing(t: Thing): Future[Thing]
 
   def getThing(id: UUID): Future[Option[Thing]]
 
   def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
 
-  def getThingInfo(id: UUID): Future[Option[JsObject]]
+  def getThingMetadata(id: UUID): Future[Option[Metadata]]
 
 }

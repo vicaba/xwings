@@ -1,10 +1,9 @@
-package infrastructure.thing.repository.neo4j
+package edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j
 
 import java.util
 import java.util.UUID
 
-import domain.thing.repository.ThingRepository
-import edu.url.lasalle.wotgraph.domain.thing.Thing
+import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.infrastructure.AppConfig
 import org.neo4j.ogm.cypher.Filter
 import org.neo4j.ogm.session.SessionFactory
@@ -42,7 +41,7 @@ object Main {
       Json.obj(
         "statements" -> List(
           Json.obj(
-            "statement" -> s"CREATE (n: Thing {_id: '$thingId', hName: '$name', action: '$action'}) RETURN n"
+            "statement" -> s"CREATE (n: Neo4jThing {_id: '$thingId', hName: '$name', action: '$action'}) RETURN n"
             , "resultDataContents" -> List("graph")
           )))
 
@@ -89,9 +88,9 @@ object Main {
     sessionFactory.openSession(s"http://${AppConfig.defaultConf.getString("neo4j.server")}", "neo4j", "xneo4j")
   }
 
-  def getSomeThings(): util.Collection[Thing] = {
+  def getSomeThings(): util.Collection[Neo4jThing] = {
     val session = getSession()
-    session.loadAll(classOf[Thing], new Filter("_id", "87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3"))
+    session.loadAll(classOf[Neo4jThing], new Filter("_id", "87ffdcc2-c28c-434f-9f4f-bc3ac0da21b3"))
   }
 
   def testInit() = {
@@ -116,7 +115,7 @@ object Main {
 
     val things = getSomeThings().toArray()
     for (t <- things) {
-      println(t.asInstanceOf[Thing].actions)
+      //println(t.asInstanceOf[Neo4jThing].actions)
     }
   }
 }

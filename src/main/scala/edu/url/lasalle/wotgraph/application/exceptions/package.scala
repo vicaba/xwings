@@ -6,4 +6,6 @@ package object exceptions {
 
   class ServiceUnavailableException(msg: String = "Service Unavailable") extends RuntimeException(msg)
 
+  class PartialUpdateException(msg: String, rollback: () => Unit = () => {}) extends RuntimeException(msg)
+
 }
