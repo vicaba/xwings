@@ -188,7 +188,7 @@ object Main {
 
     repo.getThings().map { l =>
       println(l)
-    }s
+    }
 
     repo.getThing(UUID.fromString("a1384531-7fcc-4a8e-a1b2-52a5e03dfdc6")).map { t =>
       println(t)
