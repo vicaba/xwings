@@ -14,12 +14,11 @@ object MetadataSerializer {
     override def reads(json: JsValue): JsResult[Metadata] = {
       json match {
         case json: JsObject =>
-          Serializer.metadataReads.reads(json) match {
-            case JsSuccess(metadata, _) =>
-              val metadataId = (json \ MongoIdKey).as[UUID]
-              JsSuccess(metadata.copy(thingId = metadataId))
-            case e: JsError => e
-          }
+
+          val thingId = (json \ MongoIdKey).as[UUID]
+          val metadataJson = (json \ "metadata").as[JsObject]
+          JsSuccess(Metadata(metadataJson, thingId))
+
         case _ => JsError()
       }
     }
