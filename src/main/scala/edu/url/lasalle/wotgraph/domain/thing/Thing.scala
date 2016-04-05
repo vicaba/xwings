@@ -4,7 +4,6 @@ import java.util.UUID
 
 case class Thing(
                   _id: UUID = UUID.randomUUID(),
-                  hName: String,
                   metadata: Option[Metadata] = None,
                   actions: Set[Action] = Set.empty,
                   children: Set[Thing] = Set.empty,
