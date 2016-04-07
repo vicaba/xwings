@@ -7,11 +7,11 @@ import org.neo4j.ogm.session.SessionFactory
 
 trait Neo4jOGMHelper {
 
-  val neo4jconf: Neo4jConf.Config
+  val neo4jConf: Neo4jConf.Config
 
   def getSession(): org.neo4j.ogm.session.Session = {
-    val sessionFactory = new SessionFactory(neo4jconf.packages:_*)
-    sessionFactory.openSession(neo4jconf.server.toString, neo4jconf.credentials.username, neo4jconf.credentials.password)
+    val sessionFactory = new SessionFactory(neo4jConf.packages:_*)
+    sessionFactory.openSession(neo4jConf.server.toString, neo4jConf.credentials.username, neo4jConf.credentials.password)
   }
 
   def collectionToList[T](coll: util.Collection[T]): List[T] = {

@@ -8,4 +8,10 @@ package object exceptions {
 
   class PartialUpdateException(msg: String, rollback: () => Unit = () => {}) extends RuntimeException(msg)
 
+  trait WriteOperationException
+
+  class SaveException(msg: String) extends RuntimeException(msg) with WriteOperationException
+
+  class UpdateException(msg: String) extends RuntimeException(msg) with WriteOperationException
+
 }

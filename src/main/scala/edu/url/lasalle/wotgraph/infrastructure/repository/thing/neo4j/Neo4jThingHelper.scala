@@ -9,9 +9,9 @@ import scala.collection.JavaConverters._
 object Neo4jThingHelper {
 
   implicit def thingAsNeo4jThingView(t: Thing): Neo4jThing =
-    new Neo4jThing(t._id.toString, t.hName, t.children.map(thingAsNeo4jThingView).asJava)
+    new Neo4jThing(t._id.toString, t.children.map(thingAsNeo4jThingView).asJava)
 
   implicit def neo4jThingAsThingView(t: Neo4jThing): Thing =
-    Thing(UUID.fromString(t._id), t.hName, None, Set.empty, t.children.asScala.toSet.map(neo4jThingAsThingView), t.getNeo4jId)
+    Thing(UUID.fromString(t._id), None, Set.empty, t.children.asScala.toSet.map(neo4jThingAsThingView), t.getNeo4jId)
 
 }

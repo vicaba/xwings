@@ -11,7 +11,6 @@ import play.api.libs.functional.syntax._
 
 object CreateThingSerializer {
   val createThingReads: Reads[CreateThing] = (
-    (__ \ ThingSerializer.HNameKey).read[String] and
       (__ \ ThingSerializer.MetadataKey).read[JsObject].map(Metadata(_)) and
       (__ \ ThingSerializer.ChildrenKey).read[Set[UUID]]
     ) (CreateThing.apply _)

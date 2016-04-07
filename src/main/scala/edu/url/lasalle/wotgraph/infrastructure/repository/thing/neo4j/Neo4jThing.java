@@ -17,20 +17,17 @@ public class Neo4jThing {
     private Long id;
 
     public String _id;
-    public String hName;
 
     public Neo4jThing() {
 
     }
 
-    public Neo4jThing(String _id, String hName) {
+    public Neo4jThing(String _id) {
         this._id = _id;
-        this.hName = hName;
     }
 
-    public Neo4jThing(String _id, String hName, Set<Neo4jThing> children) {
+    public Neo4jThing(String _id, Set<Neo4jThing> children) {
         this._id = _id;
-        this.hName = hName;
         this.children = children;
     }
 

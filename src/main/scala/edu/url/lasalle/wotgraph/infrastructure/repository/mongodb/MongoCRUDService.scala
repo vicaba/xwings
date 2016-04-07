@@ -1,11 +1,13 @@
 package edu.url.lasalle.wotgraph.infrastructure.repository.mongodb
 
+import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.api.ReadPreference
-import reactivemongo.api.commands.WriteResult
+import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
+import reactivemongo.bson.{BSON, BSONDocument}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,6 +51,14 @@ abstract class MongoCRUDService[E, ID](implicit tFormat: OFormat[E], idFormat: F
       case wr => Left(wr)
     }.recover {
       case wr: WriteResult => Left(wr)
+    }
+  }
+
+  def create(o: Iterable[E]): Future[Either[MultiBulkWriteResult, Iterable[E]]] = {
+    val docs = o.toSeq.map(implicitly[collection.ImplicitlyDocumentProducer](_))
+    collection.bulkInsert(ordered = false)(docs: _*).map {
+      case wr if wr.ok => Right(o)
+      case wr => Left(wr)
     }
   }
 

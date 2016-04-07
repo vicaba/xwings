@@ -8,15 +8,21 @@ import edu.url.lasalle.wotgraph.domain.thing.{Metadata, Thing}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
 
-case class CreateThing(hName: String, metadata: Metadata, children: Set[UUID])
+case class CreateThing(metadata: Metadata, children: Set[UUID])
 
 case class GetThings(pageNumber: Int, itemPerPage: Int)
 
 case class ThingUseCase(repo: ThingRepository) {
 
-  def createThing(c: CreateThing): Future[Thing] = repo.createThing(Thing(hName = c.hName))
+  def createThing(c: CreateThing): Future[Thing] = {
+
+    val metadata = Some(c.metadata)
+
+    val children = c.children.map(Thing(_))
+
+    repo.createThing(Thing(metadata = metadata, children = children))
+  }
 
   def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] = {
     repo.getThings(g.itemPerPage * g.pageNumber, g.itemPerPage)

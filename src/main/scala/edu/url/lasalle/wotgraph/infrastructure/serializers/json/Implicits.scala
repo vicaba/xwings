@@ -4,7 +4,7 @@ import edu.url.lasalle.wotgraph.infrastructure.serializers.json.dto.{CreateThing
 
 object Implicits {
 
-  implicit val thingJsonSerializer = ThingSerializer.ThingWrites
+  implicit val thingJsonSerializer = ThingSerializer.thingFormat
 
   implicit val actionJsonSerializer = ActionSerializer.actionFormat
 

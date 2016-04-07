@@ -2,148 +2,64 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.{PartialUpdateException, ServiceUnavailableException}
+import edu.url.lasalle.wotgraph.application.exceptions.SaveException
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
-import org.neo4j.ogm.cypher.query.Pagination
-import org.neo4j.ogm.cypher.Filter
 import play.api.libs.json.{JsObject, Json}
-import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
 import scaldi.Injectable._
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
-import edu.url.lasalle.wotgraph.infrastructure.repository.action.ActionMongoRepository
-import edu.url.lasalle.wotgraph.infrastructure.repository.metadata.MetadataMongoRepository
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
-import edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j.{Neo4jThing, Neo4jThingHelper}
+import edu.url.lasalle.wotgraph.infrastructure.repository.thing.mongodb.ThingMongoDbRepository
+import edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j.ThingNeo4jRepository
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
-                                override val neo4jconf: Neo4jConf.Config,
-                                metadataMongoRepository: MetadataMongoRepository,
-                                actionMongoRepository: ActionMongoRepository
+                                thingNeo4jRepository: ThingNeo4jRepository,
+                                thingMongoDbRepository: ThingMongoDbRepository
                               )
                               (implicit ec: ExecutionContext)
-  extends ThingRepository
-    with Neo4jOGMHelper {
-
-
-  private def getThingActions(id: UUID): Future[Option[Set[Action]]] = actionMongoRepository.findById(id)
+  extends ThingRepository {
 
   override def getThing(id: UUID): Future[Option[Thing]] = {
 
-    val session = getSession()
+    val thingNodeF = thingNeo4jRepository.findById(id)
 
-    val thingF = Future {
-      session.loadAll(classOf[Neo4jThing], new Filter("_id", id.toString))
-    }
+    val thingDataF = thingMongoDbRepository.findById(id)
 
-    val actionsF = getThingActions(id)
-    val metadataF = getThingMetadata(id)
+    thingNodeF.flatMap {
 
-    thingF.flatMap { thing =>
-      collectionToList(thing).headOption.map(Neo4jThingHelper.neo4jThingAsThingView) match {
-        case None => Future.successful(None)
-        case Some(t) =>
-          actionsF.flatMap {
-            case Some(actions) =>
-              metadataF.map {
-                case Some(m) =>
-                  val metadata = Some(m)
-                  Some(t.copy(actions = actions, metadata = metadata))
-                case None => Some(t.copy(actions = actions))
-              }
-            case None => Future.successful(Some(t))
-          }
-      }
-    } recover { case _ => throw new ServiceUnavailableException() }
-  }
+      case Some(thingNode) =>
 
-  override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] = {
-    val session = getSession()
+        thingDataF.map {
 
-    Future(session.loadAll(classOf[Neo4jThing], new Pagination(skip, limit))) flatMap {
-      case collection =>
-        val listOfThings = collectionToList(collection).map(Neo4jThingHelper.neo4jThingAsThingView)
-        val listOfIds = listOfThings.map(_._id).toSet
-        val listOfActionsF = actionMongoRepository.getActionsForThingIds(listOfIds)
+          case Some(thingData) =>
+            val thing = thingData.copy(_id = thingNode._id, children = thingData.children)
+            Some(thing)
 
-        val listOfThingsWithActionsF = listOfActionsF.map { listOfActions =>
-          val maps = listOfActions.map(s => s.head.thingId -> s).toMap
-          listOfThings.map { thing =>
-            maps.get(thing._id).map { actions =>
-              thing.copy(actions = actions)
-            }.getOrElse(thing)
-          }
+          case None => None
+
         }
 
-        listOfThingsWithActionsF
-    } recover { case _ => throw new ServiceUnavailableException() }
-  }
-
-  override def getThingMetadata(id: UUID): Future[Option[Metadata]] = {
-    metadataMongoRepository.findById(id)
-  }
-
-  private def saveMetadataAndActionsForThing(t: Thing) = {
-    val metadataMongoF = t.metadata match {
-      case Some(metadata) => metadataMongoRepository.create(metadata.copy(thingId = t._id)).flatMap {
-        case Left(wr) => Future.failed(new PartialUpdateException("Thing partially created, metadata not set"))
-        case Right(m) => Future.successful(Some(metadata))
-      }
-      case _ => Future.successful(None)
-    }
-
-    val actionMongoF = actionMongoRepository.create(t.actions).flatMap {
-      case Left(wr) => Future.failed(new PartialUpdateException("Thing partially created, actions not set"))
-      case Right(actions) => Future.successful(actions)
-    }
-
-    for {
-      metadata <- metadataMongoF
-      actions <- actionMongoF
-    } yield {
-      t
+      case None => Future.successful(None)
     }
 
   }
+
+  override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
+    thingMongoDbRepository.findByCriteria(Json.obj()).map(_.toList)
 
   override def createThing(t: Thing): Future[Thing] = {
 
-    import edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j.Neo4jThingHelper._
-
-    val session = getSession()
-    val neo4JThing: Neo4jThing = t
-
-    val thingNeo4jF = Future {
-      session.save[Neo4jThing](neo4JThing)
-      t
+    val thingDataF = thingMongoDbRepository.create(t.children + t) flatMap {
+      case Right(thing) => Future.successful(thing)
+      case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
     }
 
-    val metadataMongoF = t.metadata match {
-      case Some(metadata) => metadataMongoRepository.create(metadata.copy(thingId = t._id)).flatMap {
-        case Left(wr) => Future.failed(new PartialUpdateException("Thing partially created, metadata not set"))
-        case Right(m) => Future.successful(Some(metadata))
-      }
-      case _ => Future.successful(None)
-    }
+    val thingNodeF = thingNeo4jRepository.create(t) recover
+      { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
 
-    val actionMongoF = actionMongoRepository.create(t.actions).flatMap {
-      case Left(wr) => Future.failed(new PartialUpdateException("Thing partially created, actions not set"))
-      case Right(actions) => Future.successful(actions)
-    }
-
-    t.children.map(saveMetadataAndActionsForThing)
-
-    for {
-      thingNeo4j <- thingNeo4jF
-      metadata <- metadataMongoF
-      actions <- actionMongoF
-    } yield {
-      val thing = Neo4jThingHelper.neo4jThingAsThingView(thingNeo4j)
-      thing.copy(metadata = metadata, actions = actions)
-    }
+    thingNodeF zip thingDataF map { _ => t }
 
   }
 
@@ -153,15 +69,13 @@ object Main {
 
   def createThing(identifier: Int): Thing = {
 
-    def hName(id: Int) = s"Thing_$id"
-
     val id = UUID.randomUUID()
 
-    val actions = Set(Action("getConsume", UUID.randomUUID(), "a", id))
+    val actions = Set(Action("getConsume", UUID.randomUUID(), "a"))
 
-    val metadata = Json.parse("""{"metadata":{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}}""")
+    val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
 
-    val t = new Thing(id, hName(identifier), Some(Metadata(metadata.as[JsObject], id)), actions)
+    val t = new Thing(id, Some(Metadata(metadata.as[JsObject])), actions)
 
     t
 
