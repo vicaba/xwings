@@ -82,7 +82,7 @@ object Main {
     implicit val ec = scala.concurrent.ExecutionContext.global
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
-
+/*
     val t = createThing(1)
     val t2 = createThing(2)
     val t3 = createThing(3)
@@ -95,13 +95,15 @@ object Main {
     val t3a = createThing(6)
     val tWithChildrena = ta.copy(children = Set(t2a, t3a))
 
-    repo.createThing(tWithChildrena)
+    repo.createThing(tWithChildrena)*/
+
+
 
     repo.getThings().map { l =>
       println(l)
     }
 
-    repo.getThing(UUID.fromString("a1384531-7fcc-4a8e-a1b2-52a5e03dfdc6")).map { t =>
+    repo.getThing(UUID.fromString("b2b01c06-af66-4ec4-a3ae-b299d896278d")).map { t =>
       println(t)
     }
 

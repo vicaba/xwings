@@ -20,7 +20,7 @@ object DependencyInjector {
     val thingNeo4jConfig = Neo4jConf.Config(
       Neo4jConf.Credentials(conf.getString("neo4j.user"), conf.getString("neo4j.password")),
       URI.create(s"http://${conf.getString("neo4j.server")}"),
-      List("edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j")
+      List("edu.url.lasalle.wotgraph.infrastructure.repository.thing")
     )
     val thingNeo4jRepository = ThingNeo4jRepository(thingNeo4jConfig)
 
