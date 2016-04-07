@@ -1,13 +1,11 @@
 package edu.url.lasalle.wotgraph.infrastructure.repository.mongodb
 
-import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
-import reactivemongo.bson.{BSON, BSONDocument}
 
 import scala.concurrent.{ExecutionContext, Future}
 

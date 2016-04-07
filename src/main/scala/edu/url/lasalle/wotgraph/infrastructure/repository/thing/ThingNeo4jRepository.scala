@@ -1,4 +1,4 @@
-package edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j
+package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
@@ -9,6 +9,9 @@ import org.neo4j.ogm.cypher.Filter
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+  * Created by vicaba on 07/04/16.
+  */
 case class ThingNeo4jRepository(
                                  override val neo4jConf: Config
                                )(implicit ec: ExecutionContext)

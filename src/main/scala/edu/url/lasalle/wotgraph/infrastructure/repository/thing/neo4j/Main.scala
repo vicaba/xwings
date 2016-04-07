@@ -12,6 +12,7 @@ import play.api.libs.ws.ning.NingWSClient
 import play.api.libs.ws.{WSAuthScheme, WSClient, WSRequest}
 import scaldi.Injectable._
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
+import edu.url.lasalle.wotgraph.infrastructure.repository.thing.Neo4jThing
 
 import scala.collection.mutable._
 

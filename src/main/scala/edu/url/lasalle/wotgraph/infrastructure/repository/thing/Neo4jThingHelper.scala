@@ -1,4 +1,4 @@
-package edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j
+package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 

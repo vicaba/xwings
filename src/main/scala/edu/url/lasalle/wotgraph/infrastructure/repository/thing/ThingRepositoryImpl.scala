@@ -5,12 +5,9 @@ import java.util.UUID
 import edu.url.lasalle.wotgraph.application.exceptions.SaveException
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
+import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
-import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
-import edu.url.lasalle.wotgraph.infrastructure.repository.thing.mongodb.ThingMongoDbRepository
-import edu.url.lasalle.wotgraph.infrastructure.repository.thing.neo4j.ThingNeo4jRepository
-
 
 import scala.concurrent.{ExecutionContext, Future}
 
