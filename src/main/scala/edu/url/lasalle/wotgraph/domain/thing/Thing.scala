@@ -7,7 +7,7 @@ case class Thing(
                   metadata: Option[Metadata] = None,
                   actions: Set[Action] = Set.empty,
                   children: Set[Thing] = Set.empty,
-                  id: Long = 0) {
+                  id: Long = -1) {
 
   override def equals(arg0: Any): Boolean = {
     arg0 match {

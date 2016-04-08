@@ -31,12 +31,27 @@ public class Neo4jThing {
         this.children = children;
     }
 
+    public Neo4jThing(String _id, Set<Neo4jThing> children, Long neo4jId) {
+        this._id = _id;
+        this.children = children;
+        this.setNeo4jId(neo4jId);
+    }
+
 
     @Relationship(type = Neo4jThing.CHILD_RELATION)
     public Set<Neo4jThing> children = new HashSet<>();
 
     public void child(Neo4jThing neo4jThing) {
         children.add(neo4jThing);
+    }
+
+    public Neo4jThing setNeo4jId(Long id) {
+        if (id == -1) {
+            this.id = null;
+        } else {
+            this.id = id;
+        }
+        return this;
     }
 
     public Long getNeo4jId() {

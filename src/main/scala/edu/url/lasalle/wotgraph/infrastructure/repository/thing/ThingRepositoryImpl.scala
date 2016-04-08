@@ -9,7 +9,7 @@ import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
                                 thingNeo4jRepository: ThingNeo4jRepository,
@@ -49,21 +49,21 @@ case class ThingRepositoryImpl(
   override def createThing(t: Thing): Future[Thing] = {
 
     def createThingNode(thing: Thing): Future[Thing] = {
-      val thingDataF = thingMongoDbRepository.create(t) flatMap {
+      val thingDataF = thingMongoDbRepository.create(thing) flatMap {
         case Right(thing) => Future.successful(thing)
         case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
       }
 
-      val thingNodeF = thingNeo4jRepository.create(t) recover { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
+      val thingNodeF = thingNeo4jRepository.create(thing) recover { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
 
-      thingNodeF zip thingDataF map { _ => t }
+      thingNodeF zip thingDataF map { _ => thing }
     }
 
     val unidentifiedChildrenInNeo4j = t.children
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
-      t.copy(children = identifiedChildren.toSet)
-      createThingNode(t)
+      val thingWithIdentifiedChildren = t.copy(children = identifiedChildren.toSet)
+      createThingNode(thingWithIdentifiedChildren)
     }
 
   }
@@ -88,6 +88,7 @@ object Main {
 
   def main(args: Array[String]) {
     implicit val ec = scala.concurrent.ExecutionContext.global
+    import scala.concurrent.duration._
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
     val t = createThing(1)
@@ -95,18 +96,25 @@ object Main {
     val t3 = createThing(3)
     val tWithChildren = t.copy(children = Set(t2, t3))
 
-    repo.createThing(t2)
-    repo.createThing(t3)
-    repo.createThing(tWithChildren)
+    val f1 = repo.createThing(t2)
+    Await.result(f1, 3.seconds)
+    val f2 = repo.createThing(t3)
+    Await.result(f2, 3.seconds)
+    val f3 = repo.createThing(tWithChildren)
+    Await.result(f3, 3.seconds)
+
 
     val ta = createThing(4)
     val t2a = createThing(5)
     val t3a = createThing(6)
     val tWithChildrena = ta.copy(children = Set(t2a, t3a))
 
+    /*
     repo.createThing(t2a)
     repo.createThing(t3a)
     repo.createThing(tWithChildrena)
+
+    */
 
     repo.getThings().map { l =>
       println(l)
