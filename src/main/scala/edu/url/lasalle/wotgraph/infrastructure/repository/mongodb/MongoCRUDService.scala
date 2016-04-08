@@ -8,15 +8,12 @@ import play.api.libs.json._
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.api.commands.bson.BSONCountCommand.{ Count, CountResult }
-import reactivemongo.api.{BSONSerializationPack, ReadPreference}
-import reactivemongo.api.commands.{Command, MultiBulkWriteResult, WriteResult}
-import reactivemongo.core.commands.RawCommand
-import reactivemongo.bson.BSONDocument
-// BSON implementation of the count command
-import reactivemongo.api.commands.bson
+import reactivemongo.api.ReadPreference
+import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
 
-// BSON serialization-deserialization for the count arguments and result
-import reactivemongo.api.commands.bson.BSONCountCommandImplicits._
+import reactivemongo.api.commands.bson.BSONCountCommandImplicits.CountWriter
+import reactivemongo.api.commands.bson.BSONCountCommandImplicits.CountResultReader
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -89,12 +86,4 @@ abstract class MongoCRUDService[E, ID](implicit tFormat: OFormat[E], idFormat: F
     collection.remove(selector)
   }
 
-  def countExistence(thingsIds: Seq[UUID]): Future[Int] = {
-
-    val findCriteria = Json.obj(ThingSerializer.IdKey -> Json.obj("$in" -> thingsIds))
-    val command = Count(findCriteria)
-
-    collection.runCommand(command) map (_.count)
-
-  }
 }
