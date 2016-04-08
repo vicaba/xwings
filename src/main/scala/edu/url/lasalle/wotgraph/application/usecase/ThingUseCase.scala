@@ -4,12 +4,12 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions._
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
-import edu.url.lasalle.wotgraph.domain.thing.{Metadata, Thing}
+import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-case class CreateThing(metadata: Metadata, children: Set[UUID])
+case class CreateThing(metadata: Metadata, actions: Set[Action] = Set.empty, children: Set[UUID] = Set.empty)
 
 case class GetThings(pageNumber: Int, itemPerPage: Int)
 
@@ -21,13 +21,14 @@ case class ThingUseCase(repo: ThingRepository) {
 
     val children = c.children.map(Thing(_))
 
-    repo.createThing(Thing(metadata = metadata, children = children))
+    val actions = c.actions
+
+    repo.createThing(Thing(metadata = metadata, actions = actions, children = children))
   }
 
   def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] = {
     repo.getThings(g.itemPerPage * g.pageNumber, g.itemPerPage)
   }
-
 
   def getThing(id: String)(implicit ec: ExecutionContext): Future[Option[Thing]] = {
     Try(UUID.fromString(id)) match {

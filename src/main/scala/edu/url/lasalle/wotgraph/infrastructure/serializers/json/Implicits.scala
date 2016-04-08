@@ -10,7 +10,4 @@ object Implicits {
 
   implicit val metadataSerializer = MetadataSerializer.metadataFormat
 
-  implicit val createThingSerializer = CreateThingSerializer.createThingReads
-
-  implicit val getThingsSerializer = GetThingsSerializer.getThingsReads
 }
