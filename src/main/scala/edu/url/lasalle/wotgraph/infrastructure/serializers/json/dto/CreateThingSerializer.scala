@@ -13,7 +13,7 @@ import play.api.libs.functional.syntax._
 object CreateThingSerializer {
   val createThingReads: Reads[CreateThing] = (
     (__ \ ThingSerializer.MetadataKey).read[JsObject].map(Metadata(_)) and
-      (__ \ ThingSerializer.ChildrenKey).readNullable[Set[Action]].map(_.getOrElse(Set.empty)) and
+      (__ \ ThingSerializer.ActionsKey).readNullable[Set[Action]].map(_.getOrElse(Set.empty)) and
       (__ \ ThingSerializer.ChildrenKey).readNullable[Set[UUID]].map(_.getOrElse(Set.empty))
     ) (CreateThing.apply _)
 }

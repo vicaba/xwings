@@ -91,6 +91,8 @@ object Main {
     import scala.concurrent.duration._
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
+
+
     val t = createThing(1)
     val t2 = createThing(2)
     val t3 = createThing(3)
@@ -103,17 +105,16 @@ object Main {
     val f3 = repo.createThing(tWithChildren)
     Await.result(f3, 3.seconds)
 
-
+    /*
     val ta = createThing(4)
     val t2a = createThing(5)
     val t3a = createThing(6)
     val tWithChildrena = ta.copy(children = Set(t2a, t3a))
 
-    /*
+
     repo.createThing(t2a)
     repo.createThing(t3a)
     repo.createThing(tWithChildrena)
-
     */
 
     repo.getThings().map { l =>
