@@ -10,28 +10,23 @@ import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by vicaba on 07/04/16.
-  */
 case class ThingNeo4jRepository(
                                  override val neo4jConf: Config
                                )(implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
+  val DefaultQueryDepth = 0
+
   def findById(id: UUID): Future[Option[Thing]] = {
 
-    val session = getSession()
-
     Future {
-      collectionToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString)))
+      collectionToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString), DefaultQueryDepth))
         .headOption.map(Neo4jThingHelper.neo4jThingAsThingView)
     }
 
   }
 
   def create(t: Thing): Future[Thing] = {
-
-    val session = getSession()
 
     Future {
       session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(t))
@@ -43,8 +38,6 @@ case class ThingNeo4jRepository(
 
     def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
 
-    val session = getSession()
-
     val filterList = o.map { t =>
       val filter = idFilterProducer(t._id)
       filter.setBooleanOperator(BooleanOperator.OR)
@@ -55,11 +48,15 @@ case class ThingNeo4jRepository(
 
     filters.add(filterList:_*)
 
-    val depth = 0
-
     Future {
 
-      collectionToList(session.loadAll(classOf[Neo4jThing], filters, depth)) map Neo4jThingHelper.neo4jThingAsThingView
+
+      val coll = collectionToList(session.loadAll(classOf[Neo4jThing], filters, DefaultQueryDepth)) map Neo4jThingHelper.neo4jThingAsThingView
+
+      println("hola")
+
+      coll
+
 
     }
 

@@ -9,7 +9,7 @@ trait Neo4jOGMHelper {
 
   val neo4jConf: Neo4jConf.Config
 
-  def getSession(): org.neo4j.ogm.session.Session = {
+  lazy val session: org.neo4j.ogm.session.Session = {
     val sessionFactory = new SessionFactory(neo4jConf.sessionConfig, neo4jConf.packages:_*)
     sessionFactory.openSession()
   }
