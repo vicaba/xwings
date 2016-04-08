@@ -1,11 +1,22 @@
 package edu.url.lasalle.wotgraph.infrastructure.repository.mongodb
 
+import java.util.UUID
+
+import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
 import play.modules.reactivemongo.json._
 import play.modules.reactivemongo.json.collection.JSONCollection
-import reactivemongo.api.ReadPreference
-import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
+import reactivemongo.api.commands.bson.BSONCountCommand.{ Count, CountResult }
+import reactivemongo.api.{BSONSerializationPack, ReadPreference}
+import reactivemongo.api.commands.{Command, MultiBulkWriteResult, WriteResult}
+import reactivemongo.core.commands.RawCommand
+import reactivemongo.bson.BSONDocument
+// BSON implementation of the count command
+import reactivemongo.api.commands.bson
+
+// BSON serialization-deserialization for the count arguments and result
+import reactivemongo.api.commands.bson.BSONCountCommandImplicits._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -76,5 +87,14 @@ abstract class MongoCRUDService[E, ID](implicit tFormat: OFormat[E], idFormat: F
 
   def delete(selector: JsObject): Future[WriteResult] = {
     collection.remove(selector)
+  }
+
+  def countExistence(thingsIds: Seq[UUID]): Future[Int] = {
+
+    val findCriteria = Json.obj(ThingSerializer.IdKey -> Json.obj("$in" -> thingsIds))
+    val command = Count(findCriteria)
+
+    collection.runCommand(command) map (_.count)
+
   }
 }

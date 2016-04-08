@@ -48,15 +48,23 @@ case class ThingRepositoryImpl(
 
   override def createThing(t: Thing): Future[Thing] = {
 
-    val thingDataF = thingMongoDbRepository.create(t.children + t) flatMap {
-      case Right(thing) => Future.successful(thing)
-      case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
+    def createThingNode(thing: Thing): Future[Thing] = {
+      val thingDataF = thingMongoDbRepository.create(t) flatMap {
+        case Right(thing) => Future.successful(thing)
+        case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
+      }
+
+      val thingNodeF = thingNeo4jRepository.create(t) recover { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
+
+      thingNodeF zip thingDataF map { _ => t }
     }
 
-    val thingNodeF = thingNeo4jRepository.create(t) recover
-      { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
+    val unidentifiedChildrenInNeo4j = t.children
 
-    thingNodeF zip thingDataF map { _ => t }
+    thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+      t.copy(children = identifiedChildren.toSet)
+      createThingNode(t)
+    }
 
   }
 
@@ -82,20 +90,20 @@ object Main {
     implicit val ec = scala.concurrent.ExecutionContext.global
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
-/*
-    val t = createThing(1)
-    val t2 = createThing(2)
-    val t3 = createThing(3)
-    val tWithChildren = t.copy(children = Set(t2, t3))
+    /*
+        val t = createThing(1)
+        val t2 = createThing(2)
+        val t3 = createThing(3)
+        val tWithChildren = t.copy(children = Set(t2, t3))
 
-    repo.createThing(tWithChildren)
+        repo.createThing(tWithChildren)
 
-    val ta = createThing(4)
-    val t2a = createThing(5)
-    val t3a = createThing(6)
-    val tWithChildrena = ta.copy(children = Set(t2a, t3a))
+        val ta = createThing(4)
+        val t2a = createThing(5)
+        val t3a = createThing(6)
+        val tWithChildrena = ta.copy(children = Set(t2a, t3a))
 
-    repo.createThing(tWithChildrena)*/
+        repo.createThing(tWithChildrena)*/
 
 
 

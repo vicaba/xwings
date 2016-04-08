@@ -5,7 +5,8 @@ import java.util.UUID
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
-import org.neo4j.ogm.cypher.Filter
+import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
+import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +23,7 @@ case class ThingNeo4jRepository(
     val session = getSession()
 
     Future {
-      collectionToList(session.loadAll(classOf[Neo4jThing], new Filter("_id", id.toString)))
+      collectionToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString)))
         .headOption.map(Neo4jThingHelper.neo4jThingAsThingView)
     }
 
@@ -36,5 +37,31 @@ case class ThingNeo4jRepository(
       session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(t))
       t
     }
+  }
+
+  def getThings(o: Iterable[Thing]): Future[Iterable[Thing]] = {
+
+    def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
+
+    val session = getSession()
+
+    val filterList = o.map { t =>
+      val filter = idFilterProducer(t._id)
+      filter.setBooleanOperator(BooleanOperator.OR)
+      filter
+    } toList
+
+    val filters = new Filters()
+
+    filters.add(filterList:_*)
+
+    val depth = 0
+
+    Future {
+
+      collectionToList(session.loadAll(classOf[Neo4jThing], filters, depth)) map Neo4jThingHelper.neo4jThingAsThingView
+
+    }
+
   }
 }
