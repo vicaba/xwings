@@ -7,6 +7,7 @@ import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.{MongoDbConfig, ThingMongoEnvironment}
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 import edu.url.lasalle.wotgraph.infrastructure.repository.thing.{ThingMongoDbRepository, ThingNeo4jRepository, ThingRepositoryImpl}
+import org.neo4j.ogm.config.Configuration
 import scaldi.Module
 
 object DependencyInjector {
@@ -17,18 +18,19 @@ object DependencyInjector {
 
     implicit val ec = scala.concurrent.ExecutionContext.global
 
-    val thingNeo4jConfig = Neo4jConf.Config(
-      Neo4jConf.Credentials(conf.getString("neo4j.user"), conf.getString("neo4j.password")),
-      URI.create(s"http://${conf.getString("neo4j.server")}"),
-      List("edu.url.lasalle.wotgraph.infrastructure.repository.thing")
-    )
+    val thingNeo4jConfig = {
+      val configuration = new Configuration()
+      configuration.set("driver", conf.getString("neo4j.ogm.driver"))
+      configuration.set("URI", conf.getString("neo4j.ogm.uri"))
+      Neo4jConf.Config(configuration, List("edu.url.lasalle.wotgraph.infrastructure.repository.thing"))
+    }
     val thingNeo4jRepository = ThingNeo4jRepository(thingNeo4jConfig)
 
     val thingMongoEnvironment = ThingMongoEnvironment(conf)
     val thingMongoDbRepository = ThingMongoDbRepository(thingMongoEnvironment.db)
 
-    bind [ThingRepository] identifiedBy 'ThingRepository to ThingRepositoryImpl(thingNeo4jRepository, thingMongoDbRepository)
-    bind [ThingUseCase] identifiedBy 'ThingUseCase to ThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[ThingRepository] identifiedBy 'ThingRepository to ThingRepositoryImpl(thingNeo4jRepository, thingMongoDbRepository)
+    bind[ThingUseCase] identifiedBy 'ThingUseCase to ThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
   }
 
 }
