@@ -67,7 +67,7 @@ case class ThingNeo4jRepository(
 
   def deleteThing(id: UUID): Future[UUID] = {
 
-    val query = s"""MATCH (n:Thing { _id: "${id.toString}"} DETACH DELETE n)"""
+    val query = s"""MATCH (n:Thing { _id: "${id.toString}"}) DETACH DELETE (n)"""
 
     val emptyMap = new util.HashMap[String, Object]
 

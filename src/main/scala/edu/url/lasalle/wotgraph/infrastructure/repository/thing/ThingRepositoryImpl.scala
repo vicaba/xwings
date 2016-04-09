@@ -104,7 +104,7 @@ object Main {
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
-
+/*
     val t = createThing(1)
     val t2 = createThing(2)
     val t3 = createThing(3)
@@ -117,7 +117,7 @@ object Main {
     val f3 = repo.createThing(tWithChildren)
     Await.result(f3, 3.seconds)
 
-    /*
+
     val ta = createThing(4)
     val t2a = createThing(5)
     val t3a = createThing(6)
@@ -133,9 +133,9 @@ object Main {
       println(l)
     }
 
-/*    repo.deleteThing(UUID.fromString("b2b01c06-af66-4ec4-a3ae-b299d896278d")).map { t =>
+    repo.deleteThing(UUID.fromString("d3c66b40-c840-487a-ac62-3d4f0bf65713")).map { t =>
       println(t)
-    }*/
+    }
 
   }
 }
