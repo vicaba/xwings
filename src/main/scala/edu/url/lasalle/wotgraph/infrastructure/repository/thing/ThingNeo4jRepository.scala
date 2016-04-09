@@ -23,7 +23,7 @@ case class ThingNeo4jRepository(
   def findById(id: UUID): Future[Option[Thing]] = {
 
     Future {
-      collectionToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString), DefaultQueryDepth))
+      iterableToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString), DefaultQueryDepth))
         .headOption.map(Neo4jThingHelper.neo4jThingAsThingView)
     }
 
@@ -39,20 +39,28 @@ case class ThingNeo4jRepository(
 
   def getThings(o: Iterable[Thing]): Future[Iterable[Thing]] = {
 
-    def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
+    def getThingsForNonEmptyIterable(o: Iterable[Thing]): Future[Iterable[Thing]] = {
 
-    val filterList = o.map { t =>
-      val filter = idFilterProducer(t._id)
-      filter.setBooleanOperator(BooleanOperator.OR)
-      filter
-    } toList
+      def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
 
-    val filters = new Filters()
+      val firstQueryPart = """MATCH (n:Thing) WHERE"""
 
-    filters.add(filterList:_*)
+      val queryFilters = o.map(_._id.toString).mkString(s"""n._id = """", s"""" OR n._id = """", """"""")
 
-    Future {
-      collectionToList(session.loadAll(classOf[Neo4jThing], filters, DefaultQueryDepth)) map Neo4jThingHelper.neo4jThingAsThingView
+      val queryEnd = "RETURN n"
+
+      val query = s"$firstQueryPart $queryFilters $queryEnd"
+
+      val emptyMap = new util.HashMap[String, Object]
+
+      Future {
+        iterableToList(session.query(classOf[Neo4jThing], query, emptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
+      }
+    }
+
+    o match {
+      case _ if o.isEmpty => Future.successful(o)
+      case _ => getThingsForNonEmptyIterable(o)
     }
 
   }

@@ -62,6 +62,8 @@ case class ThingRepositoryImpl(
     val unidentifiedChildrenInNeo4j = t.children
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+      println("-----")
+      println(identifiedChildren)
       val thingWithIdentifiedChildren = t.copy(children = identifiedChildren.toSet)
       createThingNode(thingWithIdentifiedChildren)
     }
@@ -112,8 +114,8 @@ object Main {
     Await.result(f1, 3.seconds)
     val f2 = repo.createThing(t3)
     Await.result(f2, 3.seconds)
-    //val f3 = repo.createThing(tWithChildren)
-    //Await.result(f3, 3.seconds)
+    val f3 = repo.createThing(tWithChildren)
+    Await.result(f3, 3.seconds)
 
     /*
     val ta = createThing(4)
