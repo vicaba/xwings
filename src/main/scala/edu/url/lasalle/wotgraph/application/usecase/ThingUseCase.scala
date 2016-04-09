@@ -36,4 +36,12 @@ case class ThingUseCase(repo: ThingRepository) {
       case Success(uuid) => repo.getThing(uuid)
     }
   }
+
+  def deleteThing(id: String): Future[UUID] = {
+    Try(UUID.fromString(id)) match {
+      case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
+      case Success(uuid) => repo.deleteThing(uuid)
+    }
+  }
+
 }
