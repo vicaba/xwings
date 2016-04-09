@@ -16,6 +16,8 @@ trait ThingRepository {
     */
   def createThing(t: Thing): Future[Thing]
 
+  def deleteThing(t: UUID): Future[UUID]
+
   /**
     *
     * @param id

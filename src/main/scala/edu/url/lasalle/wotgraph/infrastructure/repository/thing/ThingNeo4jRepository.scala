@@ -2,11 +2,14 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
+import edu.url.lasalle.wotgraph.application.exceptions.SaveException
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
+
+import java.util
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -49,15 +52,24 @@ case class ThingNeo4jRepository(
     filters.add(filterList:_*)
 
     Future {
+      collectionToList(session.loadAll(classOf[Neo4jThing], filters, DefaultQueryDepth)) map Neo4jThingHelper.neo4jThingAsThingView
+    }
 
+  }
 
-      val coll = collectionToList(session.loadAll(classOf[Neo4jThing], filters, DefaultQueryDepth)) map Neo4jThingHelper.neo4jThingAsThingView
+  def deleteThing(id: UUID): Future[UUID] = {
 
-      println("hola")
+    val query = s"""MATCH (n:Thing { _id: "${id.toString}"} DETACH DELETE n)"""
 
-      coll
+    val emptyMap = new util.HashMap[String, Object]
 
-
+    Future {
+      session.query(query, emptyMap)
+    } flatMap { r =>
+      if (r.queryStatistics.getNodesDeleted == 1)
+        Future.successful(id)
+      else
+        Future.failed(new SaveException(s"Can't delete thing with id: ${id.toString}"))
     }
 
   }

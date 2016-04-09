@@ -68,6 +68,16 @@ case class ThingRepositoryImpl(
 
   }
 
+  override def deleteThing(t: UUID): Future[UUID] = {
+
+    val thingNodeF = thingNeo4jRepository.deleteThing(t)
+
+    val thingDataF = thingMongoDbRepository.delete(t)
+
+    thingNodeF zip thingDataF map { _ => t }
+
+  }
+
 }
 
 object Main {
@@ -102,8 +112,8 @@ object Main {
     Await.result(f1, 3.seconds)
     val f2 = repo.createThing(t3)
     Await.result(f2, 3.seconds)
-    val f3 = repo.createThing(tWithChildren)
-    Await.result(f3, 3.seconds)
+    //val f3 = repo.createThing(tWithChildren)
+    //Await.result(f3, 3.seconds)
 
     /*
     val ta = createThing(4)
@@ -121,9 +131,9 @@ object Main {
       println(l)
     }
 
-    repo.getThing(UUID.fromString("b2b01c06-af66-4ec4-a3ae-b299d896278d")).map { t =>
+/*    repo.deleteThing(UUID.fromString("b2b01c06-af66-4ec4-a3ae-b299d896278d")).map { t =>
       println(t)
-    }
+    }*/
 
   }
 }
