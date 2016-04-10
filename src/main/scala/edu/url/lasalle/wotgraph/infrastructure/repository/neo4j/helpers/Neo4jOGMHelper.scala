@@ -16,7 +16,7 @@ trait Neo4jOGMHelper {
     sessionFactory.openSession()
   }
 
-  def iterableToList[T](iter: java.lang.Iterable[T]): List[T] = {
+  def iterableToList[T](iterable: java.lang.Iterable[T]): List[T] = {
 
     @tailrec def iteratorToList[T](iterator: java.util.Iterator[T], list: List[T]): List[T] = {
       if (iterator.hasNext) {
@@ -25,6 +25,6 @@ trait Neo4jOGMHelper {
       } else list
     }
 
-    iteratorToList(iter.iterator(), List.empty)
+    iteratorToList(iterable.iterator(), List.empty)
   }
 }

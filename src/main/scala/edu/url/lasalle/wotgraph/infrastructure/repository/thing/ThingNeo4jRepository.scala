@@ -2,13 +2,12 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.SaveException
+import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException}
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
-
 import java.util
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,21 +19,21 @@ case class ThingNeo4jRepository(
 
   val DefaultQueryDepth = 0
 
-  def findById(id: UUID): Future[Option[Thing]] = {
+  def findThingById(id: UUID): Future[Option[Thing]] = {
 
     Future {
       iterableToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString), DefaultQueryDepth))
         .headOption.map(Neo4jThingHelper.neo4jThingAsThingView)
-    }
+    } recover { case e: Throwable => throw new ReadException(s"Can't get Thing with id: $id") }
 
   }
 
-  def create(t: Thing): Future[Thing] = {
+  def createThing(t: Thing): Future[Thing] = {
 
     Future {
       session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(t))
       t
-    }
+    } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${t._id}") }
   }
 
   def getThings(o: Iterable[Thing]): Future[Iterable[Thing]] = {
@@ -55,7 +54,7 @@ case class ThingNeo4jRepository(
 
       Future {
         iterableToList(session.query(classOf[Neo4jThing], query, emptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
-      }
+      } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
 
     o match {
@@ -77,7 +76,7 @@ case class ThingNeo4jRepository(
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
       else
-        Future.failed(new SaveException(s"Can't delete thing with id: ${id.toString}"))
+        Future.failed(new DeleteException(s"Can't delete thing with id: ${id.toString}"))
     }
 
   }

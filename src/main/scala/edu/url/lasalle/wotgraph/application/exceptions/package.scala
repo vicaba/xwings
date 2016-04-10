@@ -6,12 +6,24 @@ package object exceptions {
 
   class ServiceUnavailableException(msg: String = "Service Unavailable") extends RuntimeException(msg)
 
-  class PartialUpdateException(msg: String, rollback: () => Unit = () => {}) extends RuntimeException(msg)
+  trait DatabaseException extends RuntimeException {
+    val msg: String = ""
+    val database: String = ""
+  }
 
-  trait WriteOperationException
+  trait ReadOperationException extends DatabaseException
 
-  class SaveException(msg: String) extends RuntimeException(msg) with WriteOperationException
+  trait WriteOperationException extends DatabaseException
 
-  class UpdateException(msg: String) extends RuntimeException(msg) with WriteOperationException
+  class PartialUpdateException(override val msg: String, rollback: () => Unit = () => {})
+    extends RuntimeException(msg) with WriteOperationException
+
+  class SaveException(override val msg: String) extends WriteOperationException
+
+  class UpdateException(override val msg: String) extends WriteOperationException
+
+  class DeleteException(override val msg: String) extends WriteOperationException
+
+  class ReadException(override val msg: String) extends ReadOperationException
 
 }

@@ -20,9 +20,9 @@ case class ThingRepositoryImpl(
 
   override def getThing(id: UUID): Future[Option[Thing]] = {
 
-    val thingNodeF = thingNeo4jRepository.findById(id)
+    val thingNodeF = thingNeo4jRepository.findThingById(id)
 
-    val thingDataF = thingMongoDbRepository.findById(id)
+    val thingDataF = thingMongoDbRepository.findThingById(id)
 
     thingNodeF.flatMap {
 
@@ -44,19 +44,18 @@ case class ThingRepositoryImpl(
   }
 
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
-    thingMongoDbRepository.findByCriteria(Json.obj()).map(_.toList)
+    thingMongoDbRepository.getThings.map(_.toList)
 
   override def createThing(t: Thing): Future[Thing] = {
 
     def createThingNode(thing: Thing): Future[Thing] = {
-      val thingDataF = thingMongoDbRepository.create(thing) flatMap {
-        case Right(thing) => Future.successful(thing)
-        case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
-      }
 
-      val thingNodeF = thingNeo4jRepository.create(thing) recover { case _ => throw new SaveException(s"Failed to create thing with id ${t._id}") }
+      val thingDataF = thingMongoDbRepository.createThing(thing)
+
+      val thingNodeF = thingNeo4jRepository.createThing(thing)
 
       thingNodeF zip thingDataF map { _ => thing }
+
     }
 
     val unidentifiedChildrenInNeo4j = t.children
@@ -74,7 +73,7 @@ case class ThingRepositoryImpl(
 
     val thingNodeF = thingNeo4jRepository.deleteThing(t)
 
-    val thingDataF = thingMongoDbRepository.delete(t)
+    val thingDataF = thingMongoDbRepository.deleteThing(t)
 
     thingNodeF zip thingDataF map { _ => t }
 
@@ -104,7 +103,7 @@ object Main {
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
-/*
+
     val t = createThing(1)
     val t2 = createThing(2)
     val t3 = createThing(3)
@@ -117,7 +116,7 @@ object Main {
     val f3 = repo.createThing(tWithChildren)
     Await.result(f3, 3.seconds)
 
-
+/*
     val ta = createThing(4)
     val t2a = createThing(5)
     val t3a = createThing(6)
