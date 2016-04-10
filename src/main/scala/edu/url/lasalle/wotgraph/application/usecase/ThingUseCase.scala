@@ -33,7 +33,7 @@ case class ThingUseCase(repo: ThingRepository) {
   def getThing(id: String)(implicit ec: ExecutionContext): Future[Option[Thing]] = {
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
-      case Success(uuid) => repo.getThing(uuid)
+      case Success(uuid) => repo.findThingById(uuid)
     }
   }
 

@@ -33,14 +33,14 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
   def getThings = mongoService.findByCriteria(Json.obj()) recover {
     case t: Throwable => throw new ReadException("Can't get Things") }
 
-  def createThing(t: Thing) = mongoService.create(t) flatMap {
-    case Right(thing) => Future.successful(thing)
-    case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${t._id}"))
+  def createThing(thing: Thing) = mongoService.create(thing) flatMap {
+    case Right(t) => Future.successful(t)
+    case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${thing._id}"))
   }
 
-  def deleteThing(t: UUID) = mongoService.delete(t) flatMap {
+  def deleteThing(id: UUID) = mongoService.delete(id) flatMap {
     case Right(thing) => Future.successful(thing)
-    case Left(w) => Future.failed(new DeleteException(s"Failed to delete thing with id $t"))
+    case Left(w) => Future.failed(new DeleteException(s"Failed to delete thing with id $id"))
   }
 
 }

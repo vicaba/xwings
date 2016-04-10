@@ -28,23 +28,23 @@ case class ThingNeo4jRepository(
 
   }
 
-  def createThing(t: Thing): Future[Thing] = {
+  def createThing(thing: Thing): Future[Thing] = {
 
     Future {
-      session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(t))
-      t
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${t._id}") }
+      session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(thing))
+      thing
+    } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}") }
   }
 
-  def getThings(o: Iterable[Thing]): Future[Iterable[Thing]] = {
+  def getThings(things: Iterable[Thing]): Future[Iterable[Thing]] = {
 
-    def getThingsForNonEmptyIterable(o: Iterable[Thing]): Future[Iterable[Thing]] = {
+    def getThingsForNonEmptyIterable(ts: Iterable[Thing]): Future[Iterable[Thing]] = {
 
       def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
 
       val firstQueryPart = """MATCH (n:Thing) WHERE"""
 
-      val queryFilters = o.map(_._id.toString).mkString(s"""n._id = """", s"""" OR n._id = """", """"""")
+      val queryFilters = ts.map(_._id.toString).mkString(s"""n._id = """", s"""" OR n._id = """", """"""")
 
       val queryEnd = "RETURN n"
 
@@ -57,9 +57,9 @@ case class ThingNeo4jRepository(
       } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
 
-    o match {
-      case _ if o.isEmpty => Future.successful(o)
-      case _ => getThingsForNonEmptyIterable(o)
+    things match {
+      case _ if things.isEmpty => Future.successful(things)
+      case _ => getThingsForNonEmptyIterable(things)
     }
 
   }

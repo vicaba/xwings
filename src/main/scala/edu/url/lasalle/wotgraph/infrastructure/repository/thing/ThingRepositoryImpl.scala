@@ -18,7 +18,7 @@ case class ThingRepositoryImpl(
                               (implicit ec: ExecutionContext)
   extends ThingRepository {
 
-  override def getThing(id: UUID): Future[Option[Thing]] = {
+  override def findThingById(id: UUID): Future[Option[Thing]] = {
 
     val thingNodeF = thingNeo4jRepository.findThingById(id)
 
@@ -46,36 +46,36 @@ case class ThingRepositoryImpl(
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
     thingMongoDbRepository.getThings.map(_.toList)
 
-  override def createThing(t: Thing): Future[Thing] = {
+  override def createThing(thing: Thing): Future[Thing] = {
 
-    def createThingNode(thing: Thing): Future[Thing] = {
+    def createThingNode(t: Thing): Future[Thing] = {
 
-      val thingDataF = thingMongoDbRepository.createThing(thing)
+      val thingDataF = thingMongoDbRepository.createThing(t)
 
-      val thingNodeF = thingNeo4jRepository.createThing(thing)
+      val thingNodeF = thingNeo4jRepository.createThing(t)
 
-      thingNodeF zip thingDataF map { _ => thing }
+      thingNodeF zip thingDataF map { _ => t }
 
     }
 
-    val unidentifiedChildrenInNeo4j = t.children
+    val unidentifiedChildrenInNeo4j = thing.children
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
       println("-----")
       println(identifiedChildren)
-      val thingWithIdentifiedChildren = t.copy(children = identifiedChildren.toSet)
+      val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
       createThingNode(thingWithIdentifiedChildren)
     }
 
   }
 
-  override def deleteThing(t: UUID): Future[UUID] = {
+  override def deleteThing(id: UUID): Future[UUID] = {
 
-    val thingNodeF = thingNeo4jRepository.deleteThing(t)
+    val thingNodeF = thingNeo4jRepository.deleteThing(id)
 
-    val thingDataF = thingMongoDbRepository.deleteThing(t)
+    val thingDataF = thingMongoDbRepository.deleteThing(id)
 
-    thingNodeF zip thingDataF map { _ => t }
+    thingNodeF zip thingDataF map { _ => id }
 
   }
 

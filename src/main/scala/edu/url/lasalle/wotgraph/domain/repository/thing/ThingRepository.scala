@@ -11,19 +11,19 @@ trait ThingRepository {
 
   /**
     * Creates a Thing
-    * @param t the Thing
+    * @param thing the Thing
     * @return the new thing
     */
-  def createThing(t: Thing): Future[Thing]
+  def createThing(thing: Thing): Future[Thing]
 
-  def deleteThing(t: UUID): Future[UUID]
+  def deleteThing(id: UUID): Future[UUID]
 
   /**
     *
     * @param id
     * @return
     */
-  def getThing(id: UUID): Future[Option[Thing]]
+  def findThingById(id: UUID): Future[Option[Thing]]
 
   def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]]
 
