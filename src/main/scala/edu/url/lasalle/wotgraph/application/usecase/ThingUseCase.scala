@@ -11,11 +11,9 @@ import scala.util.{Failure, Success, Try}
 
 case class CreateThing(metadata: Metadata, actions: Set[Action] = Set.empty, children: Set[UUID] = Set.empty)
 
-case class GetThings(pageNumber: Int, itemPerPage: Int)
+object CreateThing {
 
-case class ThingUseCase(repo: ThingRepository) {
-
-  def createThing(c: CreateThing): Future[Thing] = {
+  def toThing(c: CreateThing): Thing = {
 
     val metadata = Some(c.metadata)
 
@@ -23,7 +21,27 @@ case class ThingUseCase(repo: ThingRepository) {
 
     val actions = c.actions
 
-    repo.createThing(Thing(metadata = metadata, actions = actions, children = children))
+    Thing(metadata = metadata, actions = actions, children = children)
+  }
+
+}
+
+case class GetThings(pageNumber: Int, itemPerPage: Int)
+
+case class ThingUseCase(repo: ThingRepository) {
+
+  def createThing(c: CreateThing): Future[Thing] = {
+
+    val thing = CreateThing.toThing(c)
+
+    repo.createThing(thing)
+  }
+
+  def updateThing(c: CreateThing): Future[Thing] = {
+
+    val thing = CreateThing.toThing(c)
+
+    repo.updateThing(thing)
   }
 
   def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] =

@@ -2,7 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException}
+import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException, UpdateException}
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoCRUDService
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
@@ -39,6 +39,11 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
   def createThing(thing: Thing) = mongoService.create(thing) flatMap {
     case Right(t) => Future.successful(t)
     case Left(w) => Future.failed(new SaveException(s"Failed to create thing with id ${thing._id}"))
+  }
+
+  def updateThing(thing: Thing) = mongoService.update(thing) flatMap {
+    case Right(t) => Future.successful(t)
+    case Left(w) => Future.failed(new UpdateException(s"Failed to update thing with id ${thing._id}"))
   }
 
   def deleteThing(id: UUID) = mongoService.delete(id) flatMap {

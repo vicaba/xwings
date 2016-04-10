@@ -3,7 +3,6 @@ package edu.url.lasalle.wotgraph.infrastructure.serializers.json
 import java.util.UUID
 
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata}
-import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, OWrites, _}
 
 object MetadataSerializer {

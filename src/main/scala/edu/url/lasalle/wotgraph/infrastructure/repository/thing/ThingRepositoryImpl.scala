@@ -64,12 +64,29 @@ case class ThingRepositoryImpl(
     val unidentifiedChildrenInNeo4j = thing.children
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
-      println("-----")
-      println(identifiedChildren)
       val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
       createThingNode(thingWithIdentifiedChildren)
     }
 
+  }
+
+  override def updateThing(thing: Thing): Future[Thing] = {
+    def updateThingNode(t: Thing): Future[Thing] = {
+
+      val thingDataF = thingMongoDbRepository.updateThing(t)
+
+      val thingNodeF = thingNeo4jRepository.createThing(t)
+
+      thingNodeF zip thingDataF map { _ => t }
+
+    }
+
+    val unidentifiedChildrenInNeo4j = thing.children
+
+    thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+      val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
+      updateThingNode(thingWithIdentifiedChildren)
+    }
   }
 
   override def deleteThing(id: UUID): Future[UUID] = {
@@ -81,6 +98,7 @@ case class ThingRepositoryImpl(
     thingNodeF zip thingDataF map { _ => id }
 
   }
+
 }
 
 object Main {
