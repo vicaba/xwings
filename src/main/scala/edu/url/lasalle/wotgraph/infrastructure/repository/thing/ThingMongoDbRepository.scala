@@ -6,6 +6,7 @@ import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadExc
 import edu.url.lasalle.wotgraph.domain.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoCRUDService
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.api.DB
@@ -32,6 +33,8 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
   def getThings = mongoService.findByCriteria(Json.obj()) recover {
     case t: Throwable => throw new ReadException("Can't get Things") }
+
+  def getThingsAsStream: Enumerator[Thing] = mongoService.findStreamByCriteria(Json.obj())
 
   def createThing(thing: Thing) = mongoService.create(thing) flatMap {
     case Right(t) => Future.successful(t)

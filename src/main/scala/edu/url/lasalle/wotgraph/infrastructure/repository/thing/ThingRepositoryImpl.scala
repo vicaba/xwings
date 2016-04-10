@@ -6,6 +6,7 @@ import edu.url.lasalle.wotgraph.application.exceptions.SaveException
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
+import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 
@@ -46,6 +47,8 @@ case class ThingRepositoryImpl(
   override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
     thingMongoDbRepository.getThings.map(_.toList)
 
+  override def getThingsAsStream: Enumerator[Thing] = thingMongoDbRepository.getThingsAsStream
+
   override def createThing(thing: Thing): Future[Thing] = {
 
     def createThingNode(t: Thing): Future[Thing] = {
@@ -78,7 +81,6 @@ case class ThingRepositoryImpl(
     thingNodeF zip thingDataF map { _ => id }
 
   }
-
 }
 
 object Main {
@@ -104,17 +106,21 @@ object Main {
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
 
-    val t = createThing(1)
-    val t2 = createThing(2)
-    val t3 = createThing(3)
-    val tWithChildren = t.copy(children = Set(t2, t3))
+    var i = 0
+    while (i < 10000) {
+      i = i + 1
+      val t = createThing(1)
+      val t2 = createThing(2)
+      val t3 = createThing(3)
+      val tWithChildren = t.copy(children = Set(t2, t3))
 
-    val f1 = repo.createThing(t2)
-    Await.result(f1, 3.seconds)
-    val f2 = repo.createThing(t3)
-    Await.result(f2, 3.seconds)
-    val f3 = repo.createThing(tWithChildren)
-    Await.result(f3, 3.seconds)
+      val f1 = repo.createThing(t2)
+      Await.result(f1, 3.seconds)
+      val f2 = repo.createThing(t3)
+      Await.result(f2, 3.seconds)
+      val f3 = repo.createThing(tWithChildren)
+      Await.result(f3, 3.seconds)
+    }
 
 /*
     val ta = createThing(4)

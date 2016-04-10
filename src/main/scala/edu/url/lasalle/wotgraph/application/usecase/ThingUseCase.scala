@@ -26,9 +26,10 @@ case class ThingUseCase(repo: ThingRepository) {
     repo.createThing(Thing(metadata = metadata, actions = actions, children = children))
   }
 
-  def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] = {
+  def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] =
     repo.getThings(g.itemPerPage * g.pageNumber, g.itemPerPage)
-  }
+
+  def getThingsAsStream = repo.getThingsAsStream
 
   def getThing(id: String)(implicit ec: ExecutionContext): Future[Option[Thing]] = {
     Try(UUID.fromString(id)) match {
