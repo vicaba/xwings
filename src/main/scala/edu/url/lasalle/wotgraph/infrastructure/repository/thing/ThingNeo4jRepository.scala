@@ -17,7 +17,7 @@ case class ThingNeo4jRepository(
                                )(implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
-  val DefaultQueryDepth = 0
+  val DefaultQueryDepth = 1
 
   def findThingById(id: UUID): Future[Option[Thing]] = {
 

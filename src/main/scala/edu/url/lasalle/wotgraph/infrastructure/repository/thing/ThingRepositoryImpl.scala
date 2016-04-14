@@ -81,12 +81,12 @@ case class ThingRepositoryImpl(
 
     }
 
-    val unidentifiedChildrenInNeo4j = thing.children
-
-    thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
-      val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
-      updateThingNode(thingWithIdentifiedChildren)
-    }
+    thingNeo4jRepository.findThingById(thing._id).flatMap {
+        case Some(t) =>
+          val thingToUpdate = thing.copy(id = t.id)
+          updateThingNode(thingToUpdate)
+        case None => Future.failed(new Exception())
+      }
   }
 
   override def deleteThing(id: UUID): Future[UUID] = {
@@ -122,8 +122,7 @@ object Main {
     import scala.concurrent.duration._
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
-
-
+    /*
     var i = 0
     while (i < 10000) {
       i = i + 1
@@ -140,7 +139,6 @@ object Main {
       Await.result(f3, 3.seconds)
     }
 
-/*
     val ta = createThing(4)
     val t2a = createThing(5)
     val t3a = createThing(6)
@@ -156,7 +154,7 @@ object Main {
       println(l)
     }
 
-    repo.deleteThing(UUID.fromString("d3c66b40-c840-487a-ac62-3d4f0bf65713")).map { t =>
+    repo.updateThing(Thing(UUID.fromString("dd6d020c-8360-45d9-960e-b49f5bbf56a2"))).map { t =>
       println(t)
     }
 
