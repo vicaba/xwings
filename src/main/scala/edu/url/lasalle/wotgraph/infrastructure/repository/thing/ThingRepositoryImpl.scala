@@ -32,7 +32,7 @@ case class ThingRepositoryImpl(
         thingDataF.map {
 
           case Some(thingData) =>
-            val thing = thingData.copy(_id = thingNode._id, children = thingData.children)
+            val thing = thingData.copy(_id = thingNode._id, children = thingNode.children)
             Some(thing)
 
           case None => None
@@ -70,7 +70,7 @@ case class ThingRepositoryImpl(
 
   }
 
-  override def updateThing(thing: Thing): Future[Thing] = {
+  override def updateThing(thing: Thing): Future[Option[Thing]] = {
     def updateThingNode(t: Thing): Future[Thing] = {
 
       val thingDataF = thingMongoDbRepository.updateThing(t)
@@ -90,11 +90,10 @@ case class ThingRepositoryImpl(
 
           childrenF.flatMap { identifiedChildren =>
             val thingToUpdate = thing.copy(id = t.id, children = identifiedChildren.toSet)
-            updateThingNode(thingToUpdate)
+            updateThingNode(thingToUpdate).map(Some(_))
           }
 
-
-        case None => Future.failed(new Exception())
+        case None => Future.successful(None)
 
       }
   }
@@ -141,33 +140,45 @@ object Main {
         val t = createThing(1)
         val t2 = createThing(2)
         val t3 = createThing(3)
-        val tWithChildren = t.copy(children = Set(t2, t3))
+        val t4 = createThing(4)
+        val tWithChildren = t.copy(children = Set(t2))
+        val t2WithChildren = t2.copy(children = Set(t3))
+        val t3WithChildren = t3.copy(children = Set(t4))
 
-        val f1 = repo.createThing(t2)
+        val f1 = repo.createThing(t4)
         Await.result(f1, 3.seconds)
-        val f2 = repo.createThing(t3)
+        val f2 = repo.createThing(t3WithChildren)
         Await.result(f2, 3.seconds)
-        val f3 = repo.createThing(tWithChildren)
+        val f3 = repo.createThing(t2WithChildren)
         Await.result(f3, 3.seconds)
+        val f4 = repo.createThing(tWithChildren)
+        Await.result(f4, 3.seconds)
       }
     }
 
     //createNodes()
 
+
     repo.getThings().map { l =>
       println(l)
     }
 
-    /*
+    repo.findThingById(UUID.fromString("b1b7023e-221a-4e32-9634-8c93ed4e8218")).map { l =>
+      println(l)
+    }
+
+/*
 
     repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"))).map { t =>
       println(t)
     }
-    */
+
 
     repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"), children = Set(Thing(UUID.fromString("69315f2b-d988-439e-a926-02082389de3c"))))).map { t =>
       println(t)
     }
+
+    */
 
   }
 }

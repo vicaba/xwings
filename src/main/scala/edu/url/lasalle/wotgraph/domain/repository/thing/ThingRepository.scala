@@ -17,7 +17,7 @@ trait ThingRepository {
     */
   def createThing(thing: Thing): Future[Thing]
 
-  def updateThing(thing: Thing): Future[Thing]
+  def updateThing(thing: Thing): Future[Option[Thing]]
 
   def deleteThing(id: UUID): Future[UUID]
 

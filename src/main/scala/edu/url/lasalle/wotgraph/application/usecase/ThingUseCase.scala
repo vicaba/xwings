@@ -37,11 +37,15 @@ case class ThingUseCase(repo: ThingRepository) {
     repo.createThing(thing)
   }
 
-  def updateThing(c: CreateThing): Future[Thing] = {
+  def updateThing(id: String, c: CreateThing): Future[Option[Thing]] = {
 
-    val thing = CreateThing.toThing(c)
+    Try(UUID.fromString(id)) match {
+      case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
+      case Success(uuid) =>
+        val thing = CreateThing.toThing(c).copy(_id = uuid)
+        repo.updateThing(thing)
+    }
 
-    repo.updateThing(thing)
   }
 
   def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] =
