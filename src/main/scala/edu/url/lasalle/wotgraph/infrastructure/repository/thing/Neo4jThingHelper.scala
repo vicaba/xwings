@@ -13,5 +13,4 @@ object Neo4jThingHelper {
 
   implicit def neo4jThingAsThingView(t: Neo4jThing): Thing =
     Thing(UUID.fromString(t._id), None, Set.empty, t.children.asScala.toSet.map(neo4jThingAsThingView), t.getNeo4jId)
-
 }

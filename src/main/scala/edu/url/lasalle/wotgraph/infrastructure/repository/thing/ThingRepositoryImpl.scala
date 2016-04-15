@@ -81,11 +81,21 @@ case class ThingRepositoryImpl(
 
     }
 
+    val unidentifiedChildrenInNeo4j = thing.children
+
+    val childrenF = thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j)
+
     thingNeo4jRepository.findThingById(thing._id).flatMap {
         case Some(t) =>
-          val thingToUpdate = thing.copy(id = t.id)
-          updateThingNode(thingToUpdate)
+
+          childrenF.flatMap { identifiedChildren =>
+            val thingToUpdate = thing.copy(id = t.id, children = identifiedChildren.toSet)
+            updateThingNode(thingToUpdate)
+          }
+
+
         case None => Future.failed(new Exception())
+
       }
   }
 
@@ -117,44 +127,45 @@ object Main {
 
   }
 
+
   def main(args: Array[String]) {
     implicit val ec = scala.concurrent.ExecutionContext.global
     import scala.concurrent.duration._
 
     val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
-    /*
-    var i = 0
-    while (i < 10000) {
-      i = i + 1
-      val t = createThing(1)
-      val t2 = createThing(2)
-      val t3 = createThing(3)
-      val tWithChildren = t.copy(children = Set(t2, t3))
 
-      val f1 = repo.createThing(t2)
-      Await.result(f1, 3.seconds)
-      val f2 = repo.createThing(t3)
-      Await.result(f2, 3.seconds)
-      val f3 = repo.createThing(tWithChildren)
-      Await.result(f3, 3.seconds)
+    def createNodes() = {
+      var i = 0
+      while (i < 1) {
+        i = i + 1
+        val t = createThing(1)
+        val t2 = createThing(2)
+        val t3 = createThing(3)
+        val tWithChildren = t.copy(children = Set(t2, t3))
+
+        val f1 = repo.createThing(t2)
+        Await.result(f1, 3.seconds)
+        val f2 = repo.createThing(t3)
+        Await.result(f2, 3.seconds)
+        val f3 = repo.createThing(tWithChildren)
+        Await.result(f3, 3.seconds)
+      }
     }
 
-    val ta = createThing(4)
-    val t2a = createThing(5)
-    val t3a = createThing(6)
-    val tWithChildrena = ta.copy(children = Set(t2a, t3a))
-
-
-    repo.createThing(t2a)
-    repo.createThing(t3a)
-    repo.createThing(tWithChildrena)
-    */
+    //createNodes()
 
     repo.getThings().map { l =>
       println(l)
     }
 
-    repo.updateThing(Thing(UUID.fromString("dd6d020c-8360-45d9-960e-b49f5bbf56a2"))).map { t =>
+    /*
+
+    repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"))).map { t =>
+      println(t)
+    }
+    */
+
+    repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"), children = Set(Thing(UUID.fromString("69315f2b-d988-439e-a926-02082389de3c"))))).map { t =>
       println(t)
     }
 
