@@ -9,6 +9,7 @@ import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGM
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 import java.util
+import scala.collection.JavaConverters._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,11 +23,27 @@ case class ThingNeo4jRepository(
   def findThingById(id: UUID): Future[Option[Thing]] = {
 
     Future {
-      iterableToList(session.loadAll(classOf[Neo4jThing], new Filter(ThingSerializer.IdKey, id.toString), DefaultQueryDepth))
-        .headOption.map(Neo4jThingHelper.neo4jThingAsThingView)
+
+      val query = s"""MATCH (n:Thing {_id: "c166c0d2-1cfd-4479-a178-325cab4fce7e"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2) RETURN n AS node ,n2._id AS childrenIds""";
+
+      val queryResult = session.query(query, createEmptyMap)
+
+      val result = queryResult.queryResults().asScala.map(_.asScala)
+
+      result.headOption.map { head =>
+
+        val thingId = UUID.fromString(head.get("node").get.asInstanceOf[String])
+
+        val children = result.tail.flatMap(_.get("childrenIds")).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
+
+        Thing(_id = thingId, children = children.toSet)
+
+      }
+
     } recover { case e: Throwable => throw new ReadException(s"Can't get Thing with id: $id") }
 
   }
+
 
   def createThing(thing: Thing): Future[Thing] = {
 
@@ -78,6 +95,7 @@ case class ThingNeo4jRepository(
       else
         Future.failed(new DeleteException(s"Can't delete thing with id: ${id.toString}"))
     }
-
   }
+
+  private def createEmptyMap = new util.HashMap[String, Object]
 }

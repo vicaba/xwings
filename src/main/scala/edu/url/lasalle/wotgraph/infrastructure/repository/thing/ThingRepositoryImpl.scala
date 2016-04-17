@@ -158,11 +158,6 @@ object Main {
 
     //createNodes()
 
-
-    repo.getThings().map { l =>
-      println(l)
-    }
-
     repo.findThingById(UUID.fromString("b1b7023e-221a-4e32-9634-8c93ed4e8218")).map { l =>
       println(l)
     }
