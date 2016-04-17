@@ -158,7 +158,7 @@ object Main {
 
     //createNodes()
 
-    repo.findThingById(UUID.fromString("b1b7023e-221a-4e32-9634-8c93ed4e8218")).map { l =>
+    repo.findThingById(UUID.fromString("c166c0d2-1cfd-4479-a178-325cab4fce7e")).map { l =>
       println(l)
     }
 

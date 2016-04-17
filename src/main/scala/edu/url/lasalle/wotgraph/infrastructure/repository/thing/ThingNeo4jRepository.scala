@@ -10,6 +10,7 @@ import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 import java.util
 import scala.collection.JavaConverters._
+import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,7 +25,10 @@ case class ThingNeo4jRepository(
 
     Future {
 
-      val query = s"""MATCH (n:Thing {_id: "c166c0d2-1cfd-4479-a178-325cab4fce7e"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2) RETURN n AS node ,n2._id AS childrenIds""";
+      val query =
+        s"""
+           |MATCH (n:Thing {_id: "$id"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2)
+           | RETURN n.${ThingSerializer.IdKey} AS ${ThingSerializer.IdKey}, n2._id AS ${ThingSerializer.ChildrenKey}""".stripMargin;
 
       val queryResult = session.query(query, createEmptyMap)
 
@@ -32,9 +36,9 @@ case class ThingNeo4jRepository(
 
       result.headOption.map { head =>
 
-        val thingId = UUID.fromString(head.get("node").get.asInstanceOf[String])
+        val thingId = UUID.fromString(head.get(ThingSerializer.IdKey).get.asInstanceOf[String])
 
-        val children = result.tail.flatMap(_.get("childrenIds")).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
+        val children = result.flatMap(_.get(ThingSerializer.ChildrenKey)).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
 
         Thing(_id = thingId, children = children.toSet)
 
