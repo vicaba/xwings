@@ -21,14 +21,20 @@ case class ThingNeo4jRepository(
 
   val DefaultQueryDepth = 1
 
+  val ThingLabel = "Thing"
+
+  val IdKey = ThingSerializer.IdKey
+
+  val ChildrenKey = ThingSerializer.ChildrenKey
+
   def findThingById(id: UUID): Future[Option[Thing]] = {
 
     Future {
 
       val query =
         s"""
-           |MATCH (n:Thing {_id: "$id"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2)
-           | RETURN n.${ThingSerializer.IdKey} AS ${ThingSerializer.IdKey}, n2._id AS ${ThingSerializer.ChildrenKey}""".stripMargin;
+           |MATCH (n:$ThingLabel {_id: "$id"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2)
+           | RETURN n.${ThingSerializer.IdKey} AS $IdKey, n2._id AS $ChildrenKey""".stripMargin;
 
       val queryResult = session.query(query, createEmptyMap)
 
@@ -36,9 +42,9 @@ case class ThingNeo4jRepository(
 
       result.headOption.map { head =>
 
-        val thingId = UUID.fromString(head.get(ThingSerializer.IdKey).get.asInstanceOf[String])
+        val thingId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
 
-        val children = result.flatMap(_.get(ThingSerializer.ChildrenKey)).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
+        val children = result.flatMap(_.get(ChildrenKey)).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
 
         Thing(_id = thingId, children = children.toSet)
 
@@ -51,8 +57,43 @@ case class ThingNeo4jRepository(
 
   def createThing(thing: Thing): Future[Thing] = {
 
+    def createQuery: String = {
+
+      val thingChildren = thing.children
+
+      val isChildrenEmpty = thingChildren.isEmpty
+
+      val newNodePlaceholder = "n"
+
+      val childrenIndexes = 0 to (thingChildren.count(_ => true) - 1)
+
+      val firstQueryPart = if (!isChildrenEmpty) {
+
+        val firstQueryMatch = "MATCH"
+
+        val childrenQueryMatch = thingChildren.map(_._id.toString).zipWithIndex.map {
+          case (id, i) => s"""(n$i:$ThingLabel {$IdKey: "$id"})"""
+        }.mkString("", ",", "")
+
+        s"$firstQueryMatch $childrenQueryMatch"
+
+      } else ""
+
+      val createNodeQuery = s"""CREATE ($newNodePlaceholder:$ThingLabel {$IdKey: "${thing._id}"})"""
+
+      val createRelationsQuery = childrenIndexes.map(i => s"""($newNodePlaceholder)-[r$i:CHILD]->(n$i)""").mkString("", ",", "")
+
+      val query = s"$firstQueryPart $createNodeQuery ${if (isChildrenEmpty) "" else s", $createRelationsQuery"}"
+
+      println("QUERY")
+      println(query)
+
+      query
+
+    }
+
     Future {
-      session.save[Neo4jThing](Neo4jThingHelper.thingAsNeo4jThingView(thing))
+      session.query(createQuery, createEmptyMap)
       thing
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}") }
   }
@@ -63,18 +104,16 @@ case class ThingNeo4jRepository(
 
       def idFilterProducer(id: UUID) = new Filter(ThingSerializer.IdKey, id.toString)
 
-      val firstQueryPart = """MATCH (n:Thing) WHERE"""
+      val firstQueryPart = s"""MATCH (n:$ThingLabel) WHERE"""
 
-      val queryFilters = ts.map(_._id.toString).mkString(s"""n._id = """", s"""" OR n._id = """", """"""")
+      val queryFilters = ts.map(_._id.toString).mkString(s"""n.$IdKey = """", s"""" OR n.$IdKey = """", """"""")
 
       val queryEnd = "RETURN n"
 
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
-      val emptyMap = new util.HashMap[String, Object]
-
       Future {
-        iterableToList(session.query(classOf[Neo4jThing], query, emptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
+        iterableToList(session.query(classOf[Neo4jThing], query, createEmptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
       } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
 
@@ -87,12 +126,10 @@ case class ThingNeo4jRepository(
 
   def deleteThing(id: UUID): Future[UUID] = {
 
-    val query = s"""MATCH (n:Thing { _id: "${id.toString}"}) DETACH DELETE (n)"""
-
-    val emptyMap = new util.HashMap[String, Object]
+    val query = s"""MATCH (n:$ThingLabel { _id: "${id.toString}"}) DETACH DELETE (n)"""
 
     Future {
-      session.query(query, emptyMap)
+      session.query(query, createEmptyMap)
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
