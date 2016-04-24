@@ -75,7 +75,7 @@ case class ThingRepositoryImpl(
 
       val thingDataF = thingMongoDbRepository.updateThing(t)
 
-      val thingNodeF = thingNeo4jRepository.createThing(t)
+      val thingNodeF = thingNeo4jRepository.updateThing(t)
 
       thingNodeF zip thingDataF map { _ => t }
 
@@ -86,6 +86,7 @@ case class ThingRepositoryImpl(
     val childrenF = thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j)
 
     thingNeo4jRepository.findThingById(thing._id).flatMap {
+
         case Some(t) =>
 
           childrenF.flatMap { identifiedChildren =>
@@ -158,18 +159,13 @@ object Main {
 
     createNodes()
 
-    repo.findThingById(UUID.fromString("c166c0d2-1cfd-4479-a178-325cab4fce7e")).map { l =>
-      println(l)
-    }
+    /*
 
-/*
+    val child1 = Thing(_id = UUID.fromString("e8d4f376-0dbf-4860-a05a-60539998cd12"))
 
-    repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"))).map { t =>
-      println(t)
-    }
+    val child2 = Thing(_id = UUID.fromString("7edf9150-6a63-4bb3-b65e-e901042d07b2"))
 
-
-    repo.updateThing(Thing(_id = UUID.fromString("2003dc0e-2304-4fd5-9023-4b523e041a38"), children = Set(Thing(UUID.fromString("69315f2b-d988-439e-a926-02082389de3c"))))).map { t =>
+    repo.updateThing(Thing(_id = UUID.fromString("24b0b344-3d6c-48ac-aa1b-d8f57826fad4")).copy(children = Set(child1, child2))).map { t =>
       println(t)
     }
 

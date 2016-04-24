@@ -65,7 +65,7 @@ case class ThingNeo4jRepository(
 
       val newNodePlaceholder = "n"
 
-      val childrenIndexes = 0 to (thingChildren.count(_ => true) - 1)
+      val childrenIndexes = 0 until thingChildren.count(_ => true)
 
       val firstQueryPart = if (!isChildrenEmpty) {
 
@@ -85,9 +85,6 @@ case class ThingNeo4jRepository(
 
       val query = s"$firstQueryPart $createNodeQuery ${if (isChildrenEmpty) "" else s", $createRelationsQuery"}"
 
-      println("QUERY")
-      println(query)
-
       query
 
     }
@@ -96,6 +93,54 @@ case class ThingNeo4jRepository(
       session.query(createQuery, createEmptyMap)
       thing
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}") }
+  }
+
+  def updateThing(thing: Thing): Future[Thing] = {
+
+    val firstQueryMatch = "MATCH"
+
+    val currentThingMatch = s"""(n:$ThingLabel {$IdKey: "${thing._id}"})"""
+
+    val thingChildren = thing.children
+
+    val isChildrenEmpty = thingChildren.isEmpty
+
+    def deleteChildrenQuery: String = {
+      val query = s"""$firstQueryMatch $currentThingMatch-[r:CHILD]->() DELETE r"""
+      query
+    }
+
+    def createChildrenQuery: String = {
+
+      val childrenIndexes = 0 until thingChildren.count(_ => true)
+
+      val childrenMatch = thingChildren.map(_._id).zipWithIndex.map {
+        case (id, i) =>
+          s"""(n$i:$ThingLabel {$IdKey: "$id"})"""
+      } mkString("", ",", "")
+
+      val relationshipCreate = childrenIndexes.map( i => s"""(n)-[r$i:CHILD]->(n$i)""") mkString("",",","")
+
+      val query = s"""$firstQueryMatch $currentThingMatch, $childrenMatch CREATE $relationshipCreate"""
+
+      query
+    }
+
+    val deleteF = () => Future {
+      session.query(deleteChildrenQuery, createEmptyMap)
+      thing
+    } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of Thing with id: ${thing._id}") }
+
+    val createF = () => Future {
+      session.query(createChildrenQuery, createEmptyMap)
+      thing
+    } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of Thing with id: ${thing._id}") }
+
+    if (isChildrenEmpty) {
+      deleteF()
+    } else {
+      deleteF() zip createF() map(_ => thing)
+    }
   }
 
   def getThings(things: Iterable[Thing]): Future[Iterable[Thing]] = {
