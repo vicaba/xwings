@@ -2,12 +2,13 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.CoherenceException
+import edu.url.lasalle.wotgraph.application.exceptions.{CoherenceException, ReadOperationException}
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.{JsObject, Json}
+import reactivemongo.core.errors.DatabaseException
 import scaldi.Injectable._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -139,7 +140,7 @@ object Main {
   def createThing(identifier: Int): Thing = {
 
     val id = UUID.randomUUID()
-    val actions = Set(Action("getConsume", UUID.randomUUID(), "a"))
+    val actions = Set(Action("getConsume", UUID.randomUUID(), Json.obj("a" -> "a")))
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
     val t = new Thing(id, Some(Metadata(metadata.as[JsObject])), actions)
 
@@ -177,7 +178,11 @@ object Main {
       }
     }
 
-    createNodes()
+    //createNodes()
+
+    repo.findThingById(UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")).map(println) recover {
+      case t: ReadOperationException => println(s"EXC: ${t.msg}")
+    }
 
     /*
 

@@ -17,13 +17,13 @@ object ActionSerializer {
   val actionReads: Reads[Action] = (
     (__ \ ActionNameKey).read[String] and
       (__ \ ContextIdKey).read[UUID] and
-      (__ \ ContextValueKey).read[String]
+      (__ \ ContextValueKey).read[JsObject]
     ) (Action.apply _)
 
   val actionWrites: OWrites[Action] = (
     (__ \ ActionNameKey).write[String] and
       (__ \ ContextIdKey).write[UUID] and
-      (__ \ ContextValueKey).write[String]
+      (__ \ ContextValueKey).write[JsObject]
     ) (unlift(Action.unapply))
 
 

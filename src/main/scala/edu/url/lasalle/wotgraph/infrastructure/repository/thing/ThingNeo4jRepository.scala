@@ -44,13 +44,13 @@ case class ThingNeo4jRepository(
 
         val thingId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
 
-        val children = result.flatMap(_.get(ChildrenKey)).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
+        val children = result.flatMap(_.get(ChildrenKey).flatMap(Option(_))).map(_.asInstanceOf[String]).map(id => Thing(UUID.fromString(id)))
 
         Thing(_id = thingId, children = children.toSet)
 
       }
 
-    } recover { case e: Throwable => throw new ReadException(s"Can't get Thing with id: $id") }
+    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Thing with id: $id") }
 
   }
 

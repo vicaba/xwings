@@ -3,7 +3,7 @@ package edu.url.lasalle.wotgraph.domain.thing
 import java.util.UUID
 
 import org.apache.commons.validator.routines.UrlValidator
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import play.api.libs.ws.ning.NingWSClient
 
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ object ActionExecutor {
   def executeAction(a: Action): Future[ExecutionResult] = ContextProvider.provideContextFor(a.contextId) match {
       case Some(c) =>
 
-        val contextValue = Json.parse(a.contextValue).as[Map[String, String]]
+        val contextValue = a.contextValue.as[Map[String, String]]
         c.executeAction(contextValue)
 
       case None => Future(ExecutionFailure(List("Context Not found")))
@@ -100,7 +100,7 @@ object Main {
     val contextValue = Map("httpMethod"-> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
 
     ActionExecutor.executeAction(
-      Action("a", UUID.fromString("1416c196-e837-4dae-b2ab-a64328e578b7"), Json.toJson(contextValue).toString)
+      Action("a", UUID.fromString("1416c196-e837-4dae-b2ab-a64328e578b7"), Json.toJson(contextValue).as[JsObject])
     ) map(println)
   }
 }
