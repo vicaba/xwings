@@ -14,5 +14,6 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.0",
   "org.neo4j" % "neo4j-ogm-core" % "2.0.1",
   "org.neo4j" % "neo4j-ogm-http-driver" % "2.0.1",
-  "org.scaldi" %% "scaldi" % "0.5.7"
+  "org.scaldi" %% "scaldi" % "0.5.7",
+  "commons-validator" % "commons-validator" % "1.5.0"
 )

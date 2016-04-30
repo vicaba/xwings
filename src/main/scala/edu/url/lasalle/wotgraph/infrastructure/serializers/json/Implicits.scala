@@ -1,7 +1,5 @@
 package edu.url.lasalle.wotgraph.infrastructure.serializers.json
 
-import edu.url.lasalle.wotgraph.infrastructure.serializers.json.dto.{CreateThingSerializer, GetThingsSerializer}
-
 object Implicits {
 
   implicit val thingJsonSerializer = ThingSerializer.thingFormat

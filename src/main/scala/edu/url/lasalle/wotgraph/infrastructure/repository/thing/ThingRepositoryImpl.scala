@@ -2,7 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.SaveException
+import edu.url.lasalle.wotgraph.application.exceptions.CoherenceException
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
@@ -22,7 +22,6 @@ case class ThingRepositoryImpl(
   override def findThingById(id: UUID): Future[Option[Thing]] = {
 
     val thingNodeF = thingNeo4jRepository.findThingById(id)
-
     val thingDataF = thingMongoDbRepository.findThingById(id)
 
     thingNodeF.flatMap {
@@ -32,6 +31,7 @@ case class ThingRepositoryImpl(
         thingDataF.map {
 
           case Some(thingData) =>
+
             val thing = thingData.copy(_id = thingNode._id, children = thingNode.children)
             Some(thing)
 
@@ -40,6 +40,7 @@ case class ThingRepositoryImpl(
         }
 
       case None => Future.successful(None)
+
     }
 
   }
@@ -54,7 +55,6 @@ case class ThingRepositoryImpl(
     def createThingNode(t: Thing): Future[Thing] = {
 
       val thingDataF = thingMongoDbRepository.createThing(t)
-
       val thingNodeF = thingNeo4jRepository.createThing(t)
 
       thingNodeF zip thingDataF map { _ => t }
@@ -64,17 +64,27 @@ case class ThingRepositoryImpl(
     val unidentifiedChildrenInNeo4j = thing.children
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
-      val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
-      createThingNode(thingWithIdentifiedChildren)
+
+      if ((unidentifiedChildrenInNeo4j diff(identifiedChildren toSet)) isEmpty) {
+
+        val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
+        createThingNode(thingWithIdentifiedChildren)
+
+      } else {
+
+        Future.failed(new CoherenceException("Some children were not found"))
+      }
+
+
     }
 
   }
 
   override def updateThing(thing: Thing): Future[Option[Thing]] = {
+
     def updateThingNode(t: Thing): Future[Thing] = {
 
       val thingDataF = thingMongoDbRepository.updateThing(t)
-
       val thingNodeF = thingNeo4jRepository.updateThing(t)
 
       thingNodeF zip thingDataF map { _ => t }
@@ -87,22 +97,35 @@ case class ThingRepositoryImpl(
 
     thingNeo4jRepository.findThingById(thing._id).flatMap {
 
-        case Some(t) =>
+      case Some(t) =>
 
-          childrenF.flatMap { identifiedChildren =>
-            val thingToUpdate = thing.copy(id = t.id, children = identifiedChildren.toSet)
-            updateThingNode(thingToUpdate).map(Some(_))
+        childrenF.flatMap { identifiedChildren =>
+
+          thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+
+            if ((unidentifiedChildrenInNeo4j diff(identifiedChildren toSet)) isEmpty) {
+
+              val thingToUpdate = thing.copy(id = t.id, children = identifiedChildren.toSet)
+              updateThingNode(thingToUpdate).map(Some(_))
+
+            } else {
+
+              Future.failed(new CoherenceException("Some children were not found"))
+
+            }
+
           }
 
-        case None => Future.successful(None)
+        }
 
-      }
+      case None => Future.successful(None)
+
+    }
   }
 
   override def deleteThing(id: UUID): Future[UUID] = {
 
     val thingNodeF = thingNeo4jRepository.deleteThing(id)
-
     val thingDataF = thingMongoDbRepository.deleteThing(id)
 
     thingNodeF zip thingDataF map { _ => id }
@@ -116,11 +139,8 @@ object Main {
   def createThing(identifier: Int): Thing = {
 
     val id = UUID.randomUUID()
-
     val actions = Set(Action("getConsume", UUID.randomUUID(), "a"))
-
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
-
     val t = new Thing(id, Some(Metadata(metadata.as[JsObject])), actions)
 
     t
