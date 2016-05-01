@@ -4,6 +4,7 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions.{CoherenceException, ReadOperationException}
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
+import edu.url.lasalle.wotgraph.domain.thing.action.ContextProvider
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import play.api.libs.iteratee.Enumerator
@@ -66,7 +67,7 @@ case class ThingRepositoryImpl(
 
     thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
 
-      if ((unidentifiedChildrenInNeo4j diff(identifiedChildren toSet)) isEmpty) {
+      if ((unidentifiedChildrenInNeo4j -- identifiedChildren.toSet).isEmpty) {
 
         val thingWithIdentifiedChildren = thing.copy(children = identifiedChildren.toSet)
         createThingNode(thingWithIdentifiedChildren)
@@ -75,7 +76,6 @@ case class ThingRepositoryImpl(
 
         Future.failed(new CoherenceException("Some children were not found"))
       }
-
 
     }
 
@@ -104,7 +104,7 @@ case class ThingRepositoryImpl(
 
           thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
 
-            if ((unidentifiedChildrenInNeo4j diff(identifiedChildren toSet)) isEmpty) {
+            if ((unidentifiedChildrenInNeo4j -- (identifiedChildren toSet)) isEmpty) {
 
               val thingToUpdate = thing.copy(id = t.id, children = identifiedChildren.toSet)
               updateThingNode(thingToUpdate).map(Some(_))
@@ -140,7 +140,12 @@ object Main {
   def createThing(identifier: Int): Thing = {
 
     val id = UUID.randomUUID()
-    val actions = Set(Action("getConsume", UUID.randomUUID(), Json.obj("a" -> "a")))
+    val contextValue = Map("httpMethod"-> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
+    val actions = Set(
+      Action(
+        "getConsume", UUID.fromString(ContextProvider.HTTP_CONTEXT), Json.toJson(contextValue).as[JsObject].toString()
+      )
+    )
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
     val t = new Thing(id, Some(Metadata(metadata.as[JsObject])), actions)
 
@@ -178,11 +183,13 @@ object Main {
       }
     }
 
-    //createNodes()
+    createNodes()
 
-    repo.findThingById(UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")).map(println) recover {
-      case t: ReadOperationException => println(s"EXC: ${t.msg}")
-    }
+    //    repo.findThingById(UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")).map(println) recover {
+    //      case t: ReadOperationException => println(s"EXC: ${t.msg}")
+    //    }
+
+    //repo.createThing(Thing(children = Set(Thing(_id = UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")))))
 
     /*
 

@@ -4,4 +4,4 @@ import java.util.UUID
 
 import play.api.libs.json.JsObject
 
-case class Action(actionName: String, contextId: UUID, contextValue: JsObject)
+case class Action(actionName: String, contextId: UUID, contextValue: String)

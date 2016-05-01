@@ -4,6 +4,7 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions._
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
+import edu.url.lasalle.wotgraph.domain.thing.action.{ActionExecutor, ExecutionFailure, ExecutionResult}
 import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,6 +66,25 @@ case class ThingUseCase(repo: ThingRepository) {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
       case Success(uuid) => repo.deleteThing(uuid)
     }
+  }
+
+  def executeThingAction(id: String, actionName: String)(implicit ec: ExecutionContext): Future[ExecutionResult] = {
+
+    Try(UUID.fromString(id)) match {
+      case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
+      case Success(uuid) =>
+        repo.findThingById(uuid).flatMap {
+          case Some(thing) =>
+            val action = thing.actions.find(_.actionName == actionName)
+            action match {
+              case Some(a) => ActionExecutor.executeAction(a)
+              case _ => Future(ExecutionFailure(List("Action not found")))
+            }
+          case None => Future(ExecutionFailure(List("Thing not found")))
+        }
+
+    }
+
   }
 
 }

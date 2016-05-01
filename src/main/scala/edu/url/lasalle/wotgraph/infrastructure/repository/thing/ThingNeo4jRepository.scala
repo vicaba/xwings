@@ -158,6 +158,7 @@ case class ThingNeo4jRepository(
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
       Future {
+        println(query)
         iterableToList(session.query(classOf[Neo4jThing], query, createEmptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
       } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
