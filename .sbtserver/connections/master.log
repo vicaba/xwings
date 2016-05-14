@@ -1,0 +1,13 @@
+New log file opened at Fri May 13 19:46:55 CEST 2016 by 6574@Vicaba-MacBook-Pro.local
+Taking next connection to: 55854
+New client attempting to connect on port: 55855-55854
+  Address = /192.168.1.33:55854
+This client on port 55855 has uuid 698dd684-8375-4bff-8cda-21ce1f0ab6c2 configName activator humanReadableName Activator protocolVersion 3 featureTags Vector()
+Connected Clients: activator-698dd684-8375-4bff-8cda-21ce1f0ab6c2
+Taking next connection to: 55854
+Checking to see if clients are empty...
+No non-daemon clients connected after 3 min. Shutting down.
+Server socket thread exiting.
+0 clients open, will close them...
+All client sockets have been closed.
+Closing the 6574@Vicaba-MacBook-Pro.local logs at Fri May 13 19:49:58 CEST 2016, goodbye.

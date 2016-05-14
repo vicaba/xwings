@@ -1,0 +1,20 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# An example controller showing a sample home page
+GET           /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThings
+
+POST          /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.createThing
+
+POST          /api/v1/things/search                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThingsSearch
+
+GET           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThing(id: String)
+
+PUT           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.updateThing(id: String)
+
+DELETE        /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.deleteThing(id: String)
+
+POST          /api/v1/things/:id/:actionName        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.executeAction(id: String, actionName: String)
+
+GET           /api/v1/stream/things                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThingsAsStream
