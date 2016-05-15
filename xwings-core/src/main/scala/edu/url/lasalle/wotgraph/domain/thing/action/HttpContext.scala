@@ -15,7 +15,7 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[Ah
 
   val URL_KEY = "url"
 
-  val DATA_KEY = "data"
+  val BODY_KEY = "body"
 
   override val context: AhcWSClient = AhcWSClient()(ActorMaterializer()(ActorSystem()))
 
@@ -26,9 +26,8 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[Ah
       url <- contextValue get URL_KEY if new UrlValidator() isValid url
     } yield {
       val request = context.url(url).withMethod(httpMethod)
-
-      if (httpMethod != "GET")
-        contextValue.get(DATA_KEY).fold(request)(request.withBody(_))
+      if (!(httpMethod equalsIgnoreCase "GET"))
+        contextValue.get(BODY_KEY).fold(request)(request.withBody(_))
       else
         request
     }
