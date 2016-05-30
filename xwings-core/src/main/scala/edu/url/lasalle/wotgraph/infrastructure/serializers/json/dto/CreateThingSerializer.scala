@@ -3,7 +3,7 @@ package edu.url.lasalle.wotgraph.infrastructure.serializers.json.dto
 import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.usecase.CreateThing
-import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata}
+import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata}
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import play.api.libs.json.{JsObject, _}

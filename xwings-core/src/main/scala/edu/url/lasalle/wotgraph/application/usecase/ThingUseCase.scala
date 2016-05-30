@@ -4,8 +4,8 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions._
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
-import edu.url.lasalle.wotgraph.domain.thing.action.{ActionExecutor, ExecutionFailure, ExecutionResult}
-import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
+import edu.url.lasalle.wotgraph.domain.entity.thing.action.{ActionExecutor, ExecutionFailure, ExecutionResult}
+import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata, Thing}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -35,7 +35,7 @@ case class ThingUseCase(repo: ThingRepository) {
 
     val thing = CreateThing.toThing(c)
 
-    repo.createThing(thing)
+    repo.create(thing)
   }
 
   def updateThing(id: String, c: CreateThing): Future[Option[Thing]] = {
@@ -44,27 +44,27 @@ case class ThingUseCase(repo: ThingRepository) {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
       case Success(uuid) =>
         val thing = CreateThing.toThing(c).copy(_id = uuid)
-        repo.updateThing(thing)
+        repo.update(thing)
     }
 
   }
 
   def getThings(g: GetThings = GetThings(0, 100))(implicit ec: ExecutionContext): Future[List[Thing]] =
-    repo.getThings(g.itemPerPage * g.pageNumber, g.itemPerPage)
+    repo.getAll(g.itemPerPage * g.pageNumber, g.itemPerPage)
 
-  def getThingsAsStream = repo.getThingsAsStream
+  def getThingsAsStream = repo.getAllAsStream
 
   def getThing(id: String)(implicit ec: ExecutionContext): Future[Option[Thing]] = {
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
-      case Success(uuid) => repo.findThingById(uuid)
+      case Success(uuid) => repo.findById(uuid)
     }
   }
 
   def deleteThing(id: String): Future[UUID] = {
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
-      case Success(uuid) => repo.deleteThing(uuid)
+      case Success(uuid) => repo.delete(uuid)
     }
   }
 
@@ -73,7 +73,7 @@ case class ThingUseCase(repo: ThingRepository) {
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
       case Success(uuid) =>
-        repo.findThingById(uuid).flatMap {
+        repo.findById(uuid).flatMap {
           case Some(thing) =>
             val action = thing.actions.find(_.actionName == actionName)
             action match {

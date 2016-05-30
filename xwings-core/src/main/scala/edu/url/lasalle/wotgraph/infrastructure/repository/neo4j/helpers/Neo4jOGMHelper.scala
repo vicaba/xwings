@@ -1,5 +1,6 @@
 package edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers
 
+
 import java.util
 
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
@@ -15,6 +16,8 @@ trait Neo4jOGMHelper {
     val sessionFactory = new SessionFactory(neo4jConf.sessionConfig, neo4jConf.packages:_*)
     sessionFactory.openSession()
   }
+
+  protected def createEmptyMap = new util.HashMap[String, Object]
 
   def iterableToList[T](iterable: java.lang.Iterable[T]): List[T] = {
 

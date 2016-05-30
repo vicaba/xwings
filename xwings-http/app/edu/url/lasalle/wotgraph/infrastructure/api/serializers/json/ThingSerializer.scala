@@ -2,7 +2,7 @@ package edu.url.lasalle.wotgraph.infrastructure.api.serializers.json
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
+import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.{ ThingSerializer => ThingBaseSerializer}
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
 

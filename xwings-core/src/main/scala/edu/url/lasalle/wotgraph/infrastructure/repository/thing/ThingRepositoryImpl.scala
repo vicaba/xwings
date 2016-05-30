@@ -4,12 +4,11 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions.{CoherenceException, ReadOperationException}
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
-import edu.url.lasalle.wotgraph.domain.thing.action.ContextProvider
-import edu.url.lasalle.wotgraph.domain.thing.{Action, Metadata, Thing}
+import edu.url.lasalle.wotgraph.domain.entity.thing.action.ContextProvider
+import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata, Thing}
 import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.{JsObject, Json}
-import reactivemongo.core.errors.DatabaseException
 import scaldi.Injectable._
 
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -21,10 +20,10 @@ case class ThingRepositoryImpl(
                               (implicit ec: ExecutionContext)
   extends ThingRepository {
 
-  override def findThingById(id: UUID): Future[Option[Thing]] = {
+  override def findById(id: UUID): Future[Option[Thing]] = {
 
-    val thingNodeF = thingNeo4jRepository.findThingById(id)
-    val thingDataF = thingMongoDbRepository.findThingById(id)
+    val thingNodeF = thingNeo4jRepository.findById(id)
+    val thingDataF = thingMongoDbRepository.findById(id)
 
     thingNodeF.flatMap {
 
@@ -47,17 +46,17 @@ case class ThingRepositoryImpl(
 
   }
 
-  override def getThings(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
-    thingMongoDbRepository.getThings.map(_.toList)
+  override def getAll(skip: Int = 0, limit: Int = 1000): Future[List[Thing]] =
+    thingMongoDbRepository.getAll.map(_.toList)
 
-  override def getThingsAsStream: Enumerator[Thing] = thingMongoDbRepository.getThingsAsStream
+  override def getAllAsStream: Enumerator[Thing] = thingMongoDbRepository.getAllAsStream
 
-  override def createThing(thing: Thing): Future[Thing] = {
+  override def create(thing: Thing): Future[Thing] = {
 
     def createThingNode(t: Thing): Future[Thing] = {
 
-      val thingDataF = thingMongoDbRepository.createThing(t)
-      val thingNodeF = thingNeo4jRepository.createThing(t)
+      val thingDataF = thingMongoDbRepository.create(t)
+      val thingNodeF = thingNeo4jRepository.create(t)
 
       thingNodeF zip thingDataF map { _ => t }
 
@@ -65,7 +64,7 @@ case class ThingRepositoryImpl(
 
     val unidentifiedChildrenInNeo4j = thing.children
 
-    thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+    thingNeo4jRepository.getSome(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
 
       if ((unidentifiedChildrenInNeo4j -- identifiedChildren.toSet).isEmpty) {
 
@@ -81,12 +80,12 @@ case class ThingRepositoryImpl(
 
   }
 
-  override def updateThing(thing: Thing): Future[Option[Thing]] = {
+  override def update(thing: Thing): Future[Option[Thing]] = {
 
     def updateThingNode(t: Thing): Future[Thing] = {
 
-      val thingDataF = thingMongoDbRepository.updateThing(t)
-      val thingNodeF = thingNeo4jRepository.updateThing(t)
+      val thingDataF = thingMongoDbRepository.update(t)
+      val thingNodeF = thingNeo4jRepository.update(t)
 
       thingNodeF zip thingDataF map { _ => t }
 
@@ -94,15 +93,15 @@ case class ThingRepositoryImpl(
 
     val unidentifiedChildrenInNeo4j = thing.children
 
-    val childrenF = thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j)
+    val childrenF = thingNeo4jRepository.getSome(unidentifiedChildrenInNeo4j)
 
-    thingNeo4jRepository.findThingById(thing._id).flatMap {
+    thingNeo4jRepository.findById(thing._id).flatMap {
 
       case Some(t) =>
 
         childrenF.flatMap { identifiedChildren =>
 
-          thingNeo4jRepository.getThings(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
+          thingNeo4jRepository.getSome(unidentifiedChildrenInNeo4j).flatMap { identifiedChildren =>
 
             if ((unidentifiedChildrenInNeo4j -- (identifiedChildren toSet)) isEmpty) {
 
@@ -124,10 +123,10 @@ case class ThingRepositoryImpl(
     }
   }
 
-  override def deleteThing(id: UUID): Future[UUID] = {
+  override def delete(id: UUID): Future[UUID] = {
 
-    val thingNodeF = thingNeo4jRepository.deleteThing(id)
-    val thingDataF = thingMongoDbRepository.deleteThing(id)
+    val thingNodeF = thingNeo4jRepository.delete(id)
+    val thingDataF = thingMongoDbRepository.delete(id)
 
     thingNodeF zip thingDataF map { _ => id }
 
@@ -172,13 +171,13 @@ object Main {
         val t2WithChildren = t2.copy(children = Set(t3))
         val t3WithChildren = t3.copy(children = Set(t4))
 
-        val f1 = repo.createThing(t4)
+        val f1 = repo.create(t4)
         Await.result(f1, 3.seconds)
-        val f2 = repo.createThing(t3WithChildren)
+        val f2 = repo.create(t3WithChildren)
         Await.result(f2, 3.seconds)
-        val f3 = repo.createThing(t2WithChildren)
+        val f3 = repo.create(t2WithChildren)
         Await.result(f3, 3.seconds)
-        val f4 = repo.createThing(tWithChildren)
+        val f4 = repo.create(tWithChildren)
         Await.result(f4, 3.seconds)
       }
     }

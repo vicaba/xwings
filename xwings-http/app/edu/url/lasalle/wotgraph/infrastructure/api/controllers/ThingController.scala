@@ -2,8 +2,8 @@ package edu.url.lasalle.wotgraph.infrastructure.api.controllers
 
 import edu.url.lasalle.wotgraph.application.exceptions.{ClientFormatException, CoherenceException, DatabaseException}
 import edu.url.lasalle.wotgraph.application.usecase.{CreateThing, GetThings, ThingUseCase}
-import edu.url.lasalle.wotgraph.domain.thing.Thing
-import edu.url.lasalle.wotgraph.domain.thing.action.{ExecutionFailure, ExecutionSuccess}
+import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
+import edu.url.lasalle.wotgraph.domain.entity.thing.action.{ExecutionFailure, ExecutionSuccess}
 import play.api.libs.json._
 import play.api.mvc._
 import scaldi.Injectable._
