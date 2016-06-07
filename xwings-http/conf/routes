@@ -3,18 +3,18 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET           /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThings
+GET           /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.ListThingController.execute
 
-POST          /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.createThing
+POST          /api/v1/things                        edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.CreateThingController.execute
 
-POST          /api/v1/things/search                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThingsSearch
+POST          /api/v1/things/search                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.SearchThingController.execute
 
-GET           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThing(id: String)
+GET           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.ShowThingController.execute(id: String)
 
-PUT           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.updateThing(id: String)
+PUT           /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.UpdateThingController.execute(id: String)
 
-DELETE        /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.deleteThing(id: String)
+DELETE        /api/v1/things/:id                    edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.DeleteThingController.execute(id: String)
 
-POST          /api/v1/things/:id/:actionName        edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.executeAction(id: String, actionName: String)
+POST          /api/v1/things/:id/:actionName        edu.url.lasalle.wotgraph.infrastructure.api.controllers.action.ExecuteThingActionController.execute(id: String, actionName: String)
 
-GET           /api/v1/stream/things                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.ThingController.getThingsAsStream
+GET           /api/v1/stream/things                 edu.url.lasalle.wotgraph.infrastructure.api.controllers.thing.ListThingController.executeAsStream
