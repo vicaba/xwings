@@ -1,19 +1,12 @@
 package edu.url.lasalle.wotgraph.infrastructure.repository.mongodb
 
-import java.util.UUID
 
-import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json._
-import play.modules.reactivemongo.json._
-import play.modules.reactivemongo.json.collection.JSONCollection
-import reactivemongo.api.commands.bson.BSONCountCommand.{ Count, CountResult }
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.commands.{MultiBulkWriteResult, WriteResult}
-
-import reactivemongo.api.commands.bson.BSONCountCommandImplicits.CountWriter
-import reactivemongo.api.commands.bson.BSONCountCommandImplicits.CountResultReader
-
+import reactivemongo.play.json.collection.JSONCollection
+import play.modules.reactivemongo.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -85,5 +78,7 @@ abstract class MongoCRUDService[E, ID](implicit tFormat: OFormat[E], idFormat: F
   def delete(selector: JsObject): Future[WriteResult] = {
     collection.remove(selector)
   }
+
+  def deleteAll() = delete(Json.obj())
 
 }

@@ -34,5 +34,9 @@ object Dependencies {
 
   lazy val apacheValidator = "commons-validator" % "commons-validator" % "1.5.0"
 
+  lazy val logback = "ch.qos.logback" %  "logback-classic" % "1.1.7"
+
+  lazy val scalactic = "org.scalactic" %% "scalactic" % "2.2.6"
+
 }
 

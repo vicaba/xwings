@@ -22,4 +22,6 @@ trait ThingRepository {
 
   def getAllAsStream: Enumerator[Thing]
 
+  def deleteAll(): Unit
+
 }

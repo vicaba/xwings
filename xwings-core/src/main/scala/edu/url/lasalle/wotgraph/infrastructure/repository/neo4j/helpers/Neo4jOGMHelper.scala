@@ -4,22 +4,29 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers
 import java.util
 
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
-import org.neo4j.ogm.session.SessionFactory
+import org.neo4j.ogm.session.{Session, SessionFactory}
+import org.neo4j.ogm.model.Result
+import scala.collection.JavaConverters._
+
 
 import scala.annotation.tailrec
 
-trait Neo4jOGMHelper {
+object Neo4jOGMHelper {
 
-  val neo4jConf: Neo4jConf.Config
-
-  lazy val session: org.neo4j.ogm.session.Session = {
-    val sessionFactory = new SessionFactory(neo4jConf.sessionConfig, neo4jConf.packages:_*)
+  def getSession(config: Neo4jConf.Config): Session = {
+    val sessionFactory = new SessionFactory(config.sessionConfig, config.packages:_*)
     sessionFactory.openSession()
   }
 
+}
+
+trait Neo4jOGMHelper {
+
   protected def createEmptyMap = new util.HashMap[String, Object]
 
-  def iterableToList[T](iterable: java.lang.Iterable[T]): List[T] = {
+  protected def resultCollectionAsScalaCollection(neo4jResult: Result) = neo4jResult.queryResults().asScala.map(_.asScala)
+
+  protected def iterableToList[T](iterable: java.lang.Iterable[T]): List[T] = {
 
     @tailrec def iteratorToList[T](iterator: java.util.Iterator[T], list: List[T]): List[T] = {
       if (iterator.hasNext) {

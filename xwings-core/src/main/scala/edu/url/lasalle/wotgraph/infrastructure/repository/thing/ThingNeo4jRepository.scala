@@ -7,16 +7,18 @@ import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
+
 import scala.collection.JavaConverters._
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.ThingSerializer
+import org.neo4j.ogm.session.Session
 
 import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingNeo4jRepository(
-                                 override val neo4jConf: Config
+                                 session: Session
                                )
                                (implicit ec: ExecutionContext)
-  extends Neo4jOGMHelper {
+extends Neo4jOGMHelper {
 
   val DefaultQueryDepth = 1
 
@@ -168,6 +170,10 @@ case class ThingNeo4jRepository(
       else
         Future.failed(new DeleteException(s"Can't delete thing with id: ${id.toString}"))
     }
+  }
+
+  def deleteAll(): Unit = Future {
+    session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", createEmptyMap)
   }
 
 }

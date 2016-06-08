@@ -38,7 +38,9 @@ object XWingsBuild extends Build {
     typesafeConfig,
     neo4jCore,
     neo4jHttpDriver,
-    apacheValidator
+    apacheValidator,
+    logback,
+    scalactic
   ))
 
   lazy val http = Project(
@@ -57,7 +59,8 @@ object XWingsBuild extends Build {
     ws,
     filters,
     specs2 % Test,
-    akkaRemote
+    akkaRemote,
+    scalactic
   ))
 
 }

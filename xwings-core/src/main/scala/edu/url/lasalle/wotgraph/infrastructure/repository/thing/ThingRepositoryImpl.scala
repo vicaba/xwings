@@ -2,16 +2,12 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.application.exceptions.{CoherenceException, ReadOperationException}
+import edu.url.lasalle.wotgraph.application.exceptions.CoherenceException
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
-import edu.url.lasalle.wotgraph.domain.entity.thing.action.ContextProvider
-import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata, Thing}
-import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
+import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
 import play.api.libs.iteratee.Enumerator
-import play.api.libs.json.{JsObject, Json}
-import scaldi.Injectable._
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class ThingRepositoryImpl(
                                 thingNeo4jRepository: ThingNeo4jRepository,
@@ -132,76 +128,10 @@ case class ThingRepositoryImpl(
 
   }
 
-}
-
-object Main {
-
-  def createThing(identifier: Int): Thing = {
-
-    val id = UUID.randomUUID()
-    val contextValue = Map("httpMethod"-> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
-    val actions = Set(
-      Action(
-        "getConsume", UUID.fromString(ContextProvider.HTTP_CONTEXT), Json.toJson(contextValue).as[JsObject].toString()
-      )
-    )
-    val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
-    val t = new Thing(id, Some(Metadata(metadata.as[JsObject])), actions)
-
-    t
-
+  override def deleteAll(): Unit = {
+    thingMongoDbRepository.deleteAll()
+    thingNeo4jRepository.deleteAll()
   }
 
-
-  def main(args: Array[String]) {
-    implicit val ec = scala.concurrent.ExecutionContext.global
-    import scala.concurrent.duration._
-
-    val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
-
-    def createNodes() = {
-      var i = 0
-      while (i < 1) {
-        i = i + 1
-        val t = createThing(1)
-        val t2 = createThing(2)
-        val t3 = createThing(3)
-        val t4 = createThing(4)
-        val tWithChildren = t.copy(children = Set(t2))
-        val t2WithChildren = t2.copy(children = Set(t3))
-        val t3WithChildren = t3.copy(children = Set(t4))
-
-        val f1 = repo.create(t4)
-        Await.result(f1, 3.seconds)
-        val f2 = repo.create(t3WithChildren)
-        Await.result(f2, 3.seconds)
-        val f3 = repo.create(t2WithChildren)
-        Await.result(f3, 3.seconds)
-        val f4 = repo.create(tWithChildren)
-        Await.result(f4, 3.seconds)
-      }
-    }
-
-    createNodes()
-
-    //    repo.findThingById(UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")).map(println) recover {
-    //      case t: ReadOperationException => println(s"EXC: ${t.msg}")
-    //    }
-
-    //repo.createThing(Thing(children = Set(Thing(_id = UUID.fromString("3e838ec2-d6d0-4765-acf9-4b0ec7b1d7d5")))))
-
-    /*
-
-    val child1 = Thing(_id = UUID.fromString("e8d4f376-0dbf-4860-a05a-60539998cd12"))
-
-    val child2 = Thing(_id = UUID.fromString("7edf9150-6a63-4bb3-b65e-e901042d07b2"))
-
-    repo.updateThing(Thing(_id = UUID.fromString("24b0b344-3d6c-48ac-aa1b-d8f57826fad4")).copy(children = Set(child1, child2))).map { t =>
-      println(t)
-    }
-
-    */
-
-  }
 }
 

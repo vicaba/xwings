@@ -1,8 +1,5 @@
 package edu.url.lasalle.wotgraph.domain.entity.user.authorization
 
-/**
-  * Created by vicaba on 15/05/16.
-  */
-class Permission {
+import java.util.UUID
 
-}
+case class Permission(id: UUID = UUID.randomUUID(), desc: String)

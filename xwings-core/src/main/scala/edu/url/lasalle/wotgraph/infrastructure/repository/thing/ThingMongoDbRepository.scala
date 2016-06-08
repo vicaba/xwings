@@ -8,8 +8,8 @@ import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.MongoCRUDServi
 import edu.url.lasalle.wotgraph.infrastructure.serializers.json.Implicits._
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
-import play.modules.reactivemongo.json.collection.JSONCollection
 import reactivemongo.api.DB
+import reactivemongo.play.json.collection.JSONCollection
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,5 +50,7 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
     case Right(thing) => Future.successful(thing)
     case Left(w) => Future.failed(new DeleteException(s"Failed to delete thing with id $id"))
   }
+
+  def deleteAll(): Unit = mongoService.deleteAll()
 
 }

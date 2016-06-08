@@ -5,14 +5,15 @@ import java.util.UUID
 import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException}
 import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Role
 import edu.url.lasalle.wotgraph.domain.entity.user.User
-import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
+import org.neo4j.ogm.session.Session
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 case class UserNeo4jRepository(
-                                override val neo4jConf: Config
+                                session: Session
                               )
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -29,9 +30,11 @@ case class UserNeo4jRepository(
 
   val RoleRelKey = "ROLE"
 
+  val logger = LoggerFactory.getLogger(classOf[UserNeo4jRepository]);
 
   /**
     * Finds a User by its id
+    *
     * @param id
     * @return
     */
@@ -40,9 +43,8 @@ case class UserNeo4jRepository(
     Future {
 
       val query =
-        s"""
-           |MATCH (n:$UserLabel {$IdKey: "$id"}), (n)-[r:$RoleRelKey]->(n2)
-           | RETURN n.$IdKey AS $IdKey, n2.$RoleIdKey AS $RoleIdKey n2.$RoleNameKey AS $RoleNameKey""".stripMargin;
+        s"""MATCH (n:$UserLabel {$IdKey: "$id"}), (n)-[r:$RoleRelKey]->(n2)
+            | RETURN n.$IdKey AS $IdKey, n2.$RoleIdKey AS $RoleIdKey n2.$RoleNameKey AS $RoleNameKey""".stripMargin;
 
       val queryResult = session.query(query, createEmptyMap)
 
@@ -66,6 +68,7 @@ case class UserNeo4jRepository(
 
   /**
     * Updates a User
+    *
     * @param user
     * @return
     */
@@ -76,12 +79,12 @@ case class UserNeo4jRepository(
     val firstQueryMatch = "MATCH"
     val currentUserMatch = s"""(n:$UserLabel {$IdKey: "$userId"})"""
 
-    def deleteRoleQuery: String = {
+    def deleteRoleRelationQuery: String = {
       val query = s"""$firstQueryMatch $currentUserMatch-[r:$RoleRelKey]->() DELETE r"""
       query
     }
 
-    def createRoleQuery: String = {
+    def createRoleRelationQuery: String = {
 
       val roleId = user.role.id
       val roleMatch = s"""(n2:$RoleLabel {$RoleIdKey: $roleId})"""
@@ -94,12 +97,12 @@ case class UserNeo4jRepository(
     }
 
     lazy val deleteRoleF = Future {
-      session.query(deleteRoleQuery, createEmptyMap)
+      session.query(deleteRoleRelationQuery, createEmptyMap)
       user
     } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of User with id: $userId") }
 
     lazy val createRoleF = Future {
-      session.query(createRoleQuery, createEmptyMap)
+      session.query(createRoleRelationQuery, createEmptyMap)
       user
     } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of User with id: $userId") }
 
@@ -109,20 +112,18 @@ case class UserNeo4jRepository(
 
   /**
     * Creates a User
+    *
     * @param user
     * @return
     */
   def create(user: User): Future[User] = {
 
+    val roleId = user.role.id
+
     def createQuery: String = {
 
-      val role = user.role.id
-
-      val createNodeQuery =
-        s"""MATCH (role:Role) WHERE role._id = $role
-            |CREATE (n:$UserLabel {$IdKey: "${user.id.toString}"})-[r:ROLE]->(role)""".stripMargin
-
-      createNodeQuery
+      s"""MATCH (role:$RoleLabel) WHERE role.$RoleIdKey = $roleId
+          |CREATE (n:$UserLabel {$IdKey: "${user.id.toString}"})-[r:$RoleRelKey]->(role)""".stripMargin
     }
 
     Future {
@@ -134,12 +135,13 @@ case class UserNeo4jRepository(
 
   /**
     * Deletes a User
+    *
     * @param id
     * @return
     */
   def delete(id: UUID): Future[UUID] = {
 
-    val query = s"""MATCH (n:$User { $IdKey: "${id.toString}"}) DETACH DELETE (n)"""
+    val query = s"""MATCH (n:$UserLabel { $IdKey: "${id.toString}"}) DETACH DELETE n"""
 
     Future {
       session.query(query, createEmptyMap)
