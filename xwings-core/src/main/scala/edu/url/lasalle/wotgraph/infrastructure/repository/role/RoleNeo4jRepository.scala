@@ -15,6 +15,14 @@ case class RoleNeo4jRepository(
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
+  val RoleLabel = "Role"
+
+  val IdKey = "_id"
+
+  val RoleNameKey = "name"
+
+  val RoleRelKey = "ROLE"
+
   def findById(id: UUID): Future[Option[Role]] = ???
 
   def update(role: Role): Future[Role] = ???

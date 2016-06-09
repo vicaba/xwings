@@ -8,12 +8,12 @@ import scala.concurrent.Future
 
 trait RoleRepository {
 
-    def createRole(role: Role): Future[Role]
+    def create(role: Role): Future[Role]
 
-    def updateRole(role: Role): Future[Option[Role]]
+    def update(role: Role): Future[Option[Role]]
 
-    def deleteRole(id: UUID): Future[UUID]
+    def delete(id: UUID): Future[UUID]
 
-    def findRoleById(id: UUID): Future[Option[Role]]
+    def findById(id: UUID): Future[Option[Role]]
 
 }
