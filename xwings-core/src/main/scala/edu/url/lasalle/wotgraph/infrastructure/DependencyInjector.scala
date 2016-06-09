@@ -1,12 +1,13 @@
 package edu.url.lasalle.wotgraph.infrastructure
 
 import edu.url.lasalle.wotgraph.application.usecase.ThingUseCase
+import edu.url.lasalle.wotgraph.domain.repository.permission.PermissionRepository
 import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
 import edu.url.lasalle.wotgraph.domain.repository.user.UserRepository
 import edu.url.lasalle.wotgraph.infrastructure.repository.mongodb.ThingMongoEnvironment
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
-import edu.url.lasalle.wotgraph.infrastructure.repository.permission.PermissionNeo4jRepository
+import edu.url.lasalle.wotgraph.infrastructure.repository.permission.{PermissionNeo4jRepository, PermissionRepositoryImpl}
 import edu.url.lasalle.wotgraph.infrastructure.repository.thing.{ThingMongoDbRepository, ThingNeo4jRepository, ThingRepositoryImpl}
 import edu.url.lasalle.wotgraph.infrastructure.repository.user.{UserNeo4jRepository, UserRepositoryImpl}
 import org.neo4j.ogm.config.Configuration
@@ -55,6 +56,9 @@ object DependencyInjector {
       inject[Neo4jSession](identified by 'Neo4jSession)
     )
 
+    bind[PermissionRepository] identifiedBy 'PermissionRepository to PermissionRepositoryImpl(
+      inject[PermissionNeo4jRepository](identified by 'PermissionNeo4jRepository)
+    )
 
   }
 
