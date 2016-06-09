@@ -7,10 +7,12 @@ import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Role
 import edu.url.lasalle.wotgraph.domain.entity.user.User
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.session.Session
+import org.scalactic._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 case class UserNeo4jRepository(
                                 session: Session
@@ -116,21 +118,21 @@ case class UserNeo4jRepository(
     * @param user
     * @return
     */
-  def create(user: User): Future[User] = {
+  def create(user: User): Future[User Or Every[String]] = {
 
     val roleId = user.role.id
 
     def createQuery: String = {
 
-      s"""MATCH (role:$RoleLabel) WHERE role.$RoleIdKey = $roleId
+      s"""MATCH (role:$RoleLabel) WHERE role.$RoleIdKey = "$roleId"
           |CREATE (n:$UserLabel {$IdKey: "${user.id.toString}"})-[r:$RoleRelKey]->(role)""".stripMargin
     }
 
-    Future {
-      session.query(createQuery, createEmptyMap)
-      user
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create User with id: ${user.id}") }
 
+    Future {
+      val r = session.query(createQuery, createEmptyMap)
+      if (r.queryStatistics().getNodesCreated == 1) Good(user) else Bad(One("User not created"))
+    } recover { case e: Throwable => throw new SaveException(s"sCan't create User with id: ${user.id}") }
   }
 
   /**

@@ -27,7 +27,9 @@ case class RoleNeo4jRepository(
 
   def update(role: Role): Future[Role] = ???
 
-  def create(role: Role): Future[Role] = ???
+  def create(role: Role): Future[Role] = {
+
+  }
 
   def delete(id: UUID): Future[UUID] = ???
 

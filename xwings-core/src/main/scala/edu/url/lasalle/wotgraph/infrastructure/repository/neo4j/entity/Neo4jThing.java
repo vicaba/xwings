@@ -1,4 +1,4 @@
-package edu.url.lasalle.wotgraph.infrastructure.repository.thing;
+package edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.entity;
 
 
 import org.neo4j.ogm.annotation.GraphId;

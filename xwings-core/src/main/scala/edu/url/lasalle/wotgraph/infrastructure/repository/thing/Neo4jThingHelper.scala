@@ -3,6 +3,7 @@ package edu.url.lasalle.wotgraph.infrastructure.repository.thing
 import java.util.UUID
 
 import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
+import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.entity.Neo4jThing
 
 import scala.collection.JavaConverters._
 

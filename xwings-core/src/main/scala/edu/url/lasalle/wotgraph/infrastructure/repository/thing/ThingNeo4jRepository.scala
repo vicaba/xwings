@@ -5,6 +5,7 @@ import java.util.UUID
 import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException}
 import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
+import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.entity.Neo4jThing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 
@@ -38,7 +39,7 @@ extends Neo4jOGMHelper {
            | RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey""".stripMargin;
 
       val queryResult = session.query(query, createEmptyMap)
-      val result = queryResult.queryResults().asScala.map(_.asScala)
+      val result = resultCollectionAsScalaCollection(queryResult)
 
       result.headOption.map { head =>
 
@@ -146,7 +147,6 @@ extends Neo4jOGMHelper {
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
       Future {
-        println(query)
         iterableToList(session.query(classOf[Neo4jThing], query, createEmptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
       } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
