@@ -6,13 +6,25 @@ import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadExc
 import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Role
 import edu.url.lasalle.wotgraph.domain.entity.user.User
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
+import edu.url.lasalle.wotgraph.infrastructure.repository.role.RoleNeo4jRepository
 import org.neo4j.ogm.session.Session
 import org.scalactic._
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+
+object UserNeo4jRepository {
+
+  object Keys {
+
+    val UserLabel = "User"
+
+    val RoleRelKey = "ROLE"
+
+  }
+
+}
 
 case class UserNeo4jRepository(
                                 session: Session
@@ -20,17 +32,10 @@ case class UserNeo4jRepository(
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
-  val UserLabel = "User"
+  import User.Keys._
+  import UserNeo4jRepository.Keys._
+  import Role.{Keys => RoleK}
 
-  val RoleLabel = "Role"
-
-  val IdKey = "_id"
-
-  val RoleIdKey = "_id"
-
-  val RoleNameKey = "name"
-
-  val RoleRelKey = "ROLE"
 
   val logger = LoggerFactory.getLogger(classOf[UserNeo4jRepository]);
 
@@ -46,7 +51,7 @@ case class UserNeo4jRepository(
 
       val query =
         s"""MATCH (n:$UserLabel {$IdKey: "$id"}), (n)-[r:$RoleRelKey]->(n2)
-            | RETURN n.$IdKey AS $IdKey, n2.$RoleIdKey AS $RoleIdKey n2.$RoleNameKey AS $RoleNameKey""".stripMargin;
+            | RETURN n.$IdKey AS $IdKey, n2.${RoleK.IdKey} AS ${RoleK.IdKey} n2.${RoleK.NameKey} AS ${RoleK.NameKey}""".stripMargin;
 
       val queryResult = session.query(query, createEmptyMap)
 
@@ -55,8 +60,8 @@ case class UserNeo4jRepository(
       result.headOption.map { head =>
 
         val userId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
-        val roleId = UUID.fromString(head.get(RoleIdKey).get.asInstanceOf[String])
-        val roleName = head.get(RoleNameKey).get.asInstanceOf[String]
+        val roleId = UUID.fromString(head.get({RoleK.IdKey}).get.asInstanceOf[String])
+        val roleName = head.get({RoleK.IdKey}).get.asInstanceOf[String]
         // The role must exist
         val role = Role(roleId, roleName)
 
@@ -89,7 +94,7 @@ case class UserNeo4jRepository(
     def createRoleRelationQuery: String = {
 
       val roleId = user.role.id
-      val roleMatch = s"""(n2:$RoleLabel {$RoleIdKey: $roleId})"""
+      val roleMatch = s"""(n2:${RoleNeo4jRepository.Keys.RoleLabel} {${RoleK.IdKey}: $roleId})"""
 
       val relationshipCreate = s"""(n)->[r:$RoleRelKey]->(n2)"""
 
@@ -124,7 +129,7 @@ case class UserNeo4jRepository(
 
     def createQuery: String = {
 
-      s"""MATCH (role:$RoleLabel) WHERE role.$RoleIdKey = "$roleId"
+      s"""MATCH (role:${RoleNeo4jRepository.Keys.RoleLabel}) WHERE role.${RoleK.IdKey} = "$roleId"
           |CREATE (n:$UserLabel {$IdKey: "${user.id.toString}"})-[r:$RoleRelKey]->(role)""".stripMargin
     }
 

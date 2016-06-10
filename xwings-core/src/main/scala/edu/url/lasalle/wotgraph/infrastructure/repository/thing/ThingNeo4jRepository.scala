@@ -57,12 +57,14 @@ extends Neo4jOGMHelper {
 
   def create(thing: Thing): Future[Thing] = {
 
+
+    // TODO: Remove Duplicate Query
     def createQuery: String = {
 
       val thingChildren = thing.children
       val isChildrenEmpty = thingChildren.isEmpty
-      val newNodePlaceholder = "n"
-      val childrenIndexes = 0 until thingChildren.count(_ => true)
+      val n = "n"
+      val childrenIndices = 0 until thingChildren.count(_ => true)
 
       val firstQueryPart = if (!isChildrenEmpty) {
 
@@ -76,8 +78,8 @@ extends Neo4jOGMHelper {
 
       } else ""
 
-      val createNodeQuery = s"""CREATE ($newNodePlaceholder:$ThingLabel {$IdKey: "${thing._id}"})"""
-      val createRelationsQuery = childrenIndexes.map(i => s"""($newNodePlaceholder)-[r$i:CHILD]->(n$i)""").mkString("", ",", "")
+      val createNodeQuery = s"""CREATE ($n:$ThingLabel {$IdKey: "${thing._id}"})"""
+      val createRelationsQuery = childrenIndices.map(i => s"""($n)-[r$i:CHILD]->(n$i)""").mkString("", ",", "")
 
       val query = s"$firstQueryPart $createNodeQuery ${if (isChildrenEmpty) "" else s", $createRelationsQuery"}"
 
@@ -103,6 +105,7 @@ extends Neo4jOGMHelper {
       query
     }
 
+    // TODO: Remove Duplicate Query
     def createChildrenQuery: String = {
 
       val childrenIndexes = 0 until thingChildren.count(_ => true)

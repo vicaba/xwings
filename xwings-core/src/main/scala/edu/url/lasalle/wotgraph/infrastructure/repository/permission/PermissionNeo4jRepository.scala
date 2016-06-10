@@ -11,22 +11,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object PermissionNeo4jRepository {
 
-  val IdKey = "_id"
-
-  val DescKey = "desc"
+  object Keys {
+    val PermLabel = "Perm"
+  }
 
 }
 
 case class PermissionNeo4jRepository(
-                                 session: Session
-                               )
-                               (implicit ec: ExecutionContext)
+                                      session: Session
+                                    )
+                                    (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
-  import PermissionNeo4jRepository._
+  import Permission.Keys._
+  import PermissionNeo4jRepository.Keys._
   import Neo4jHelper._
-
-  private val PermLabel = "Perm"
 
   def findById(id: UUID): Future[Option[Permission]] = {
 
@@ -56,24 +55,24 @@ case class PermissionNeo4jRepository(
 
     def getPermissionsForNonEmptyIterable(perms: Iterable[Permission]): Future[Iterable[Permission]] = {
 
-        val firstQueryPart = s"""MATCH (n:$PermLabel) WHERE"""
-        val queryFilters = perms.map(_.id.toString).mkString(s"""n.$IdKey = """", s"""" OR n.$IdKey = """", """"""")
-        val queryEnd = "RETURN n"
+      val firstQueryPart = s"""MATCH (n:$PermLabel) WHERE"""
+      val queryFilters = perms.map(_.id.toString).mkString(s"""n.$IdKey = """", s"""" OR n.$IdKey = """", """"""")
+      val queryEnd = "RETURN n"
 
-        val query = s"$firstQueryPart $queryFilters $queryEnd"
+      val query = s"$firstQueryPart $queryFilters $queryEnd"
 
-        Future {
-          val queryResult = session.query(query, createEmptyMap)
-          val result = resultCollectionAsScalaCollection(queryResult).map(mapAsPermission)
-          result
+      Future {
+        val queryResult = session.query(query, createEmptyMap)
+        val result = resultCollectionAsScalaCollection(queryResult).map(mapAsPermission)
+        result
 
-        } recover { case e: Throwable => throw new ReadException("Can't get Things") }
-      }
+      } recover { case e: Throwable => throw new ReadException("Can't get Things") }
+    }
 
     perms match {
-        case _ if perms.isEmpty => Future.successful(perms)
-        case _ => getPermissionsForNonEmptyIterable(perms)
-      }
+      case _ if perms.isEmpty => Future.successful(perms)
+      case _ => getPermissionsForNonEmptyIterable(perms)
+    }
 
   }
 
@@ -96,10 +95,8 @@ case class PermissionNeo4jRepository(
     val permId = perm.id
     val permDesc = perm.desc
 
-    def createQuery: String = {
-
+    val createQuery =
       s"""CREATE (p:$PermLabel { $IdKey: "$permId", $DescKey: "$permDesc" })"""
-    }
 
     Future {
       session.query(createQuery, createEmptyMap)

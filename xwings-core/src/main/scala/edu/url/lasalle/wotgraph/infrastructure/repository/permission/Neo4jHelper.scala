@@ -8,9 +8,11 @@ import scala.collection._
 
 object Neo4jHelper {
 
+  import Permission.Keys._
+
   def mapAsPermission(map: mutable.Map[String, AnyRef]): Permission = {
-    val id = UUID.fromString(map.get(PermissionNeo4jRepository.IdKey).get.asInstanceOf[String])
-    val desc = map.get(PermissionNeo4jRepository.DescKey).get.asInstanceOf[String]
+    val id = UUID.fromString(map.get(IdKey).get.asInstanceOf[String])
+    val desc = map.get(DescKey).get.asInstanceOf[String]
     Permission(id, desc)
   }
 
