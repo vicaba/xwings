@@ -41,7 +41,7 @@ case class RoleNeo4jRepository(
           |RETURN n.$IdKey AS $IdKey, n.$NameKey AS $NameKey,
           |n2.${Perm.IdKey} AS ${Perm.IdKey}, n2.${Perm.DescKey} AS ${Perm.DescKey}""".stripMargin
 
-    val queryResult = session.query(query, createEmptyMap)
+    val queryResult = session.query(query, emptyMap)
 
     val result = resultCollectionAsScalaCollection(queryResult)
 
@@ -75,7 +75,7 @@ case class RoleNeo4jRepository(
     )
 
     Future {
-      session.query(createQuery, createEmptyMap)
+      session.query(createQuery, emptyMap)
       role
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Role with id: $roleId") }
   }

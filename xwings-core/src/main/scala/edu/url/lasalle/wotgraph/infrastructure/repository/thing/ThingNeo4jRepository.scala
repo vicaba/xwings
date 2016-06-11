@@ -4,9 +4,13 @@ import java.util.UUID
 
 import edu.url.lasalle.wotgraph.application.exceptions.{DeleteException, ReadException, SaveException}
 import edu.url.lasalle.wotgraph.domain.entity.thing.Thing
+import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Permission
+import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Permission.Keys
+import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Role.Keys._
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.Neo4jConf.Config
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.entity.Neo4jThing
 import edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.helpers.Neo4jOGMHelper
+import edu.url.lasalle.wotgraph.infrastructure.repository.permission.PermissionNeo4jRepository
 import org.neo4j.ogm.cypher.{BooleanOperator, Filter, Filters}
 
 import scala.collection.JavaConverters._
@@ -19,7 +23,7 @@ case class ThingNeo4jRepository(
                                  session: Session
                                )
                                (implicit ec: ExecutionContext)
-extends Neo4jOGMHelper {
+  extends Neo4jOGMHelper {
 
   val DefaultQueryDepth = 1
 
@@ -28,6 +32,8 @@ extends Neo4jOGMHelper {
   val IdKey = ThingSerializer.IdKey
 
   val ChildrenKey = ThingSerializer.ChildrenKey
+
+  val ChildRelKey = "CHILD"
 
   def findById(id: UUID): Future[Option[Thing]] = {
 
@@ -38,7 +44,7 @@ extends Neo4jOGMHelper {
            |MATCH (n:$ThingLabel {_id: "$id"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2)
            | RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey""".stripMargin;
 
-      val queryResult = session.query(query, createEmptyMap)
+      val queryResult = session.query(query, emptyMap)
       val result = resultCollectionAsScalaCollection(queryResult)
 
       result.headOption.map { head =>
@@ -57,82 +63,49 @@ extends Neo4jOGMHelper {
 
   def create(thing: Thing): Future[Thing] = {
 
-
-    // TODO: Remove Duplicate Query
-    def createQuery: String = {
-
-      val thingChildren = thing.children
-      val isChildrenEmpty = thingChildren.isEmpty
-      val n = "n"
-      val childrenIndices = 0 until thingChildren.count(_ => true)
-
-      val firstQueryPart = if (!isChildrenEmpty) {
-
-        val firstQueryMatch = "MATCH"
-
-        val childrenQueryMatch = thingChildren.map(_._id.toString).zipWithIndex.map {
-          case (id, i) => s"""(n$i:$ThingLabel {$IdKey: "$id"})"""
-        }.mkString("", ",", "")
-
-        s"$firstQueryMatch $childrenQueryMatch"
-
-      } else ""
-
-      val createNodeQuery = s"""CREATE ($n:$ThingLabel {$IdKey: "${thing._id}"})"""
-      val createRelationsQuery = childrenIndices.map(i => s"""($n)-[r$i:CHILD]->(n$i)""").mkString("", ",", "")
-
-      val query = s"$firstQueryPart $createNodeQuery ${if (isChildrenEmpty) "" else s", $createRelationsQuery"}"
-
-      query
-
-    }
+    val createQuery = createAndLink1QueryFactory(
+      nodeDefinition = s"""(n:$ThingLabel {$IdKey: "${thing._id}"})""",
+      relatees = thing.children,
+      relateeQueryMatchDefinition = (i: Int, t: Thing) =>
+        s"""(n$i:$ThingLabel {$IdKey: "${t._id}"})""",
+      relationDefinition = (i: Int) =>
+        s"""(n)-[r$i:$ChildRelKey]->(n$i)"""
+    )
 
     Future {
-      session.query(createQuery, createEmptyMap)
+      session.query(createQuery, emptyMap)
       thing
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}") }
   }
 
   def update(thing: Thing): Future[Thing] = {
 
-    val firstQueryMatch = "MATCH"
-    val currentThingMatch = s"""(n:$ThingLabel {$IdKey: "${thing._id}"})"""
+    val thingMatch = s"""(n:$ThingLabel {$IdKey: "${thing._id}"})"""
     val thingChildren = thing.children
-    val isChildrenEmpty = thingChildren.isEmpty
 
-    def deleteChildrenQuery: String = {
-      val query = s"""$firstQueryMatch $currentThingMatch-[r:CHILD]->() DELETE r"""
-      query
-    }
+    val deleteChildrenQuery: String =
+      s"""${Keywords.Match} $thingMatch-[r:CHILD]->() DELETE r"""
 
-    // TODO: Remove Duplicate Query
-    def createChildrenQuery: String = {
-
-      val childrenIndexes = 0 until thingChildren.count(_ => true)
-
-      val childrenMatch = thingChildren.map(_._id).zipWithIndex.map {
-        case (id, i) =>
-          s"""(n$i:$ThingLabel {$IdKey: "$id"})"""
-      } mkString("", ",", "")
-
-      val relationshipCreate = childrenIndexes.map(i => s"""(n)-[r$i:CHILD]->(n$i)""") mkString("", ",", "")
-
-      val query = s"""$firstQueryMatch $currentThingMatch, $childrenMatch CREATE $relationshipCreate"""
-
-      query
-    }
+    val linkToChildrenQuery = matchAndLink1QueryFactory(
+      nodeDefinition =  thingMatch,
+      relatees = thingChildren,
+      relateeQueryMatchDefinition = (i: Int, t: Thing) =>
+        s"""(n$i:$ThingLabel {$IdKey: "${t._id}"})""",
+      relationDefinition = (i: Int) =>
+        s"""(n)-[r$i:$ChildRelKey]->(n$i)"""
+    )
 
     lazy val deleteChildrenF = Future {
-      session.query(deleteChildrenQuery, createEmptyMap)
+      session.query(deleteChildrenQuery, emptyMap)
       thing
     } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of Thing with id: ${thing._id}") }
 
     lazy val createChildrenF = Future {
-      session.query(createChildrenQuery, createEmptyMap)
+      session.query(linkToChildrenQuery, emptyMap)
       thing
     } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of Thing with id: ${thing._id}") }
 
-    if (isChildrenEmpty)
+    if (thingChildren.isEmpty)
       deleteChildrenF
     else
       deleteChildrenF zip createChildrenF map (_ => thing)
@@ -150,7 +123,7 @@ extends Neo4jOGMHelper {
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
       Future {
-        iterableToList(session.query(classOf[Neo4jThing], query, createEmptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
+        iterableToList(session.query(classOf[Neo4jThing], query, emptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
       } recover { case e: Throwable => throw new ReadException("Can't get Things") }
     }
 
@@ -166,7 +139,7 @@ extends Neo4jOGMHelper {
     val query = s"""MATCH (n:$ThingLabel { $IdKey: "${id.toString}"}) DETACH DELETE (n)"""
 
     Future {
-      session.query(query, createEmptyMap)
+      session.query(query, emptyMap)
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
@@ -176,7 +149,7 @@ extends Neo4jOGMHelper {
   }
 
   def deleteAll(): Unit = Future {
-    session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", createEmptyMap)
+    session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", emptyMap)
   }
 
 }

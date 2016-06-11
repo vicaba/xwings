@@ -53,7 +53,7 @@ case class UserNeo4jRepository(
         s"""MATCH (n:$UserLabel {$IdKey: "$id"}), (n)-[r:$RoleRelKey]->(n2)
             | RETURN n.$IdKey AS $IdKey, n2.${RoleK.IdKey} AS ${RoleK.IdKey} n2.${RoleK.NameKey} AS ${RoleK.NameKey}""".stripMargin;
 
-      val queryResult = session.query(query, createEmptyMap)
+      val queryResult = session.query(query, emptyMap)
 
       val result = queryResult.queryResults().asScala.map(_.asScala)
 
@@ -104,12 +104,12 @@ case class UserNeo4jRepository(
     }
 
     lazy val deleteRoleF = Future {
-      session.query(deleteRoleRelationQuery, createEmptyMap)
+      session.query(deleteRoleRelationQuery, emptyMap)
       user
     } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of User with id: $userId") }
 
     lazy val createRoleF = Future {
-      session.query(createRoleRelationQuery, createEmptyMap)
+      session.query(createRoleRelationQuery, emptyMap)
       user
     } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of User with id: $userId") }
 
@@ -135,7 +135,7 @@ case class UserNeo4jRepository(
 
 
     Future {
-      val r = session.query(createQuery, createEmptyMap)
+      val r = session.query(createQuery, emptyMap)
       if (r.queryStatistics().getNodesCreated == 1) Good(user) else Bad(One("User not created"))
     } recover { case e: Throwable => throw new SaveException(s"sCan't create User with id: ${user.id}") }
   }
@@ -151,7 +151,7 @@ case class UserNeo4jRepository(
     val query = s"""MATCH (n:$UserLabel { $IdKey: "${id.toString}"}) DETACH DELETE n"""
 
     Future {
-      session.query(query, createEmptyMap)
+      session.query(query, emptyMap)
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)

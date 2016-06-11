@@ -20,9 +20,20 @@ object Neo4jOGMHelper {
 
 }
 
+
 trait Neo4jOGMHelper {
 
-  protected def createEmptyMap = new util.HashMap[String, Object]
+  type Neo4jKeyword = String
+
+  object Keywords {
+
+    val Match: Neo4jKeyword = "MATCH"
+
+    val Create: Neo4jKeyword = "CREATE"
+
+  }
+
+  protected def emptyMap = new util.HashMap[String, Object]
 
   protected def resultCollectionAsScalaCollection(neo4jResult: Result) =
     neo4jResult.queryResults().asScala.map(_.asScala)
@@ -46,8 +57,39 @@ trait Neo4jOGMHelper {
     relatees: Iterable[T],
     relateeQueryMatchDefinition: (Int, T) => String,
     relationDefinition: (Int) => String
-  ): String = {
+  ): String =
+    matchOrCreateAndLink1QueryFactory(
+      Keywords.Create,
+      nodeDefinition,
+      relatees,
+      relateeQueryMatchDefinition,
+      relationDefinition)
 
+  protected def matchAndLink1QueryFactory[T]
+  (
+    nodeDefinition: String,
+    relatees: Iterable[T],
+    relateeQueryMatchDefinition: (Int, T) => String,
+    relationDefinition: (Int) => String
+  ): String =
+    matchOrCreateAndLink1QueryFactory(
+      Keywords.Match,
+      nodeDefinition,
+      relatees,
+      relateeQueryMatchDefinition,
+      relationDefinition)
+
+
+
+
+  private def matchOrCreateAndLink1QueryFactory[T]
+  (
+    matchOrCreate: Neo4jKeyword,
+    nodeDefinition: String,
+    relatees: Iterable[T],
+    relateeQueryMatchDefinition: (Int, T) => String,
+    relationDefinition: (Int) => String
+  ): String = {
 
     val isRelateesEmpty = relatees.isEmpty
     val relateesIndices = 0 until relatees.count(_ => true)
@@ -57,10 +99,10 @@ trait Neo4jOGMHelper {
         s"MATCH ${relatees.zipWithIndex.map { case (r, i) => relateeQueryMatchDefinition(i, r) }.mkString("", ",", "")}"
       else ""
 
-    val createNodeQuery = s"CREATE $nodeDefinition"
-    val createRelationsQuery = relateesIndices.map( i => relationDefinition(i))
+    val nodeQuery = s"$matchOrCreate $nodeDefinition"
+    val createRelationsQuery = relateesIndices.map(i => relationDefinition(i)).mkString("", ",", "")
 
-    s"$relateesQueryMatch $createNodeQuery ${if (isRelateesEmpty) "" else s", $createRelationsQuery"}"
+    s"$relateesQueryMatch $nodeQuery ${if (isRelateesEmpty) "" else s", $createRelationsQuery"}"
 
   }
 

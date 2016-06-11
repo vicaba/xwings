@@ -34,7 +34,7 @@ case class PermissionNeo4jRepository(
       val query =
         s"""MATCH (n:$PermLabel { $IdKey: "$id" }) RETURN n.$IdKey AS $IdKey, n.$DescKey AS $DescKey"""
 
-      val queryResult = session.query(query, createEmptyMap)
+      val queryResult = session.query(query, emptyMap)
 
       val result = resultCollectionAsScalaCollection(queryResult)
 
@@ -62,7 +62,7 @@ case class PermissionNeo4jRepository(
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
       Future {
-        val queryResult = session.query(query, createEmptyMap)
+        val queryResult = session.query(query, emptyMap)
         val result = resultCollectionAsScalaCollection(queryResult).map(mapAsPermission)
         result
 
@@ -84,7 +84,7 @@ case class PermissionNeo4jRepository(
     val query = s"""MATCH (n:$PermLabel { $IdKey: "$permId" }) SET n.$DescKey = "$permDesc""""
 
     Future {
-      session.query(query, createEmptyMap)
+      session.query(query, emptyMap)
       perm
     } recover { case e: Throwable => throw new SaveException(s"sCan't update Permission with id: $permId") }
 
@@ -99,7 +99,7 @@ case class PermissionNeo4jRepository(
       s"""CREATE (p:$PermLabel { $IdKey: "$permId", $DescKey: "$permDesc" })"""
 
     Future {
-      session.query(createQuery, createEmptyMap)
+      session.query(createQuery, emptyMap)
       perm
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Permission with id: $permId") }
 
@@ -110,7 +110,7 @@ case class PermissionNeo4jRepository(
     val query = s"""MATCH (n:$PermLabel { $IdKey: "$id" }) DETACH DELETE n"""
 
     Future {
-      session.query(query, createEmptyMap)
+      session.query(query, emptyMap)
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
@@ -121,7 +121,7 @@ case class PermissionNeo4jRepository(
   }
 
   def deleteAll(): Unit = Future {
-    session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", createEmptyMap)
+    session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap)
   }
 
 }
