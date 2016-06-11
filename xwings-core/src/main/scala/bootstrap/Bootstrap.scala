@@ -2,14 +2,14 @@ package bootstrap
 
 import java.util.UUID
 
-import edu.url.lasalle.wotgraph.domain.entity.thing.action.ContextProvider
-import edu.url.lasalle.wotgraph.domain.entity.thing.{Action, Metadata, Thing}
-import edu.url.lasalle.wotgraph.domain.entity.user.authorization.Permission
-import edu.url.lasalle.wotgraph.domain.repository.thing.ThingRepository
-import edu.url.lasalle.wotgraph.infrastructure.DependencyInjector._
-import edu.url.lasalle.wotgraph.infrastructure.repository.permission.PermissionNeo4jRepository
+import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
+import wotgraph.app.thing.domain.repository.ThingRepository
+import wotgraph.app.thing.domain.service.ContextProvider
+import wotgraph.toolkit.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
+import wotgraph.app.permission.domain.entity.Permission
+import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
 
 import scala.concurrent.{Await, Future}
 

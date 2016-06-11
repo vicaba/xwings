@@ -1,0 +1,127 @@
+package wotgraph.app.permission.infrastructure.repository.neo4j
+
+import java.util.UUID
+
+import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
+import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
+import org.neo4j.ogm.session.Session
+import wotgraph.app.permission.domain.entity.Permission
+
+import scala.concurrent.{ExecutionContext, Future}
+
+object PermissionNeo4jRepository {
+
+  object Keys {
+    val PermLabel = "Perm"
+  }
+
+}
+
+case class PermissionNeo4jRepository(
+                                      session: Session
+                                    )
+                                    (implicit ec: ExecutionContext)
+  extends Neo4jOGMHelper {
+
+  import Neo4jHelper._
+  import Permission.Keys._
+  import PermissionNeo4jRepository.Keys._
+
+  def findById(id: UUID): Future[Option[Permission]] = {
+
+    Future {
+
+      val query =
+        s"""MATCH (n:$PermLabel { $IdKey: "$id" }) RETURN n.$IdKey AS $IdKey, n.$DescKey AS $DescKey"""
+
+      val queryResult = session.query(query, emptyMap)
+
+      val result = resultCollectionAsScalaCollection(queryResult)
+
+      result.headOption.map { head =>
+
+        val permId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
+        val permDesc = head.get(DescKey).get.asInstanceOf[String]
+
+        Permission(permId, permDesc)
+
+      }
+
+    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Permission with id: $id") }
+
+  }
+
+  def getSome(perms: Iterable[Permission]): Future[Iterable[Permission]] = {
+
+    def getPermissionsForNonEmptyIterable(perms: Iterable[Permission]): Future[Iterable[Permission]] = {
+
+      val firstQueryPart = s"""MATCH (n:$PermLabel) WHERE"""
+      val queryFilters = perms.map(_.id.toString).mkString(s"""n.$IdKey = """", s"""" OR n.$IdKey = """", """"""")
+      val queryEnd = "RETURN n"
+
+      val query = s"$firstQueryPart $queryFilters $queryEnd"
+
+      Future {
+        val queryResult = session.query(query, emptyMap)
+        val result = resultCollectionAsScalaCollection(queryResult).map(mapAsPermission)
+        result
+
+      } recover { case e: Throwable => throw new ReadException("Can't get Things") }
+    }
+
+    perms match {
+      case _ if perms.isEmpty => Future.successful(perms)
+      case _ => getPermissionsForNonEmptyIterable(perms)
+    }
+
+  }
+
+  def update(perm: Permission): Future[Permission] = {
+
+    val permId = perm.id
+    val permDesc = perm.desc
+
+    val query = s"""MATCH (n:$PermLabel { $IdKey: "$permId" }) SET n.$DescKey = "$permDesc""""
+
+    Future {
+      session.query(query, emptyMap)
+      perm
+    } recover { case e: Throwable => throw new SaveException(s"sCan't update Permission with id: $permId") }
+
+  }
+
+  def create(perm: Permission): Future[Permission] = {
+
+    val permId = perm.id
+    val permDesc = perm.desc
+
+    val createQuery =
+      s"""CREATE (p:$PermLabel { $IdKey: "$permId", $DescKey: "$permDesc" })"""
+
+    Future {
+      session.query(createQuery, emptyMap)
+      perm
+    } recover { case e: Throwable => throw new SaveException(s"sCan't create Permission with id: $permId") }
+
+  }
+
+  def delete(id: UUID): Future[UUID] = {
+
+    val query = s"""MATCH (n:$PermLabel { $IdKey: "$id" }) DETACH DELETE n"""
+
+    Future {
+      session.query(query, emptyMap)
+    } flatMap { r =>
+      if (r.queryStatistics.getNodesDeleted == 1)
+        Future.successful(id)
+      else
+        Future.failed(new DeleteException(s"Can't delete Permission with id: ${id.toString}"))
+    }
+
+  }
+
+  def deleteAll(): Unit = Future {
+    session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap)
+  }
+
+}
