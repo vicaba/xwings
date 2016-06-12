@@ -8,6 +8,8 @@ import org.neo4j.ogm.session.Session
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
 import wotgraph.app.role.domain.entity.Role
+import wotgraph.app.role.infrastructure.serialization.keys.RoleKeys._
+import wotgraph.app.permission.infrastructure.serialization.keys.PermissionKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,17 +32,14 @@ case class RoleNeo4jRepository(
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
-  import Permission.{Keys => Perm}
-  import Role.Keys._
   import RoleNeo4jRepository.Keys._
-
 
   def findById(id: UUID): Future[Option[Role]] = Future {
 
     val query =
-      s"""MATCH (n:$RoleLabel { $IdKey: "$id" }), (n)-[r:$PermissionRelKey]->(n2)
-          |RETURN n.$IdKey AS $IdKey, n.$NameKey AS $NameKey,
-          |n2.${Perm.IdKey} AS ${Perm.IdKey}, n2.${Perm.DescKey} AS ${Perm.DescKey}""".stripMargin
+      s"""MATCH (n:$RoleLabel { $Id: "$id" }), (n)-[r:$PermissionRelKey]->(n2)
+          |RETURN n.$Id AS $Id, n.$Name AS $Name,
+          |n2.${PermissionKeys.Id} AS ${PermissionKeys.Id}, n2.${PermissionKeys.Desc} AS ${PermissionKeys.Desc}""".stripMargin
 
     val queryResult = session.query(query, emptyMap)
 
@@ -48,8 +47,8 @@ case class RoleNeo4jRepository(
 
     result.headOption.map { head =>
 
-      val roleId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
-      val roleName = head.get(NameKey).get.asInstanceOf[String]
+      val roleId = UUID.fromString(head.get(Id).get.asInstanceOf[String])
+      val roleName = head.get(Name).get.asInstanceOf[String]
 
       // TODO: Add Permissions to the role object
 
@@ -59,6 +58,21 @@ case class RoleNeo4jRepository(
 
   } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Role with id: $id") }
 
+  def getAll: Future[List[Role]] = {
+    val query = s"""MATCH (n:$RoleLabel) RETURN n.$Id AS $Id, n.$Name AS $Name"""
+
+    Future {
+      val queryResult = session.query(query, emptyMap)
+      val result = resultCollectionAsScalaCollection(queryResult)
+
+      result.map { e =>
+        val roleId = UUID.fromString(e.get(Id).get.asInstanceOf[String])
+        val roleName = e.get(Name).get.asInstanceOf[String]
+        Role(roleId, roleName)
+      }.toList
+    }
+  }
+
   def update(role: Role): Future[Role] = ???
 
   def create(role: Role): Future[Role] = {
@@ -67,10 +81,10 @@ case class RoleNeo4jRepository(
     val roleName = role.name
 
     val createQuery = createAndLink1QueryFactory(
-      nodeDefinition = s"""(p:$RoleLabel { $IdKey: "$roleId", $NameKey: "$roleName" })""",
+      nodeDefinition = s"""(p:$RoleLabel { $Id: "$roleId", $Name: "$roleName" })""",
       relatees = role.permissions,
       relateeQueryMatchDefinition = (i: Int, p: Permission) =>
-        s"""(n$i:${PermissionNeo4jRepository.Keys.PermLabel} {${Perm.IdKey}: "${p.id}"})""",
+        s"""(n$i:${PermissionNeo4jRepository.Keys.PermLabel} {${PermissionKeys.Id}: "${p.id}"})""",
       relationDefinition = (i: Int) =>
         s"""(n)-[r$i:$PermissionRelKey]->(n$i)"""
     )

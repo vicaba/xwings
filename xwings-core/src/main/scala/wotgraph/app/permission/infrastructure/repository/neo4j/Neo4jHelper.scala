@@ -8,11 +8,11 @@ import scala.collection._
 
 object Neo4jHelper {
 
-  import Permission.Keys._
+  import wotgraph.app.permission.infrastructure.serialization.keys.PermissionKeys
 
   def mapAsPermission(map: mutable.Map[String, AnyRef]): Permission = {
-    val id = UUID.fromString(map.get(IdKey).get.asInstanceOf[String])
-    val desc = map.get(DescKey).get.asInstanceOf[String]
+    val id = UUID.fromString(map.get(PermissionKeys.Id).get.asInstanceOf[String])
+    val desc = map.get(PermissionKeys.Desc).get.asInstanceOf[String]
     Permission(id, desc)
   }
 

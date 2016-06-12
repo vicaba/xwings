@@ -4,11 +4,11 @@ import java.util.UUID
 
 import wotgraph.app.user.domain.entity.User
 import wotgraph.app.user.domain.repository.UserRepository
-import wotgraph.app.user.infrastructure.repository.user.neo4j.UserNeo4jRepository
 import wotgraph.toolkit.DependencyInjector._
 import org.scalactic.{Every, Or}
 import scaldi.Injectable._
 import wotgraph.app.role.domain.entity.Role
+import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 

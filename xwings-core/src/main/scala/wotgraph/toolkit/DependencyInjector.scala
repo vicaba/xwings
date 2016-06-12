@@ -1,22 +1,22 @@
 package wotgraph.toolkit
 
-import wotgraph.app.thing.application.usecase._
-import wotgraph.app.thing.domain.repository.ThingRepository
-import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
-import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
-import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
-import wotgraph.app.user.domain.repository.UserRepository
-import wotgraph.app.user.infrastructure.repository.user.neo4j.UserNeo4jRepository
-import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
-import wotgraph.toolkit.repository.neo4j.Neo4jConf
-import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
 import scaldi.Module
 import wotgraph.app.permission.domain.repository.PermissionRepository
 import wotgraph.app.permission.infrastructure.repository.PermissionRepositoryImpl
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
+import wotgraph.app.thing.application.usecase._
+import wotgraph.app.thing.domain.repository.ThingRepository
+import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
+import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
+import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
+import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
+import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
+import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
+import wotgraph.toolkit.repository.neo4j.Neo4jConf
+import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 
 object DependencyInjector {
 

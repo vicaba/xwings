@@ -2,10 +2,11 @@ package wotgraph.app.permission.infrastructure.repository.neo4j
 
 import java.util.UUID
 
-import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
-import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.session.Session
+import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
 import wotgraph.app.permission.domain.entity.Permission
+import wotgraph.app.permission.infrastructure.serialization.keys.PermissionKeys._
+import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,7 +25,6 @@ case class PermissionNeo4jRepository(
   extends Neo4jOGMHelper {
 
   import Neo4jHelper._
-  import Permission.Keys._
   import PermissionNeo4jRepository.Keys._
 
   def findById(id: UUID): Future[Option[Permission]] = {
@@ -32,7 +32,7 @@ case class PermissionNeo4jRepository(
     Future {
 
       val query =
-        s"""MATCH (n:$PermLabel { $IdKey: "$id" }) RETURN n.$IdKey AS $IdKey, n.$DescKey AS $DescKey"""
+        s"""MATCH (n:$PermLabel { $Id: "$id" }) RETURN n.$Id AS $Id, n.$Desc AS $Desc"""
 
       val queryResult = session.query(query, emptyMap)
 
@@ -40,8 +40,8 @@ case class PermissionNeo4jRepository(
 
       result.headOption.map { head =>
 
-        val permId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
-        val permDesc = head.get(DescKey).get.asInstanceOf[String]
+        val permId = UUID.fromString(head.get(Id).get.asInstanceOf[String])
+        val permDesc = head.get(Desc).get.asInstanceOf[String]
 
         Permission(permId, permDesc)
 
@@ -56,7 +56,7 @@ case class PermissionNeo4jRepository(
     def getPermissionsForNonEmptyIterable(perms: Iterable[Permission]): Future[Iterable[Permission]] = {
 
       val firstQueryPart = s"""MATCH (n:$PermLabel) WHERE"""
-      val queryFilters = perms.map(_.id.toString).mkString(s"""n.$IdKey = """", s"""" OR n.$IdKey = """", """"""")
+      val queryFilters = perms.map(_.id.toString).mkString(s"""n.$Id = """", s"""" OR n.$Id = """", """"""")
       val queryEnd = "RETURN n"
 
       val query = s"$firstQueryPart $queryFilters $queryEnd"
@@ -81,7 +81,7 @@ case class PermissionNeo4jRepository(
     val permId = perm.id
     val permDesc = perm.desc
 
-    val query = s"""MATCH (n:$PermLabel { $IdKey: "$permId" }) SET n.$DescKey = "$permDesc""""
+    val query = s"""MATCH (n:$PermLabel { $Id: "$permId" }) SET n.$Desc = "$permDesc""""
 
     Future {
       session.query(query, emptyMap)
@@ -96,7 +96,7 @@ case class PermissionNeo4jRepository(
     val permDesc = perm.desc
 
     val createQuery =
-      s"""CREATE (p:$PermLabel { $IdKey: "$permId", $DescKey: "$permDesc" })"""
+      s"""CREATE (p:$PermLabel { $Id: "$permId", $Desc: "$permDesc" })"""
 
     Future {
       session.query(createQuery, emptyMap)
@@ -107,7 +107,7 @@ case class PermissionNeo4jRepository(
 
   def delete(id: UUID): Future[UUID] = {
 
-    val query = s"""MATCH (n:$PermLabel { $IdKey: "$id" }) DETACH DELETE n"""
+    val query = s"""MATCH (n:$PermLabel { $Id: "$id" }) DETACH DELETE n"""
 
     Future {
       session.query(query, emptyMap)

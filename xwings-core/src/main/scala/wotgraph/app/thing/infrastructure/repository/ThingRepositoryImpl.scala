@@ -11,9 +11,6 @@ import play.api.libs.iteratee.Enumerator
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by vicaba on 11/06/16.
-  */
 case class ThingRepositoryImpl(
                                 thingNeo4jRepository: ThingNeo4jRepository,
                                 thingMongoDbRepository: ThingMongoDbRepository

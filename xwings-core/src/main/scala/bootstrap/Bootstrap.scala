@@ -72,7 +72,7 @@ object PermissionHelper {
 
   def createNodes(): Future[List[Permission]] = {
 
-    val p = Permission(desc = "a perm")
+    val p = Permission(desc = "Create a Thing")
 
     repo.create(p).map(_ => List(p))
   }

@@ -1,4 +1,4 @@
-package wotgraph.app.user.infrastructure.repository.user.neo4j
+package wotgraph.app.user.infrastructure.repository.neo4j
 
 import java.util.UUID
 
@@ -10,6 +10,9 @@ import org.scalactic._
 import org.slf4j.LoggerFactory
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
+import wotgraph.app.user.infrastructure.serialization.keys.UserKeys._
+import wotgraph.app.role.infrastructure.serialization.keys.RoleKeys
+
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -32,8 +35,6 @@ case class UserNeo4jRepository(
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
-  import Role.{Keys => RoleK}
-  import User.Keys._
   import UserNeo4jRepository.Keys._
 
 
@@ -50,8 +51,8 @@ case class UserNeo4jRepository(
     Future {
 
       val query =
-        s"""MATCH (n:$UserLabel {$IdKey: "$id"}), (n)-[r:$RoleRelKey]->(n2)
-            | RETURN n.$IdKey AS $IdKey, n2.${RoleK.IdKey} AS ${RoleK.IdKey} n2.${RoleK.NameKey} AS ${RoleK.NameKey}""".stripMargin;
+        s"""MATCH (n:$UserLabel {$Id: "$id"}), (n)-[r:$RoleRelKey]->(n2)
+            | RETURN n.$Id AS $Id, n2.${RoleKeys.Id} AS ${RoleKeys.Id} n2.${RoleKeys.Name} AS ${RoleKeys.Name}""".stripMargin;
 
       val queryResult = session.query(query, emptyMap)
 
@@ -59,9 +60,9 @@ case class UserNeo4jRepository(
 
       result.headOption.map { head =>
 
-        val userId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
-        val roleId = UUID.fromString(head.get({RoleK.IdKey}).get.asInstanceOf[String])
-        val roleName = head.get({RoleK.IdKey}).get.asInstanceOf[String]
+        val userId = UUID.fromString(head.get(Id).get.asInstanceOf[String])
+        val roleId = UUID.fromString(head.get({RoleKeys.Id}).get.asInstanceOf[String])
+        val roleName = head.get({RoleKeys.Id}).get.asInstanceOf[String]
         // The role must exist
         val role = Role(roleId, roleName)
 
@@ -84,7 +85,7 @@ case class UserNeo4jRepository(
     val userId = user.id
 
     val firstQueryMatch = "MATCH"
-    val currentUserMatch = s"""(n:$UserLabel {$IdKey: "$userId"})"""
+    val currentUserMatch = s"""(n:$UserLabel {$Id: "$userId"})"""
 
     def deleteRoleRelationQuery: String = {
       val query = s"""$firstQueryMatch $currentUserMatch-[r:$RoleRelKey]->() DELETE r"""
@@ -94,7 +95,7 @@ case class UserNeo4jRepository(
     def createRoleRelationQuery: String = {
 
       val roleId = user.role.id
-      val roleMatch = s"""(n2:${RoleNeo4jRepository.Keys.RoleLabel} {${RoleK.IdKey}: $roleId})"""
+      val roleMatch = s"""(n2:${RoleNeo4jRepository.Keys.RoleLabel} {${RoleKeys.Id}: $roleId})"""
 
       val relationshipCreate = s"""(n)->[r:$RoleRelKey]->(n2)"""
 
@@ -129,8 +130,8 @@ case class UserNeo4jRepository(
 
     def createQuery: String = {
 
-      s"""MATCH (role:${RoleNeo4jRepository.Keys.RoleLabel}) WHERE role.${RoleK.IdKey} = "$roleId"
-          |CREATE (n:$UserLabel {$IdKey: "${user.id.toString}"})-[r:$RoleRelKey]->(role)""".stripMargin
+      s"""MATCH (role:${RoleNeo4jRepository.Keys.RoleLabel}) WHERE role.${RoleKeys.Id} = "$roleId"
+          |CREATE (n:$UserLabel {$Id: "${user.id.toString}"})-[r:$RoleRelKey]->(role)""".stripMargin
     }
 
 
@@ -148,7 +149,7 @@ case class UserNeo4jRepository(
     */
   def delete(id: UUID): Future[UUID] = {
 
-    val query = s"""MATCH (n:$UserLabel { $IdKey: "${id.toString}"}) DETACH DELETE n"""
+    val query = s"""MATCH (n:$UserLabel { $Id: "${id.toString}"}) DETACH DELETE n"""
 
     Future {
       session.query(query, emptyMap)

@@ -16,4 +16,6 @@ trait RoleRepository {
 
     def findById(id: UUID): Future[Option[Role]]
 
+    def getAll: Future[List[Role]]
+
 }
