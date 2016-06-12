@@ -8,6 +8,7 @@ import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
 import wotgraph.toolkit.repository.neo4j.entity.Neo4jThing
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.session.Session
+import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,9 +25,9 @@ case class ThingNeo4jRepository(
 
   val ThingLabel = "Thing"
 
-  val IdKey = ThingSerializer.IdKey
+  val IdKey = ThingKeys.Id
 
-  val ChildrenKey = ThingSerializer.ChildrenKey
+  val ChildrenKey = ThingKeys.Children
 
   val ChildRelKey = "CHILD"
 
@@ -36,8 +37,8 @@ case class ThingNeo4jRepository(
 
       val query =
         s"""
-           |MATCH (n:$ThingLabel {_id: "$id"}) OPTIONAL MATCH (n)-[r:CHILD]->(n2)
-           | RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey""".stripMargin;
+           |MATCH (n:$ThingLabel {$IdKey: "$id"}) OPTIONAL MATCH (n)-[r:$ChildRelKey]->(n2)
+           | RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey""".stripMargin
 
       val queryResult = session.query(query, emptyMap)
       val result = resultCollectionAsScalaCollection(queryResult)
@@ -79,7 +80,7 @@ case class ThingNeo4jRepository(
     val thingChildren = thing.children
 
     val deleteChildrenQuery: String =
-      s"""${Keywords.Match} $thingMatch-[r:CHILD]->() DELETE r"""
+      s"""${Keywords.Match} $thingMatch-[r:$ChildRelKey]->() DELETE r"""
 
     val linkToChildrenQuery = matchAndLink1QueryFactory(
       nodeDefinition =  thingMatch,

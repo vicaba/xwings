@@ -3,7 +3,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET           /api/v1/things                        wotgraph.app.thing.infrastructure.http.api.controller.ListThingController.execute
+GET           /api/v1/things                        wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.execute
 
 POST          /api/v1/things                        wotgraph.app.thing.infrastructure.http.api.controller.CreateThingController.execute
 
@@ -17,4 +17,4 @@ DELETE        /api/v1/things/:id                    wotgraph.app.thing.infrastru
 
 POST          /api/v1/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.ExecuteThingActionController.execute(id: String, actionName: String)
 
-GET           /api/v1/stream/things                 wotgraph.app.thing.infrastructure.http.api.controller.ListThingController.executeAsStream
+GET           /api/v1/stream/things                 wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream

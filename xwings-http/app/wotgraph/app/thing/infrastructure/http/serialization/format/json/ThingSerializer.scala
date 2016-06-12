@@ -3,7 +3,7 @@ package wotgraph.app.thing.infrastructure.http.serialization.format.json
 import java.util.UUID
 
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
-import wotgraph.app.thing.infrastructure.serialization.format.json.{ThingSerializer => ThingBaseSerializer}
+import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 import wotgraph.app.thing.infrastructure.serialization.format.json.Implicits._
 import play.api.libs.json._
 
@@ -12,26 +12,26 @@ object ThingSerializer {
   object ThingWrites extends OWrites[Thing] {
     override def writes(o: Thing): JsObject = {
 
-      val actions = Json.obj(ThingBaseSerializer.ActionsKey -> o.actions)
+      val actions = Json.obj(ThingKeys.Actions -> o.actions)
 
-      val metadata = Json.obj(ThingBaseSerializer.MetadataKey -> o.metadata)
+      val metadata = Json.obj(ThingKeys.Metadata -> o.metadata)
 
-      val children = Json.obj(ThingBaseSerializer.ChildrenKey -> o.children)
+      val children = Json.obj(ThingKeys.Children -> o.children)
 
-      Json.obj(ThingBaseSerializer.IdKey -> o._id) ++ actions ++ metadata ++ children
+      Json.obj(ThingKeys.Id -> o._id) ++ actions ++ metadata ++ children
     }
   }
 
   object ThingReads extends Reads[Thing] {
     override def reads(json: JsValue): JsResult[Thing] = {
 
-      val id = (json \ ThingBaseSerializer.IdKey).as[UUID]
+      val id = (json \ ThingKeys.Id).as[UUID]
 
-      val actions = (json \ ThingBaseSerializer.ActionsKey).asOpt[Set[Action]] getOrElse Set.empty
+      val actions = (json \ ThingKeys.Actions).asOpt[Set[Action]] getOrElse Set.empty
 
-      val metadata = (json \ ThingBaseSerializer.MetadataKey).asOpt[JsObject] map (Metadata(_))
+      val metadata = (json \ ThingKeys.Metadata).asOpt[JsObject] map (Metadata(_))
 
-      val children = (json \ ThingBaseSerializer.ChildrenKey).asOpt[Set[UUID]] map(_.map(Thing(_))) getOrElse Set.empty
+      val children = (json \ ThingKeys.Children).asOpt[Set[UUID]] map(_.map(Thing(_))) getOrElse Set.empty
 
       JsSuccess(Thing(id, metadata, actions, children))
 
@@ -48,22 +48,22 @@ object ThingMinifiedSerializer {
   object ThingWrites extends OWrites[Thing] {
     override def writes(o: Thing): JsObject = {
 
-      val actions = Json.obj(ThingBaseSerializer.ActionsKey -> o.actions)
+      val actions = Json.obj(ThingKeys.Actions -> o.actions)
 
-      val metadata = Json.obj(ThingBaseSerializer.MetadataKey -> o.metadata)
+      val metadata = Json.obj(ThingKeys.Metadata -> o.metadata)
 
-      Json.obj(ThingBaseSerializer.IdKey -> o._id) ++ actions ++ metadata
+      Json.obj(ThingKeys.Id -> o._id) ++ actions ++ metadata
     }
   }
 
   object ThingReads extends Reads[Thing] {
     override def reads(json: JsValue): JsResult[Thing] = {
 
-      val id = (json \ ThingBaseSerializer.IdKey).as[UUID]
+      val id = (json \ ThingKeys.Id).as[UUID]
 
-      val actions = (json \ ThingBaseSerializer.ActionsKey).asOpt[Set[Action]] getOrElse Set.empty
+      val actions = (json \ ThingKeys.Actions).asOpt[Set[Action]] getOrElse Set.empty
 
-      val metadata = (json \ ThingBaseSerializer.MetadataKey).asOpt[JsObject] map (Metadata(_))
+      val metadata = (json \ ThingKeys.Metadata).asOpt[JsObject] map (Metadata(_))
 
       JsSuccess(Thing(id, metadata, actions))
 

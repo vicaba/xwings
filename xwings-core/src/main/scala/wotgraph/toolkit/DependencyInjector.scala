@@ -1,6 +1,6 @@
 package wotgraph.toolkit
 
-import wotgraph.app.thing.application.usecase.ThingUseCase
+import wotgraph.app.thing.application.usecase._
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
@@ -47,7 +47,12 @@ object DependencyInjector {
       inject[ThingMongoDbRepository](identified by 'ThingMongoDbRepository)
     )
 
-    bind[ThingUseCase] identifiedBy 'ThingUseCase to ThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[CreateThingUseCase] identifiedBy 'CreateThingUseCase to new CreateThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[ShowThingUseCase] identifiedBy 'ShowThingUseCase to new ShowThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[ListThingsUseCase] identifiedBy 'ListThingsUseCase to new ListThingsUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[DeleteThingUseCase] identifiedBy 'DeleteThingUseCase to new DeleteThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[ExecuteThingActionUseCase] identifiedBy 'ExecuteThingActionUseCase to new ExecuteThingActionUseCase(inject[ThingRepository](identified by 'ThingRepository))
 
     bind[UserNeo4jRepository] identifiedBy 'UserNeo4jRepository to UserNeo4jRepository(
       inject[Neo4jSession](identified by 'Neo4jSession)

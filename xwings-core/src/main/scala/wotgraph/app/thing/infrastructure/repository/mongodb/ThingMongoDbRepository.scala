@@ -10,6 +10,7 @@ import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.Json
 import reactivemongo.api.DB
 import reactivemongo.play.json.collection.JSONCollection
+import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -25,7 +26,7 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
       override def getIdFromEntity(entity: Thing): UUID = entity._id
 
-      override val identityName: String = "_id"
+      override val identityName: String = ThingKeys.Id
 
     }
   }
