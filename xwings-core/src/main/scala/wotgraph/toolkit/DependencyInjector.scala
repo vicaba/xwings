@@ -32,7 +32,7 @@ object DependencyInjector {
       val configuration = new Configuration()
       configuration.set("driver", conf.getString("neo4j.ogm.driver"))
       configuration.set("URI", conf.getString("neo4j.ogm.uri"))
-      Neo4jConf.Config(configuration, List("edu.url.lasalle.wotgraph.infrastructure.repository.neo4j.entity"))
+      Neo4jConf.Config(configuration, List("wotgraph.toolkit.repository.neo4j.entity"))
     }
     bind[Neo4jSession] identifiedBy 'Neo4jSession to Neo4jOGMHelper.getSession(
       inject[Neo4jConf.Config](identified by 'Neo4jConfig)
