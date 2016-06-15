@@ -70,12 +70,12 @@ object ThingMinifiedSerializer {
     }
   }
 
-  private val setOfThingsReads = Reads.seq[Thing](ThingReads)
+  val thingSeqReads = Reads.seq[Thing](ThingReads)
 
-  private val setOfThingsWrites = Writes.seq[Thing](ThingWrites)
+  val thingSeqWrites = Writes.seq[Thing](ThingWrites)
 
   val thingFormat = OFormat(ThingReads, ThingWrites)
 
-  val thingSeqFormat = Format(setOfThingsReads, setOfThingsWrites)
+  val thingSeqFormat = Format(thingSeqReads, thingSeqWrites)
 
 }

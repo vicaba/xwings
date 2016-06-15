@@ -14,8 +14,8 @@ object Helper
     with PredefJsonMessages {
 
   def seqOfThingsToHttpResponse(thingsF: Future[Seq[Thing]])(implicit ec: ExecutionContext): Future[Result] = {
-    thingsF map { setOfThings =>
-      val json = ThingMinifiedSerializer.thingSeqFormat.writes(setOfThings)
+    thingsF map { seqOfThings =>
+      val json = ThingMinifiedSerializer.thingSeqFormat.writes(seqOfThings)
       Ok(json)
     } recover {
       case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
