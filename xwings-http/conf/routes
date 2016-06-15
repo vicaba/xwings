@@ -18,3 +18,6 @@ DELETE        /api/v1/things/:id                    wotgraph.app.thing.infrastru
 POST          /api/v1/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.ExecuteThingActionController.execute(id: String, actionName: String)
 
 GET           /api/v1/stream/things                 wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
+
+GET           /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.ListRolesController.execute
+

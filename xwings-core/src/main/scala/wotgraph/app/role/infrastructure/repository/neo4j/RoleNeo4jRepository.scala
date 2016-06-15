@@ -2,9 +2,10 @@ package wotgraph.app.role.infrastructure.repository.neo4j
 
 import java.util.UUID
 
-import wotgraph.app.exceptions.{ReadException, SaveException}
+import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 import org.neo4j.ogm.session.Session
+import org.slf4j.LoggerFactory
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
 import wotgraph.app.role.domain.entity.Role
@@ -34,29 +35,39 @@ case class RoleNeo4jRepository(
 
   import RoleNeo4jRepository.Keys._
 
-  def findById(id: UUID): Future[Option[Role]] = Future {
+  val logger = LoggerFactory.getLogger(classOf[RoleNeo4jRepository]);
+
+  def findById(id: UUID): Future[Option[Role]] = {
+
+    val roleId = s"r$Id"
 
     val query =
       s"""MATCH (n:$RoleLabel { $Id: "$id" }), (n)-[r:$PermissionRelKey]->(n2)
-          |RETURN n.$Id AS $Id, n.$Name AS $Name,
+          |RETURN n.$Id AS $roleId, n.$Name AS $Name,
           |n2.${PermissionKeys.Id} AS ${PermissionKeys.Id}, n2.${PermissionKeys.Desc} AS ${PermissionKeys.Desc}""".stripMargin
 
-    val queryResult = session.query(query, emptyMap)
+    val mapAsPermission = wotgraph.app.permission.infrastructure.repository.neo4j.Neo4jHelper.mapAsPermission _
 
-    val result = resultCollectionAsScalaCollection(queryResult)
+    Future {
 
-    result.headOption.map { head =>
+      val queryResult = session.query(query, emptyMap)
+      val result = resultCollectionAsScalaCollection(queryResult)
 
-      val roleId = UUID.fromString(head.get(Id).get.asInstanceOf[String])
-      val roleName = head.get(Name).get.asInstanceOf[String]
+      val perms = result.map(mapAsPermission).toSet
+      logger.debug(perms.toString())
 
-      // TODO: Add Permissions to the role object
 
-      Role(roleId, roleName)
+      result.headOption.map { head =>
 
-    }
+        val roleId = UUID.fromString(head.get(Id).get.asInstanceOf[String])
+        val roleName = head.get(Name).get.asInstanceOf[String]
 
-  } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Role with id: $id") }
+        Role(roleId, roleName, perms)
+
+      }
+
+    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Role with id: $id") }
+  }
 
   def getAll: Future[List[Role]] = {
     val query = s"""MATCH (n:$RoleLabel) RETURN n.$Id AS $Id, n.$Name AS $Name"""
@@ -81,7 +92,7 @@ case class RoleNeo4jRepository(
     val roleName = role.name
 
     val createQuery = createAndLink1QueryFactory(
-      nodeDefinition = s"""(p:$RoleLabel { $Id: "$roleId", $Name: "$roleName" })""",
+      nodeDefinition = s"""(n:$RoleLabel { $Id: "$roleId", $Name: "$roleName" })""",
       relatees = role.permissions,
       relateeQueryMatchDefinition = (i: Int, p: Permission) =>
         s"""(n$i:${PermissionNeo4jRepository.Keys.PermLabel} {${PermissionKeys.Id}: "${p.id}"})""",
@@ -95,6 +106,22 @@ case class RoleNeo4jRepository(
     } recover { case e: Throwable => throw new SaveException(s"sCan't create Role with id: $roleId") }
   }
 
-  def delete(id: UUID): Future[UUID] = ???
+  def delete(id: UUID): Future[UUID] = {
+
+    val query = s"""MATCH (n:$RoleLabel { $Id: "${id.toString}"}) DETACH DELETE (n)"""
+
+    Future {
+      session.query(query, emptyMap)
+    } flatMap { r =>
+      if (r.queryStatistics.getNodesDeleted == 1)
+        Future.successful(id)
+      else
+        Future.failed(new DeleteException(s"Can't delete thing with id: ${id.toString}"))
+    }
+  }
+
+  def deleteAll(): Unit = Future {
+    session.query(s"""MATCH (n:$RoleLabel) DETACH DELETE n""", emptyMap)
+  }
 
 }

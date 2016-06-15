@@ -6,6 +6,10 @@ import scaldi.Module
 import wotgraph.app.permission.domain.repository.PermissionRepository
 import wotgraph.app.permission.infrastructure.repository.PermissionRepositoryImpl
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
+import wotgraph.app.role.application.usecase.ListRolesUseCase
+import wotgraph.app.role.domain.repository.RoleRepository
+import wotgraph.app.role.infrastructure.repository.RoleRepositoryImpl
+import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
 import wotgraph.app.thing.application.usecase._
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
@@ -68,6 +72,16 @@ object DependencyInjector {
     bind[PermissionRepository] identifiedBy 'PermissionRepository to PermissionRepositoryImpl(
       inject[PermissionNeo4jRepository](identified by 'PermissionNeo4jRepository)
     )
+
+    bind[RoleNeo4jRepository] identifiedBy 'RoleNeo4jRepository to RoleNeo4jRepository(
+      inject[Neo4jSession](identified by 'Neo4jSession)
+    )
+
+    bind[RoleRepository] identifiedBy 'RoleRepository to RoleRepositoryImpl(
+      inject[RoleNeo4jRepository](identified by 'RoleNeo4jRepository)
+    )
+
+    bind[ListRolesUseCase] identifiedBy 'ListRolesUseCase to new ListRolesUseCase(inject[RoleRepository](identified by 'RoleRepository))
 
   }
 

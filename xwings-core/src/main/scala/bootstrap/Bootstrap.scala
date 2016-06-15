@@ -10,7 +10,12 @@ import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
+import wotgraph.app.role.domain.entity.Role
+import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
+import scala.concurrent.duration._
 
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
 
@@ -31,9 +36,6 @@ object ThingHelper {
     t
 
   }
-
-  implicit val ec = scala.concurrent.ExecutionContext.global
-  import scala.concurrent.duration._
 
   val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
@@ -66,15 +68,34 @@ object ThingHelper {
 
 object PermissionHelper {
 
-  implicit val ec = scala.concurrent.ExecutionContext.global
-
   val repo: PermissionNeo4jRepository = inject[PermissionNeo4jRepository](identified by 'PermissionNeo4jRepository)
 
   def createNodes(): Future[List[Permission]] = {
 
     val p = Permission(desc = "Create a Thing")
+    val p2 = Permission(desc = "Delete a Thing")
 
-    repo.create(p).map(_ => List(p))
+    for {
+      fp <- repo.create(p).map(_ => List(p))
+      fp2 <- repo.create(p2).map(_ => List(p2))
+    } yield {
+      fp ::: fp2
+    }
+
+  }
+
+  def deleteNodes() = repo.deleteAll()
+
+}
+
+object RoleHelper {
+
+  val repo: RoleNeo4jRepository = inject[RoleNeo4jRepository](identified by 'RoleNeo4jRepository)
+
+  def createNodes(perms: List[Permission]): Future[List[Role]] = {
+
+    val r = Role(name = "admin", permissions = perms.toSet)
+    repo.create(r).map(_ => List(r))
   }
 
   def deleteNodes() = repo.deleteAll()
@@ -83,19 +104,36 @@ object PermissionHelper {
 
 object Bootstrap {
 
-  implicit val ec = scala.concurrent.ExecutionContext.global
-
   def main(args: Array[String]) {
 
     ThingHelper.deleteNodes()
     PermissionHelper.deleteNodes()
+    RoleHelper.deleteNodes()
 
     ThingHelper.createNodes()
     val f = PermissionHelper.createNodes()
 
-    f.map { l =>
-      PermissionHelper.repo.update(l.head.copy(desc = "hola"))
+    f.map(RoleHelper.createNodes)
+
+
+  }
+
+}
+
+object Query {
+
+  def main(args: Array[String]) {
+    val f = RoleHelper.repo.findById(UUID.fromString("76b0cfe5-07fc-4c23-a855-72e8088f6222"))
+
+    f.map { r =>
+
+      println(r)
+
     }
+
+    println("Hola")
+
+    Await.ready(f, Duration.Inf)
 
   }
 

@@ -7,4 +7,6 @@ object RoleKeys {
 
   val Name = "name"
 
+  val Permissions = "perms"
+
 }
