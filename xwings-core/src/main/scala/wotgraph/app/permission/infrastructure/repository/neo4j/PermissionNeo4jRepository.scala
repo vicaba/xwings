@@ -120,6 +120,19 @@ case class PermissionNeo4jRepository(
 
   }
 
+  def getAll: Future[List[Permission]] = {
+    val query = s"""MATCH (n:$PermLabel)"""
+
+    Future {
+
+      val queryResult = session.query(query, emptyMap)
+      val result = resultCollectionAsScalaCollection(queryResult)
+
+      result.map(mapAsPermission).toList
+
+    }
+  }
+
   def deleteAll(): Unit = Future {
     session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap)
   }

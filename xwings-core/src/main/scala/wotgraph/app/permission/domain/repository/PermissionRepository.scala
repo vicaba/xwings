@@ -3,7 +3,6 @@ package wotgraph.app.permission.domain.repository
 import java.util.UUID
 
 import wotgraph.app.permission.domain.entity.Permission
-
 import scala.concurrent.Future
 
 
@@ -16,5 +15,7 @@ trait PermissionRepository {
   def update(perm: Permission): Future[Option[Permission]]
 
   def delete(id: UUID): Future[UUID]
+
+  def getAll: Future[List[Permission]]
 
 }
