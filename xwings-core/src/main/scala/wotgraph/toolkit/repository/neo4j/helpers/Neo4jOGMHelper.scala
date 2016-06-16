@@ -25,6 +25,8 @@ trait Neo4jOGMHelper {
 
   type Neo4jKeyword = String
 
+  type Neo4jLazyResult = () => Result
+
   object Keywords {
 
     val Match: Neo4jKeyword = "MATCH"
@@ -32,6 +34,8 @@ trait Neo4jOGMHelper {
     val Create: Neo4jKeyword = "CREATE"
 
   }
+
+  protected def n(param: String): String = s"{ $param }"
 
   protected def emptyMap = new util.HashMap[String, Object]
 

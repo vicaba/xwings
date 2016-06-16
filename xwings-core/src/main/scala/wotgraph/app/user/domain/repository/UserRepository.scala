@@ -17,4 +17,7 @@ trait UserRepository {
   def delete(id: UUID): Future[UUID]
 
   def findById(id: UUID): Future[Option[User]]
+
+  def findByCredentials(name: String, password: String): Future[Option[User]]
+
 }

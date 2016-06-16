@@ -5,4 +5,8 @@ object UserKeys {
 
   val Id = "_id"
 
+  val Name = "name"
+
+  val Password = "password"
+
 }

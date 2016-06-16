@@ -29,19 +29,3 @@ case class UserRepositoryImpl(
   override def delete(id: UUID): Future[UUID] = userNeo4jRepository.delete(id)
 
 }
-
-object Main {
-
-  def main(args: Array[String]) {
-    implicit val ec = scala.concurrent.ExecutionContext.global
-    import scala.concurrent.duration._
-
-    val repo: UserRepository = inject[UserRepository](identified by 'UserRepository)
-
-    val f = repo.create(User(role = Role(name = "SomeRole")))
-
-    Await.result(f, 5 seconds)
-
-  }
-
-}
