@@ -2,6 +2,7 @@ package bootstrap
 
 import java.util.UUID
 
+import org.scalactic.{Every, Or}
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.domain.service.ContextProvider
@@ -12,9 +13,10 @@ import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
+import wotgraph.app.user.domain.entity.User
+import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
+
 import scala.concurrent.duration._
-
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Await, Future}
 
@@ -52,13 +54,13 @@ object ThingHelper {
       val t3WithChildren = t3.copy(children = Set(t4))
 
       val f1 = repo.create(t4)
-      Await.result(f1, 3.seconds)
+      Await.result(f1, 6.seconds)
       val f2 = repo.create(t3WithChildren)
-      Await.result(f2, 3.seconds)
+      Await.result(f2, 6.seconds)
       val f3 = repo.create(t2WithChildren)
-      Await.result(f3, 3.seconds)
+      Await.result(f3, 6.seconds)
       val f4 = repo.create(tWithChildren)
-      Await.result(f4, 3.seconds)
+      Await.result(f4, 6.seconds)
     }
   }
 
@@ -104,6 +106,21 @@ object RoleHelper {
 
 }
 
+object UserHelper {
+
+  val repo: UserNeo4jRepository = inject[UserNeo4jRepository](identified by 'UserNeo4jRepository)
+
+  def createNodes(role: Role): Future[User Or Every[String]] = {
+
+    val u = User(name = "Victor", password = "gun", role = role)
+    repo.create(u)
+
+  }
+
+  def deleteNodes() = ???
+
+}
+
 object Bootstrap {
 
   def main(args: Array[String]) {
@@ -115,8 +132,9 @@ object Bootstrap {
     ThingHelper.createNodes()
     val f = PermissionHelper.createNodes()
 
-    f.map(RoleHelper.createNodes)
+    val f2 = f.flatMap(RoleHelper.createNodes)
 
+    f2.map( r => UserHelper.createNodes(r.head))
 
   }
 

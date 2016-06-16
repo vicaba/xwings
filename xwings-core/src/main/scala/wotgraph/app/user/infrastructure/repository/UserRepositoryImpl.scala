@@ -21,7 +21,7 @@ case class UserRepositoryImpl(
 
   override def findById(id: UUID): Future[Option[User]] = userNeo4jRepository.findById(id)
 
-  override def create(user: User):  Future[User Or Every[String]] = userNeo4jRepository.create(user)
+  override def create(user: User): Future[User Or Every[String]] = userNeo4jRepository.create(user)
 
   // TODO: Check if user exists
   override def update(user: User): Future[Option[User]] = userNeo4jRepository.update(user).map(Some(_))

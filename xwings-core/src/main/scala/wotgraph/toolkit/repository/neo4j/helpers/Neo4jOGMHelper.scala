@@ -23,15 +23,15 @@ object Neo4jOGMHelper {
 
 trait Neo4jOGMHelper {
 
-  type Neo4jKeyword = String
+  type Keyword = String
 
-  type Neo4jLazyResult = () => Result
+  type LazyResult = () => Result
 
   object Keywords {
 
-    val Match: Neo4jKeyword = "MATCH"
+    val Match: Keyword = "MATCH"
 
-    val Create: Neo4jKeyword = "CREATE"
+    val Create: Keyword = "CREATE"
 
   }
 
@@ -86,7 +86,7 @@ trait Neo4jOGMHelper {
 
   private def matchOrCreateAndLink1QueryFactory[T]
   (
-    matchOrCreate: Neo4jKeyword,
+    matchOrCreate: Keyword,
     nodeDefinition: String,
     relatees: Iterable[T],
     relateeQueryMatchDefinition: (Int, T) => String,
