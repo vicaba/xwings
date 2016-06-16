@@ -69,21 +69,6 @@ case class RoleNeo4jRepository(
     } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Role with id: $id") }
   }
 
-  def getAll: Future[List[Role]] = {
-    val query = s"""MATCH (n:$RoleLabel) RETURN n.$Id AS $Id, n.$Name AS $Name"""
-
-    Future {
-      val queryResult = session.query(query, emptyMap)
-      val result = resultCollectionAsScalaCollection(queryResult)
-
-      result.map { e =>
-        val roleId = UUID.fromString(e.get(Id).get.asInstanceOf[String])
-        val roleName = e.get(Name).get.asInstanceOf[String]
-        Role(roleId, roleName)
-      }.toList
-    }
-  }
-
   def update(role: Role): Future[Role] = ???
 
   def create(role: Role): Future[Role] = {
@@ -117,6 +102,21 @@ case class RoleNeo4jRepository(
         Future.successful(id)
       else
         Future.failed(new DeleteException(s"Can't delete thing with id: ${id.toString}"))
+    }
+  }
+
+  def getAll: Future[List[Role]] = {
+    val query = s"""MATCH (n:$RoleLabel) RETURN n.$Id AS $Id, n.$Name AS $Name"""
+
+    Future {
+      val queryResult = session.query(query, emptyMap)
+      val result = resultCollectionAsScalaCollection(queryResult)
+
+      result.map { e =>
+        val roleId = UUID.fromString(e.get(Id).get.asInstanceOf[String])
+        val roleName = e.get(Name).get.asInstanceOf[String]
+        Role(roleId, roleName)
+      }.toList
     }
   }
 

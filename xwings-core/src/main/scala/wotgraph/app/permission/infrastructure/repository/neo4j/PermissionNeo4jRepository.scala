@@ -3,6 +3,7 @@ package wotgraph.app.permission.infrastructure.repository.neo4j
 import java.util.UUID
 
 import org.neo4j.ogm.session.Session
+import org.slf4j.LoggerFactory
 import wotgraph.app.exceptions.{DeleteException, ReadException, SaveException}
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.serialization.keys.PermissionKeys._
@@ -26,6 +27,9 @@ case class PermissionNeo4jRepository(
 
   import Neo4jHelper._
   import PermissionNeo4jRepository.Keys._
+
+  val logger = LoggerFactory.getLogger(classOf[PermissionNeo4jRepository]);
+
 
   def findById(id: UUID): Future[Option[Permission]] = {
 
@@ -121,14 +125,15 @@ case class PermissionNeo4jRepository(
   }
 
   def getAll: Future[List[Permission]] = {
-    val query = s"""MATCH (n:$PermLabel)"""
+
+    val query = s"""${Keywords.Match} (n:$PermLabel) RETURN n.$Id AS $Id, n.$Desc AS $Desc"""
 
     Future {
 
       val queryResult = session.query(query, emptyMap)
       val result = resultCollectionAsScalaCollection(queryResult)
-
       result.map(mapAsPermission).toList
+
 
     }
   }

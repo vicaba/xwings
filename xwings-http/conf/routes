@@ -19,6 +19,7 @@ POST          /api/v1/things/:id/:actionName        wotgraph.app.thing.infrastru
 
 GET           /api/v1/stream/things                 wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
 
+GET           /api/v1/permissions                   wotgraph.app.permission.infrastructure.http.api.controller.ListPermissionsController.execute
 
 GET           /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.ListRolesController.execute
 

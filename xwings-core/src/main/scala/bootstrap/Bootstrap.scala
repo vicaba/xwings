@@ -84,6 +84,8 @@ object PermissionHelper {
 
   }
 
+  def getAll = repo.getAll
+
   def deleteNodes() = repo.deleteAll()
 
 }
@@ -131,9 +133,14 @@ object Query {
 
     }
 
+    Await.ready(f, Duration.Inf)
+
+    val f2 = PermissionHelper.getAll
+
     println("Hola")
 
-    Await.ready(f, Duration.Inf)
+    Await.ready(f2, Duration.Inf)
+
 
   }
 

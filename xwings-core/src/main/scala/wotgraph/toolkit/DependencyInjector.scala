@@ -3,6 +3,7 @@ package wotgraph.toolkit
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
 import scaldi.Module
+import wotgraph.app.permission.application.usecase.ListPermissionsUseCase
 import wotgraph.app.permission.domain.repository.PermissionRepository
 import wotgraph.app.permission.infrastructure.repository.PermissionRepositoryImpl
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
@@ -71,6 +72,10 @@ object DependencyInjector {
 
     bind[PermissionRepository] identifiedBy 'PermissionRepository to PermissionRepositoryImpl(
       inject[PermissionNeo4jRepository](identified by 'PermissionNeo4jRepository)
+    )
+
+    bind[ListPermissionsUseCase] identifiedBy 'ListPermissionsUseCase to new ListPermissionsUseCase(
+      inject[PermissionRepository](identified by 'PermissionRepository)
     )
 
     bind[RoleNeo4jRepository] identifiedBy 'RoleNeo4jRepository to RoleNeo4jRepository(
