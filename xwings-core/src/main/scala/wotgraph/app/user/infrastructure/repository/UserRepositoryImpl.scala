@@ -28,4 +28,5 @@ case class UserRepositoryImpl(
 
   override def delete(id: UUID): Future[UUID] = userNeo4jRepository.delete(id)
 
+  override def findByCredentials(name: String, password: String): Future[Option[User]] = ???
 }

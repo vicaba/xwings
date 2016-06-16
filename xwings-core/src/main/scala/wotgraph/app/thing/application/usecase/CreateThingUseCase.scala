@@ -8,12 +8,6 @@ import scala.concurrent.Future
 
 class CreateThingUseCase(thingRepository: ThingRepository) {
 
-  def execute(c: CreateThing): Future[Thing] = {
-
-    val thing = CreateThing.toThing(c)
-
-    thingRepository.create(thing)
-  }
-
+  def execute(c: CreateThing): Future[Thing] = thingRepository.create(CreateThing.toThing(c))
 
 }
