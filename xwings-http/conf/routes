@@ -22,5 +22,5 @@ GET           /api/v1/stream/things                 wotgraph.app.thing.infrastru
 
 GET           /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.ListRolesController.execute
 
-POST           /api/v1/roles                        wotgraph.app.role.infrastructure.http.api.controller.CreateRoleController.execute
+POST          /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.CreateRoleController.execute
 
