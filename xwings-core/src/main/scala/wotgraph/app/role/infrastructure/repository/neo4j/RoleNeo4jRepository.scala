@@ -120,7 +120,7 @@ case class RoleNeo4jRepository(
     }
   }
 
-  def deleteAll(): Unit = Future {
+  def deleteAll: Unit = Future {
     session.query(s"""MATCH (n:$RoleLabel) DETACH DELETE n""", emptyMap)
   }
 

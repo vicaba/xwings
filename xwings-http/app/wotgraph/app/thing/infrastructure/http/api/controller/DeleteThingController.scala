@@ -14,7 +14,7 @@ class DeleteThingController extends Controller with PredefJsonMessages {
 
   lazy val deleteThingUseCase: DeleteThingUseCase = inject[DeleteThingUseCase](identified by 'DeleteThingUseCase)
 
-  def execute(id: String) = Action.async(parse.json) { request =>
+  def execute(id: String) = Action.async { request =>
     deleteThingUseCase.execute(id) map { id =>
       Ok(Json.obj(ThingKeys.Id -> id))
     } recover {

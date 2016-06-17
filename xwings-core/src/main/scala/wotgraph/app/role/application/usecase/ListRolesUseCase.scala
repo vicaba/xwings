@@ -7,6 +7,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ListRolesUseCase(roleRepository: RoleRepository) {
 
-  def execute()(implicit ec: ExecutionContext): Future[List[Role]] = roleRepository.getAll
+  def execute(): Future[List[Role]] = roleRepository.getAll
 
 }

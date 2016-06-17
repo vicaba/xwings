@@ -1,5 +1,9 @@
 package wotgraph.toolkit
 
+import java.security.MessageDigest
+
+import org.apache.commons.codec.binary.Hex
+import org.apache.commons.codec.digest.DigestUtils
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
 import scaldi.Module
@@ -16,9 +20,11 @@ import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
 import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
+import wotgraph.app.user.application.usecase.{CreateUserUseCase, DeleteUserUseCase, ListUsersUseCase, UpdateUserUseCase}
 import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
+import wotgraph.toolkit.crypt.{Hasher, PBKDF2WithHmacSHA512}
 import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
 import wotgraph.toolkit.repository.neo4j.Neo4jConf
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
@@ -52,12 +58,24 @@ object DependencyInjector {
       inject[ThingMongoDbRepository](identified by 'ThingMongoDbRepository)
     )
 
-    bind[CreateThingUseCase] identifiedBy 'CreateThingUseCase to new CreateThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
-    bind[ShowThingUseCase] identifiedBy 'ShowThingUseCase to new ShowThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
-    bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
-    bind[ListThingsUseCase] identifiedBy 'ListThingsUseCase to new ListThingsUseCase(inject[ThingRepository](identified by 'ThingRepository))
-    bind[DeleteThingUseCase] identifiedBy 'DeleteThingUseCase to new DeleteThingUseCase(inject[ThingRepository](identified by 'ThingRepository))
-    bind[ExecuteThingActionUseCase] identifiedBy 'ExecuteThingActionUseCase to new ExecuteThingActionUseCase(inject[ThingRepository](identified by 'ThingRepository))
+    bind[CreateThingUseCase] identifiedBy 'CreateThingUseCase to new CreateThingUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
+    bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
+    bind[ShowThingUseCase] identifiedBy 'ShowThingUseCase to new ShowThingUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
+    bind[ListThingsUseCase] identifiedBy 'ListThingsUseCase to new ListThingsUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
+    bind[DeleteThingUseCase] identifiedBy 'DeleteThingUseCase to new DeleteThingUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
+    bind[ExecuteThingActionUseCase] identifiedBy 'ExecuteThingActionUseCase to new ExecuteThingActionUseCase(
+      inject[ThingRepository](identified by 'ThingRepository)
+    )
 
     bind[UserNeo4jRepository] identifiedBy 'UserNeo4jRepository to UserNeo4jRepository(
       inject[Neo4jSession](identified by 'Neo4jSession)
@@ -65,6 +83,27 @@ object DependencyInjector {
     bind[UserRepository] identifiedBy 'UserRepository to UserRepositoryImpl(
       inject[UserNeo4jRepository](identified by 'UserNeo4jRepository)
     )
+
+
+    bind[Hasher.PrebuiltHash] identifiedBy 'PrebuiltPasswordHasher to
+      ((new PBKDF2WithHmacSHA512).hash(_: Array[Char], "2m0E8".getBytes, 2, 512)).andThen(Hex.encodeHexString)
+
+
+    bind[CreateUserUseCase] identifiedBy 'CreateUserUseCase to new CreateUserUseCase(
+      inject[UserRepository](identified by 'UserRepository),
+      inject[Hasher.PrebuiltHash](identified by 'PrebuiltPasswordHasher)
+    )
+    bind[UpdateUserUseCase] identifiedBy 'UpdateUserUseCase to new UpdateUserUseCase(
+      inject[UserRepository](identified by 'UserRepository),
+      inject[Hasher.PrebuiltHash](identified by 'PrebuiltPasswordHasher)
+    )
+    bind[ListUsersUseCase] identifiedBy 'ListUsersUseCase to new ListUsersUseCase(
+      inject[UserRepository](identified by 'UserRepository)
+    )
+    bind[DeleteUserUseCase] identifiedBy 'DeleteUserUseCase to new DeleteUserUseCase(
+      inject[UserRepository](identified by 'UserRepository)
+    )
+
 
     bind[PermissionNeo4jRepository] identifiedBy 'PermissionNeo4jRepository to PermissionNeo4jRepository(
       inject[Neo4jSession](identified by 'Neo4jSession)

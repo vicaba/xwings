@@ -1,8 +1,9 @@
 package wotgraph.app.user.application.usecase
 
-/**
-  * Created by vicaba on 15/06/16.
-  */
-class ListUsersUseCase {
+import wotgraph.app.user.domain.repository.UserRepository
+
+class ListUsersUseCase(userRepository: UserRepository) {
+
+  def execute() = userRepository.getAll
 
 }

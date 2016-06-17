@@ -26,7 +26,7 @@ class CreateThingController extends Controller with PredefJsonMessages {
         f.map { t =>
           Created(Json.obj(ThingKeys.Id -> t._id))
         } recover {
-          case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
+          case e: DatabaseException => InternalServerError(Json.obj(MessageKey -> e.msg))
           case e: CoherenceException => UnprocessableEntity(Json.obj(MessageKey -> e.msg))
         }
       case e: JsError => Future.successful(BadRequest(e.toString))

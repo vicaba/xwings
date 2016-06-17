@@ -7,6 +7,8 @@ object UserKeys {
 
   val Name = "name"
 
-  val Password = "password"
+  val Password = "pass"
+
+  val Role = "role"
 
 }

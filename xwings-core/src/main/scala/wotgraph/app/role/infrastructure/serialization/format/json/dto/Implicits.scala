@@ -2,7 +2,7 @@ package wotgraph.app.role.infrastructure.serialization.format.json.dto
 
 object Implicits {
 
-  implicit val createRoleSerializer = CreateRoleSerializer.createRoleReads
+  implicit val createRoleJsonSerializer = CreateRoleSerializer.createRoleReads
 
 }
 
