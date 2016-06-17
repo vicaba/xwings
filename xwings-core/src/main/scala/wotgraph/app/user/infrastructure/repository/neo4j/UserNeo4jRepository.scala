@@ -54,7 +54,7 @@ case class UserNeo4jRepository(
     Future {
 
       val query =
-        s"""${Keywords.Match} (n:$UserLabel {$Id: "${n(Id)}"})-[r:$RoleRelKey]->(n2)
+        s"""${Keywords.Match} (n:$UserLabel { $Id: ${n(Id)} })-[r:$RoleRelKey]->(n2)
            | RETURN n.$Id AS $Id, n.$Name AS $Name,
            | n2.${RoleKeys.Id} AS $roleIdKey n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
 
@@ -71,6 +71,39 @@ case class UserNeo4jRepository(
       }
 
     } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get User with id: $id") }
+
+  }
+
+  def findByCredentials(name: String, password: String): Future[Option[User]] = {
+
+    val roleIdKey = s"r${RoleKeys.Id}"
+    val roleNameKey = s"r${RoleKeys.Name}"
+
+    Future {
+
+      val query =
+        s"""${Keywords.Match} (n:$UserLabel { $Name: ${n(Name)}, $Password: ${n(Password)}})-[r:$RoleRelKey]->(n2)
+           | RETURN n.$Id AS $Id, n.$Name AS $Name,
+           | n2.${RoleKeys.Id} AS $roleIdKey n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
+
+      val params = Map(
+        Name -> name,
+        Password -> password
+      )
+
+      val queryResult = session.query(query, params.asJava)
+      val result = queryResult.queryResults().asScala.map(_.asScala)
+
+      result.headOption.map { head =>
+
+        val roleId = UUID.fromString(head.get(roleIdKey).get.asInstanceOf[String])
+        val roleName = head.get(roleNameKey).get.asInstanceOf[String]
+
+        Neo4jHelper.mapAsUser(head)(Role(roleId, roleName))
+
+      }
+
+    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't execute query") }
 
   }
 
@@ -114,7 +147,7 @@ case class UserNeo4jRepository(
     * @param user The user to update
     * @return
     */
-  def update(user: User): Future[User Or Every[AppError]] = {
+  def update(user: User): Future[User Or Every[StorageError]] = {
 
     val roleIdKey = s"r${RoleKeys.Id}"
     val userId = user.id
@@ -173,7 +206,7 @@ case class UserNeo4jRepository(
     * @param id The user id to delete
     * @return
     */
-  def delete(id: UUID): Future[UUID Or Every[AppError]] = {
+  def delete(id: UUID): Future[UUID Or Every[StorageError]] = {
 
     val query = s"""${Keywords.Match} (n:$UserLabel { $Id: ${n(Id)} }) DETACH DELETE n"""
     val params = Map(Id -> id.toString)

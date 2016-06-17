@@ -24,12 +24,12 @@ case class UserRepositoryImpl(
 
   override def create(user: User): Future[User Or Every[StorageError]] = userNeo4jRepository.create(user)
 
-  // TODO: Check if user exists
-  override def update(user: User): Future[User Or Every[AppError]] = userNeo4jRepository.update(user)
+  override def update(user: User): Future[User Or Every[StorageError]] = userNeo4jRepository.update(user)
 
-  override def delete(id: UUID): Future[UUID Or Every[AppError]] = userNeo4jRepository.delete(id)
+  override def delete(id: UUID): Future[UUID Or Every[StorageError]] = userNeo4jRepository.delete(id)
 
-  override def findByCredentials(name: String, password: String): Future[Option[User]] = ???
+  override def findByCredentials(name: String, password: String): Future[Option[User]] =
+    userNeo4jRepository.findByCredentials(name, password)
 
   override def getAll: Future[List[User]] = userNeo4jRepository.getAll
 }

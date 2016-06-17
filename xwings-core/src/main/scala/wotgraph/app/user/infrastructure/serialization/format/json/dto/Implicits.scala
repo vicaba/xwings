@@ -4,4 +4,6 @@ object Implicits {
 
   implicit val createUserJsonSerializer = CreateUserSerializer.createUserReads
 
+  implicit val userCredentialsJsonSerializer = UserCredentialsSerializer.userCredentialsReads
+
 }
