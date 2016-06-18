@@ -33,3 +33,6 @@ PUT           /api/v1/users/:id                     wotgraph.app.user.infrastruc
 
 DELETE        /api/v1/users/:id                     wotgraph.app.user.infrastructure.http.api.controller.DeleteUserController.execute(id: String)
 
+POST          /api/v1/session                       wotgraph.app.session.infrastructure.http.api.controller.LoginController.execute
+
+DELETE        /api/v1/session                       wotgraph.app.session.infrastructure.http.api.controller.LogoutController.execute

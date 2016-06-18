@@ -7,8 +7,9 @@ import wotgraph.toolkit.crypt.Hasher
 
 import scala.concurrent.Future
 
-class LoginUserUseCase(userRepository: UserRepository, hash: Hasher.PrebuiltHash) {
+class AuthenticateUserUseCase(userRepository: UserRepository, hash: Hasher.PreconfiguredHash) {
 
-  def execute(uC: UserCredentials): Future[Option[User]] = userRepository.findByCredentials(uC.name, uC.password)
+  def execute(uC: UserCredentials): Future[Option[User]] =
+    userRepository.findByCredentials(uC.name, hash(uC.password.toCharArray))
 
 }

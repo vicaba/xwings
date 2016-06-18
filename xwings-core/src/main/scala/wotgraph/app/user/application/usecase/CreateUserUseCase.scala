@@ -11,7 +11,7 @@ import wotgraph.toolkit.crypt.Hasher
 import scala.concurrent.Future
 
 
-class CreateUserUseCase(userRepository: UserRepository, hash: Hasher.PrebuiltHash) {
+class CreateUserUseCase(userRepository: UserRepository, hash: Hasher.PreconfiguredHash) {
 
   def execute(c: CreateUser): Future[User Or Every[AppError]] = {
     val user = CreateUser.toUser(c)

@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class UpdateUserUseCase(userRepository: UserRepository, hash: Hasher.PrebuiltHash) {
+class UpdateUserUseCase(userRepository: UserRepository, hash: Hasher.PreconfiguredHash) {
 
   def execute(id: String, u: CreateUser): Future[User Or Every[AppError]] = {
 

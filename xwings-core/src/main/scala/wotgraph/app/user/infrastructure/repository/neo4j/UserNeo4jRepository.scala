@@ -82,9 +82,9 @@ case class UserNeo4jRepository(
     Future {
 
       val query =
-        s"""${Keywords.Match} (n:$UserLabel { $Name: ${n(Name)}, $Password: ${n(Password)}})-[r:$RoleRelKey]->(n2)
+        s"""${Keywords.Match} (n:$UserLabel { $Name: ${n(Name)}, $Password: ${n(Password)} })-[r:$RoleRelKey]->(n2)
            | RETURN n.$Id AS $Id, n.$Name AS $Name,
-           | n2.${RoleKeys.Id} AS $roleIdKey n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
+           | n2.${RoleKeys.Id} AS $roleIdKey, n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
 
       val params = Map(
         Name -> name,

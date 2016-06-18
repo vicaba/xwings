@@ -190,6 +190,9 @@ object Query {
 
     Await.ready(f5, Duration.Inf)
 
+    val f6 = UserHelper.repo.findByCredentials("Xavi", "hey")
+
+    Await.ready(f6, Duration.Inf)
 
   }
 

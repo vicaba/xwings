@@ -4,7 +4,7 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 object Hasher {
-  type PrebuiltHash = Array[Char] => String
+  type PreconfiguredHash = Array[Char] => String
 }
 
 class PBKDF2WithHmacSHA512 {

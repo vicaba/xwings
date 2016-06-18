@@ -20,7 +20,7 @@ import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
 import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
-import wotgraph.app.user.application.usecase.{CreateUserUseCase, DeleteUserUseCase, ListUsersUseCase, UpdateUserUseCase}
+import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
@@ -85,23 +85,27 @@ object DependencyInjector {
     )
 
 
-    bind[Hasher.PrebuiltHash] identifiedBy 'PrebuiltPasswordHasher to
+    bind[Hasher.PreconfiguredHash] identifiedBy 'PrebuiltPasswordHasher to
       ((new PBKDF2WithHmacSHA512).hash(_: Array[Char], "2m0E8".getBytes, 2, 512)).andThen(Hex.encodeHexString)
 
 
     bind[CreateUserUseCase] identifiedBy 'CreateUserUseCase to new CreateUserUseCase(
       inject[UserRepository](identified by 'UserRepository),
-      inject[Hasher.PrebuiltHash](identified by 'PrebuiltPasswordHasher)
+      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher)
     )
     bind[UpdateUserUseCase] identifiedBy 'UpdateUserUseCase to new UpdateUserUseCase(
       inject[UserRepository](identified by 'UserRepository),
-      inject[Hasher.PrebuiltHash](identified by 'PrebuiltPasswordHasher)
+      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher)
     )
     bind[ListUsersUseCase] identifiedBy 'ListUsersUseCase to new ListUsersUseCase(
       inject[UserRepository](identified by 'UserRepository)
     )
     bind[DeleteUserUseCase] identifiedBy 'DeleteUserUseCase to new DeleteUserUseCase(
       inject[UserRepository](identified by 'UserRepository)
+    )
+    bind[AuthenticateUserUseCase] identifiedBy 'AuthenticateUserUseCase to new AuthenticateUserUseCase(
+      inject[UserRepository](identified by 'UserRepository),
+      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher)
     )
 
 
