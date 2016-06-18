@@ -12,9 +12,7 @@ import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by vicaba on 11/06/16.
-  */
+
 case class ThingNeo4jRepository(
                                  session: Session
                                )

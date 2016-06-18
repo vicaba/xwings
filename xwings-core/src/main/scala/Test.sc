@@ -1,9 +1,7 @@
-import com.google.common.hash.Hasher
-import org.apache.commons.codec.binary.Hex
-import wotgraph.toolkit.crypt.PBKDF2WithHmacSHA512
+import java.util.UUID
 
-val hasher = new PBKDF2WithHmacSHA512
+object User {
+  type UserId = UUID
+}
 
-Hex.encodeHexString(hasher.hash("v".toCharArray, "2m0E8".getBytes, 2, 512))
-
-
+case class User(id: User.UserId = UUID.randomUUID())
