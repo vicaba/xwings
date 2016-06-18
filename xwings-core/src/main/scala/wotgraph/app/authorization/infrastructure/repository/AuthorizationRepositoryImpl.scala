@@ -6,7 +6,7 @@ import wotgraph.app.authorization.infrastructure.repository.neo4j.AuthorizationN
 import scala.concurrent.{ExecutionContext, Future}
 
 case class AuthorizationRepositoryImpl(
-                                        authorizationNeo4jRepository: AuthorizationNeo4jRepository,
+                                        authorizationNeo4jRepository: AuthorizationNeo4jRepository
                                       )
                                       (implicit ec: ExecutionContext)
   extends AuthorizationRepository {
