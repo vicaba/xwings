@@ -4,6 +4,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import scaldi.Injectable._
 import wotgraph.app.exceptions.{ClientFormatException, DatabaseException}
+import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.DeleteThingUseCase
 import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 import wotgraph.toolkit.DependencyInjector._
@@ -14,8 +15,8 @@ class DeleteThingController extends Controller with PredefJsonMessages {
 
   lazy val deleteThingUseCase: DeleteThingUseCase = inject[DeleteThingUseCase](identified by 'DeleteThingUseCase)
 
-  def execute(id: String) = Action.async { request =>
-    deleteThingUseCase.execute(id) map { id =>
+  def execute(id: String) = AuthenticatedAction.async { r =>
+    deleteThingUseCase.execute(id)(r.userId) map { id =>
       Ok(Json.obj(ThingKeys.Id -> id))
     } recover {
       case e: ClientFormatException => BadRequest(Json.obj(MessageKey -> e.msg))

@@ -4,6 +4,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc._
 import scaldi.Injectable._
 import wotgraph.app.exceptions.{CoherenceException, DatabaseException}
+import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.CreateThingUseCase
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.infrastructure.serialization.format.json.dto.Implicits._
@@ -17,12 +18,12 @@ class CreateThingController extends Controller with PredefJsonMessages {
 
   lazy val createThingUseCase: CreateThingUseCase = inject[CreateThingUseCase](identified by 'CreateThingUseCase)
 
-  def execute = Action.async(parse.json) { request =>
+  def execute = AuthenticatedAction.async(parse.json) { implicit r =>
 
-    val res = request.body.validate[CreateThing]
+    val res = r.body.validate[CreateThing]
     res match {
       case JsSuccess(createThingDto, _) =>
-        val f = createThingUseCase.execute(createThingDto)
+        val f = createThingUseCase.execute(createThingDto)(r.userId)
         f.map { t =>
           Created(Json.obj(ThingKeys.Id -> t._id))
         } recover {

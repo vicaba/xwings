@@ -15,14 +15,18 @@ import scala.concurrent.Future
 
 class LoginController extends Controller with PredefJsonMessages {
 
-  lazy val authenticateUserUseCase: AuthenticateUserUseCase = inject[AuthenticateUserUseCase](identified by 'AuthenticateUserUseCase)
+  lazy val authenticateUserUseCase: AuthenticateUserUseCase =
+    inject[AuthenticateUserUseCase](identified by 'AuthenticateUserUseCase)
+
+  lazy val encrypt: String => String = inject[String => String](identified by 'SessionEncrypter)
+
 
   def execute = Action.async(parse.json) { implicit r =>
 
     val res = r.body.validate[UserCredentials]
     res match {
       case JsSuccess(userCredentials, _) => authenticateUserUseCase.execute(userCredentials).map {
-        case Some(u) => Created("").addingToSession(AuthenticatedAction.tokenKey -> u.id.toString) // TODO: Improve encryption
+        case Some(u) => Created("").addingToSession(AuthenticatedAction.tokenKey -> encrypt(u.id.toString))
         case None => NotFound("")
       }
       case e: JsError => Future.successful(BadRequest(e.toString))

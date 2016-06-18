@@ -4,6 +4,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import scaldi.Injectable._
 import wotgraph.app.exceptions.{ClientFormatException, DatabaseException}
+import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.ShowThingUseCase
 import wotgraph.app.thing.infrastructure.http.serialization.format.json.ThingSerializer
 import wotgraph.toolkit.DependencyInjector._
@@ -14,9 +15,9 @@ class ShowThingController extends Controller with PredefJsonMessages {
 
   lazy val showThingUseCase: ShowThingUseCase = inject[ShowThingUseCase](identified by 'ShowThingUseCase)
 
-  def execute(id: String) = Action.async {
+  def execute(id: String) = AuthenticatedAction.async { r =>
 
-    showThingUseCase.execute(id) map {
+    showThingUseCase.execute(id)(r.userId) map {
       case Some(thing) => Ok(ThingSerializer.thingFormat.writes(thing))
       case None => NotFound(Json.obj())
     } recover {

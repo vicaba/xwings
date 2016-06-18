@@ -1,9 +1,7 @@
 package wotgraph.toolkit
 
-import java.security.MessageDigest
 
 import org.apache.commons.codec.binary.Hex
-import org.apache.commons.codec.digest.DigestUtils
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
 import scaldi.Module
@@ -24,7 +22,7 @@ import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
-import wotgraph.toolkit.crypt.{Hasher, PBKDF2WithHmacSHA512}
+import wotgraph.toolkit.crypt.{Cypher, Hasher, MyCypher, PBKDF2WithHmacSHA512}
 import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
 import wotgraph.toolkit.repository.neo4j.Neo4jConf
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
@@ -38,6 +36,11 @@ object DependencyInjector {
     implicit val ec = scala.concurrent.ExecutionContext.global
 
     val thingMongoEnvironment = ThingMongoEnvironment(conf)
+
+    bind[String => String] identifiedBy 'SessionEncrypter to
+      ((new MyCypher).encrypt(">rvPoorzLD@n{`s1880R6Ph80;zw1}", _: String))
+    bind[String => String] identifiedBy 'SessionDecrypter to
+      ((new MyCypher).decrypt(">rvPoorzLD@n{`s1880R6Ph80;zw1}", _: String))
 
     bind[Neo4jConf.Config] identifiedBy 'Neo4jConfig to {
       val configuration = new Configuration()

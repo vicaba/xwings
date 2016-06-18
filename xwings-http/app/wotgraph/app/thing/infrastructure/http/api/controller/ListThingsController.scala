@@ -7,6 +7,7 @@ import play.api.http.HttpEntity
 import play.api.libs.streams.Streams
 import play.api.mvc._
 import scaldi.Injectable._
+import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.ListThingsUseCase
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.infrastructure.http.serialization.format.json.ThingMinifiedSerializer
@@ -19,16 +20,16 @@ class ListThingsController extends Controller with PredefJsonMessages {
 
   lazy val listThingsUseCase: ListThingsUseCase = inject[ListThingsUseCase](identified by 'ListThingsUseCase)
 
-  def execute = Action.async { request =>
+  def execute = AuthenticatedAction.async { r =>
 
-    val f = listThingsUseCase.execute()
+    val f = listThingsUseCase.execute()(r.userId)
     Helper.seqOfThingsToHttpResponse(f)
 
   }
 
-  def executeAsStream = Action.async { request =>
+  def executeAsStream = AuthenticatedAction.async { r =>
 
-    val publisher: Publisher[Thing] = Streams.enumeratorToPublisher(listThingsUseCase.executeAsStream)
+    val publisher: Publisher[Thing] = Streams.enumeratorToPublisher(listThingsUseCase.executeAsStream(r.userId))
     val data: Source[ByteString, _] = Source.fromPublisher(publisher).map { thing =>
       ByteString(ThingMinifiedSerializer.thingFormat.writes(thing).toString)
     }

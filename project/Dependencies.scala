@@ -4,7 +4,7 @@ object Dependencies {
 
   val akkaVersion = "2.4.4"
 
-  val playVersion = "2.5.3"
+  val playVersion = "2.5.4"
 
   lazy val akkaRemote = "com.typesafe.akka" %% "akka-remote" % akkaVersion
 
@@ -17,6 +17,8 @@ object Dependencies {
   lazy val playReactiveMongo = "org.reactivemongo" %% "play2-reactivemongo" % "0.11.13"
 
   lazy val playWS = "com.typesafe.play" %% "play-ws" % playVersion
+
+  lazy val playCache = "com.typesafe.play" %% "play-cache" % playVersion
 
   lazy val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 
