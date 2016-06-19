@@ -20,9 +20,8 @@ class DeleteThingUseCase(thingRepository: ThingRepository, authorizationService:
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
       case Success(uuid) =>
-        authorizationService.execute(userId, DeleteThingUseCase.permission.id).flatMap {
-          case true => thingRepository.delete(uuid).map(Good(_))
-          case false => Future.successful(Bad(One(AuthorizationError.NotAuthorized)))
+        AuthorizationService.executeAsync(authorizationService, userId, DeleteThingUseCase.permission.id) {
+          thingRepository.delete(uuid).map(Good(_))
         }
     }
   }

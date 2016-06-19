@@ -28,6 +28,7 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] with Cont
   private def authenticate[A](request: Request[A]): Future[AuthenticatedRequest[A] Either Request[A]] =
     request.session.get(tokenKey)
       .fold[Future[AuthenticatedRequest[A] Either Request[A]]] {
+      println(request.session)
       Future.successful(Right(request))
     } {
       tokenValue =>

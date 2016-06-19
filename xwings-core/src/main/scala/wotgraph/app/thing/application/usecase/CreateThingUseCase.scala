@@ -17,11 +17,9 @@ import scala.concurrent.Future
 class CreateThingUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
   def execute(c: CreateThing)(userId: User.Id): Future[Thing Or Every[AppError]] =
-    authorizationService.execute(userId, CreateThingUseCase.permission.id).flatMap {
-      case true => thingRepository.create(CreateThing.toThing(c)).map(Good(_))
-      case false => Future.successful(Bad(One(AuthorizationError.NotAuthorized)))
+    AuthorizationService.executeAsync(authorizationService, userId, CreateThingUseCase.permission.id) {
+      thingRepository.create(CreateThing.toThing(c)).map(Good(_))
     }
-
 }
 
 object CreateThingUseCase extends PermissionProvider {

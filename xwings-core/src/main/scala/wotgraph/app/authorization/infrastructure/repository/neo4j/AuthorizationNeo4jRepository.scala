@@ -14,9 +14,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 case class AuthorizationNeo4jRepository(
-                                     session: Session
-                                   )
-                                   (implicit ec: ExecutionContext)
+                                         session: Session
+                                       )
+                                       (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
   def isUserAllowedToExecuteUseCase(nodeId: UUID, useCaseId: UUID): Future[Boolean] = {
@@ -32,7 +32,7 @@ case class AuthorizationNeo4jRepository(
       s"""
          |MATCH (p:$permLabel) WHERE p.$permIdKey = ${n(permIdPlaceholder)}
          |MATCH (u:$userLabel)-[*2]-(p) WHERE u.$userIdKey = ${n(userIdKey)}
-         |RETURN p.$permIdKey
+         |RETURN p.$permIdKey AS $permIdKey
        """.stripMargin
 
     val params = Map(
@@ -42,10 +42,14 @@ case class AuthorizationNeo4jRepository(
 
     Future {
       val queryResult = session.query(query, params.asJava)
-      "a"
       val result = resultCollectionAsScalaCollection(queryResult)
-      result.nonEmpty
-    } recover { case e: Throwable => throw e}
+      result.headOption.fold(false) { map =>
+        map.get(permIdKey) match {
+          case Some(p) => if (p == null) false else true
+          case None => false
+        }
+      }
+    } recover { case e: Throwable => throw e }
   }
 
 }

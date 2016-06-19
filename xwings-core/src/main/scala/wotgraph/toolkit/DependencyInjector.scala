@@ -70,20 +70,24 @@ object DependencyInjector {
       inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ShowThingUseCase] identifiedBy 'ShowThingUseCase to new ShowThingUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ListThingsUseCase] identifiedBy 'ListThingsUseCase to new ListThingsUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[DeleteThingUseCase] identifiedBy 'DeleteThingUseCase to new DeleteThingUseCase(
       inject[ThingRepository](identified by 'ThingRepository),
       inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ExecuteThingActionUseCase] identifiedBy 'ExecuteThingActionUseCase to new ExecuteThingActionUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
 
     bind[UserNeo4jRepository] identifiedBy 'UserNeo4jRepository to UserNeo4jRepository(

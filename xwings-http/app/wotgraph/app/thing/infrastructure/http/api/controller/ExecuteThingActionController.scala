@@ -1,9 +1,10 @@
 package wotgraph.app.thing.infrastructure.http.api.controller
 
+import org.scalactic.{Bad, Good}
 import play.api.libs.json.Json
 import play.api.mvc._
 import scaldi.Injectable._
-import wotgraph.app.exceptions.{ClientFormatException, DatabaseException}
+import wotgraph.app.error.infrastructure.http.api.ErrorHelper
 import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.ExecuteThingActionUseCase
 import wotgraph.app.thing.domain.service.{ExecutionFailure, ExecutionSuccess}
@@ -17,11 +18,11 @@ class ExecuteThingActionController extends Controller with PredefJsonMessages {
 
   def execute(id: String, actionName: String) = AuthenticatedAction.async(parse.json) { r =>
     executeThingActionUseCase.execute(id, actionName)(r.userId) map {
-      case success: ExecutionSuccess => Ok(Json.obj("data" -> success.message))
-      case failure: ExecutionFailure => BadRequest(Json.obj("message" -> failure.errors))
-    } recover {
-      case e: ClientFormatException => BadRequest(Json.obj(MessageKey -> e.msg))
-      case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
+      case Good(result) => result match {
+        case success: ExecutionSuccess => Ok(Json.obj("data" -> success.message))
+        case failure: ExecutionFailure => BadRequest(Json.obj("message" -> failure.errors))
+      }
+      case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
     }
   }
 

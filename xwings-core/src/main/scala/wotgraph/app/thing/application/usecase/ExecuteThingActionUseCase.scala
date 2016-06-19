@@ -2,7 +2,9 @@ package wotgraph.app.thing.application.usecase
 
 import java.util.UUID
 
-import wotgraph.app.exceptions.ClientFormatException
+import org.scalactic._
+import wotgraph.app.authorization.application.service.AuthorizationService
+import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.domain.service.{ActionExecutor, ExecutionFailure, ExecutionResult}
 import wotgraph.app.user.domain.entity.User
@@ -12,27 +14,26 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class ExecuteThingActionUseCase(thingRepository: ThingRepository) {
+class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(id: String, actionName: String)(userId: User.Id): Future[ExecutionResult] = {
+  def execute(id: String, actionName: String)(userId: User.Id): Future[ExecutionResult Or Every[AppError]] = {
 
     Try(UUID.fromString(id)) match {
-      case Failure(_) => Future.failed(new ClientFormatException("UUID not provided"))
+      case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
       case Success(uuid) =>
-        thingRepository.findById(uuid).flatMap {
-          case Some(thing) =>
-            val action = thing.actions.find(_.actionName == actionName)
-            action match {
-              case Some(a) => ActionExecutor.executeAction(a)
-              case _ => Future(ExecutionFailure(List("Action not found")))
-            }
-          case None => Future(ExecutionFailure(List("Thing not found")))
+        AuthorizationService.executeAsync(authorizationService, userId, ExecuteThingActionUseCase.permission.id) {
+          thingRepository.findById(uuid).flatMap {
+            case Some(thing) =>
+              val action = thing.actions.find(_.actionName == actionName)
+              action match {
+                case Some(a) => ActionExecutor.executeAction(a).map(Good(_))
+                case _ => Future.successful(Good(ExecutionFailure(List("Action not found"))))
+              }
+            case None => Future(Good(ExecutionFailure(List("Thing not found"))))
+          }
         }
-
     }
-
   }
-
 }
 
 object ExecuteThingActionUseCase extends PermissionProvider {

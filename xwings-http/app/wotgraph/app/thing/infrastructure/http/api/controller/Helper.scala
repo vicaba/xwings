@@ -13,13 +13,16 @@ object Helper
   extends Controller
     with PredefJsonMessages {
 
-  def seqOfThingsToHttpResponse(thingsF: Future[Seq[Thing]])(implicit ec: ExecutionContext): Future[Result] = {
+  def asyncSeqOfThingsToHttpResponse(thingsF: Future[Seq[Thing]])(implicit ec: ExecutionContext): Future[Result] = {
     thingsF map { seqOfThings =>
       val json = ThingMinifiedSerializer.thingSeqFormat.writes(seqOfThings)
       Ok(json)
-    } recover {
-      case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
     }
+  }
+
+  def seqOfThingsToHttpResponse(things: Seq[Thing]): Result = {
+      val json = ThingMinifiedSerializer.thingSeqFormat.writes(things)
+      Ok(json)
   }
 
 }

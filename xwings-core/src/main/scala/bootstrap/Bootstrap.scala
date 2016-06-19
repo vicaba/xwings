@@ -225,8 +225,8 @@ object Query {
     Await.ready(f5, Duration.Inf)
 
     val f6 = AuthorizationHelper.service.execute(
-      UUID.fromString("14a67dd4-6d31-44ac-9d39-f8b7a8b17bbd"),
-      UUID.fromString("a2e0c04b-3507-4daa-a783-55d0763306c4")
+      UUID.fromString("00a38644-8e72-4f85-ba7a-8f4730124d16"),
+      UUID.fromString("dd9728e1-2962-49a2-a3b8-66516128dbb6")
     )
 
     f6.map { r =>
@@ -240,12 +240,12 @@ object Query {
 
     val f7 = AuthorizationHelper.service.execute(
       UUID.fromString("bb56599d-d82f-458d-993b-f7c0c993c56c"),
-      UUID.fromString("a2e0c04b-3507-4daa-a783-55d0763306c4")
+      UUID.fromString("97bf4d2a-2c44-4466-ad4f-c2adca8b0072")
     )
 
     f7.map { r =>
       // false
-      println(r)
+      println("f7" + r)
     }
 
     Await.ready(f7, Duration.Inf)
