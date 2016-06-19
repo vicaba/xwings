@@ -9,8 +9,8 @@ import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.domain.repository.RoleRepository
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
-import scala.concurrent.{ExecutionContext, Future}
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 class ListRolesUseCase(roleRepository: RoleRepository, authorizationService: AuthorizationService) {
 
   def execute()(executorAgentId: UUID): Future[List[Role] Or Every[AppError]] =

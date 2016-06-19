@@ -135,7 +135,8 @@ object DependencyInjector {
     )
 
     bind[ListPermissionsUseCase] identifiedBy 'ListPermissionsUseCase to new ListPermissionsUseCase(
-      inject[PermissionRepository](identified by 'PermissionRepository)
+      inject[PermissionRepository](identified by 'PermissionRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
 
 

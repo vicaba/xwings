@@ -10,9 +10,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class AuthorizationService(authorizationRepository: AuthorizationRepository) {
-  def execute(nodeId: UUID, useCaseId: UUID): Future[Boolean] = {
-    if (nodeId == AuthorizationService.BypassUUID) Future.successful(true)
-    else authorizationRepository.isNodeAllowedToExecuteUseCase(nodeId, useCaseId)
+  def execute(executorAgentId: UUID, useCaseId: UUID): Future[Boolean] = {
+    if (executorAgentId == AuthorizationService.BypassUUID) Future.successful(true)
+    else authorizationRepository.isNodeAllowedToExecuteUseCase(executorAgentId, useCaseId)
   }
 }
 
