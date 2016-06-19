@@ -1,10 +1,12 @@
 package wotgraph.app.authorization.domain.repository
 
+import java.util.UUID
+
 import scala.concurrent.Future
 
 
 trait AuthorizationRepository {
 
-  def hasUseCaseAllConnectionsToUser: Future[Boolean]
+  def isNodeAllowedToExecuteUseCase(nodeId: UUID, useCaseId: UUID): Future[Boolean]
 
 }

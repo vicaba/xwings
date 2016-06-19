@@ -17,8 +17,4 @@ class AuthenticateUserUseCase(userRepository: UserRepository, hash: Hasher.Preco
 
 }
 
-object AuthenticateUserUseCase extends PermissionProvider {
-  override protected val permissionId: UUID = UUID.fromString("bcf10e8d-67c0-4593-a63c-6d36fcce4f7a")
-}
-
 

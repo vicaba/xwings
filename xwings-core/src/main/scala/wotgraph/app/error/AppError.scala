@@ -14,4 +14,12 @@ object ValidationError {
 
 case class Validation(override val msg: String) extends ValidationError
 
+sealed trait AuthorizationError extends AppError
+
+object AuthorizationError {
+  val NotAuthorized = AuthorizationDenied("Not authorized")
+}
+
+case class AuthorizationDenied(override val msg: String) extends AuthorizationError
+
 

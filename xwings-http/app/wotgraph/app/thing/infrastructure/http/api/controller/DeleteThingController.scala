@@ -1,8 +1,10 @@
 package wotgraph.app.thing.infrastructure.http.api.controller
 
+import org.scalactic.{Bad, Good}
 import play.api.libs.json.Json
 import play.api.mvc._
 import scaldi.Injectable._
+import wotgraph.app.error.infrastructure.http.api.ErrorHelper
 import wotgraph.app.exceptions.{ClientFormatException, DatabaseException}
 import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.usecase.DeleteThingUseCase
@@ -16,8 +18,9 @@ class DeleteThingController extends Controller with PredefJsonMessages {
   lazy val deleteThingUseCase: DeleteThingUseCase = inject[DeleteThingUseCase](identified by 'DeleteThingUseCase)
 
   def execute(id: String) = AuthenticatedAction.async { r =>
-    deleteThingUseCase.execute(id)(r.userId) map { id =>
-      Ok(Json.obj(ThingKeys.Id -> id))
+    deleteThingUseCase.execute(id)(r.userId) map {
+      case Good(_id) => Ok(Json.obj(ThingKeys.Id -> _id))
+      case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
     } recover {
       case e: ClientFormatException => BadRequest(Json.obj(MessageKey -> e.msg))
       case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))

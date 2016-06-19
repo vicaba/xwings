@@ -5,6 +5,10 @@ import org.apache.commons.codec.binary.Hex
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
 import scaldi.Module
+import wotgraph.app.authorization.application.service.AuthorizationService
+import wotgraph.app.authorization.domain.repository.AuthorizationRepository
+import wotgraph.app.authorization.infrastructure.repository.AuthorizationRepositoryImpl
+import wotgraph.app.authorization.infrastructure.repository.neo4j.AuthorizationNeo4jRepository
 import wotgraph.app.permission.application.usecase.ListPermissionsUseCase
 import wotgraph.app.permission.domain.repository.PermissionRepository
 import wotgraph.app.permission.infrastructure.repository.PermissionRepositoryImpl
@@ -62,7 +66,8 @@ object DependencyInjector {
     )
 
     bind[CreateThingUseCase] identifiedBy 'CreateThingUseCase to new CreateThingUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(
       inject[ThingRepository](identified by 'ThingRepository)
@@ -74,7 +79,8 @@ object DependencyInjector {
       inject[ThingRepository](identified by 'ThingRepository)
     )
     bind[DeleteThingUseCase] identifiedBy 'DeleteThingUseCase to new DeleteThingUseCase(
-      inject[ThingRepository](identified by 'ThingRepository)
+      inject[ThingRepository](identified by 'ThingRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ExecuteThingActionUseCase] identifiedBy 'ExecuteThingActionUseCase to new ExecuteThingActionUseCase(
       inject[ThingRepository](identified by 'ThingRepository)
@@ -124,16 +130,34 @@ object DependencyInjector {
       inject[PermissionRepository](identified by 'PermissionRepository)
     )
 
+
     bind[RoleNeo4jRepository] identifiedBy 'RoleNeo4jRepository to RoleNeo4jRepository(
       inject[Neo4jSession](identified by 'Neo4jSession)
     )
-
     bind[RoleRepository] identifiedBy 'RoleRepository to RoleRepositoryImpl(
       inject[RoleNeo4jRepository](identified by 'RoleNeo4jRepository)
     )
 
-    bind[CreateRoleUseCase] identifiedBy 'CreateRoleUseCase to new CreateRoleUseCase(inject[RoleRepository](identified by 'RoleRepository))
-    bind[ListRolesUseCase] identifiedBy 'ListRolesUseCase to new ListRolesUseCase(inject[RoleRepository](identified by 'RoleRepository))
+
+    bind[CreateRoleUseCase] identifiedBy 'CreateRoleUseCase to new CreateRoleUseCase(
+      inject[RoleRepository](identified by 'RoleRepository)
+    )
+    bind[ListRolesUseCase] identifiedBy 'ListRolesUseCase to new ListRolesUseCase(
+      inject[RoleRepository](identified by 'RoleRepository)
+    )
+
+
+    bind[AuthorizationNeo4jRepository] identifiedBy 'AuthorizationNeo4jRepository to AuthorizationNeo4jRepository(
+      inject[Neo4jSession](identified by 'Neo4jSession)
+    )
+    bind[AuthorizationRepository] identifiedBy 'AuthorizationRepository to AuthorizationRepositoryImpl(
+      inject[AuthorizationNeo4jRepository](identified by 'AuthorizationNeo4jRepository)
+    )
+
+
+    bind[AuthorizationService] identifiedBy 'AuthorizationService to new AuthorizationService(
+      inject[AuthorizationRepository](identified by 'AuthorizationRepository)
+    )
 
   }
 

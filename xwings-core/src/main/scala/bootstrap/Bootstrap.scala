@@ -10,6 +10,7 @@ import wotgraph.app.thing.domain.service.ContextProvider
 import wotgraph.toolkit.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
+import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.error.AppError
 import wotgraph.app.permission.application.usecase.{ListPermissionsUseCase, PermissionUseCasePermissionProvider}
 import wotgraph.app.permission.domain.entity.Permission
@@ -158,6 +159,10 @@ object UserHelper {
 
 }
 
+object AuthorizationHelper {
+  val service = inject[AuthorizationService](identified by 'AuthorizationService)
+}
+
 object Bootstrap {
 
   def main(args: Array[String]) {
@@ -219,9 +224,31 @@ object Query {
 
     Await.ready(f5, Duration.Inf)
 
-    val f6 = UserHelper.repo.findByCredentials("Xavi", "hey")
+    val f6 = AuthorizationHelper.service.execute(
+      UUID.fromString("14a67dd4-6d31-44ac-9d39-f8b7a8b17bbd"),
+      UUID.fromString("a2e0c04b-3507-4daa-a783-55d0763306c4")
+    )
+
+    f6.map { r =>
+      // true
+      println("f6" + r)
+    } recover {
+      case e: Throwable => e.getStackTrace.foreach(println); throw e
+    }
 
     Await.ready(f6, Duration.Inf)
+
+    val f7 = AuthorizationHelper.service.execute(
+      UUID.fromString("bb56599d-d82f-458d-993b-f7c0c993c56c"),
+      UUID.fromString("a2e0c04b-3507-4daa-a783-55d0763306c4")
+    )
+
+    f7.map { r =>
+      // false
+      println(r)
+    }
+
+    Await.ready(f7, Duration.Inf)
 
   }
 
