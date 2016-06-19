@@ -21,7 +21,7 @@ class UpdateThingUseCase(thingRepository: ThingRepository, authorizationService:
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
       case Success(uuid) =>
-        AuthorizationService.asyncExecute(authorizationService, executorAgentId, ShowThingUseCase.permission.id) {
+        AuthorizationService.asyncExecute(authorizationService, executorAgentId, UpdateThingUseCase.permission.id) {
           val thing = CreateThing.toThing(c).copy(_id = uuid)
           thingRepository.update(thing).map(Good(_))
         }
