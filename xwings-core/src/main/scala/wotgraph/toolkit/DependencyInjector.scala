@@ -148,10 +148,12 @@ object DependencyInjector {
 
 
     bind[CreateRoleUseCase] identifiedBy 'CreateRoleUseCase to new CreateRoleUseCase(
-      inject[RoleRepository](identified by 'RoleRepository)
+      inject[RoleRepository](identified by 'RoleRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ListRolesUseCase] identifiedBy 'ListRolesUseCase to new ListRolesUseCase(
-      inject[RoleRepository](identified by 'RoleRepository)
+      inject[RoleRepository](identified by 'RoleRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
 
 

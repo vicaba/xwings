@@ -2,15 +2,21 @@ package wotgraph.app.role.application.usecase
 
 import java.util.UUID
 
+import org.scalactic.{Every, Good, Or}
+import wotgraph.app.authorization.application.service.AuthorizationService
+import wotgraph.app.error.AppError
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.domain.repository.RoleRepository
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class ListRolesUseCase(roleRepository: RoleRepository) {
+class ListRolesUseCase(roleRepository: RoleRepository, authorizationService: AuthorizationService) {
 
-  def execute(): Future[List[Role]] = roleRepository.getAll
+  def execute()(executorAgentId: UUID): Future[List[Role] Or Every[AppError]] =
+    AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateRoleUseCase.permission.id) {
+      roleRepository.getAll.map(Good(_))
+    }
 
 }
 
