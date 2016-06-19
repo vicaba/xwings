@@ -4,6 +4,7 @@ package wotgraph.app.user.application.usecase
 import java.util.UUID
 
 import org.scalactic.{Every, Or}
+import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.error.AppError
 import wotgraph.app.user.application.usecase.dto.CreateUser
 import wotgraph.app.user.domain.entity.User
@@ -14,12 +15,14 @@ import wotgraph.toolkit.crypt.Hasher
 import scala.concurrent.Future
 
 
-class CreateUserUseCase(userRepository: UserRepository, hash: Hasher.PreconfiguredHash) {
+class CreateUserUseCase(userRepository: UserRepository, hash: Hasher.PreconfiguredHash, authorizationService: AuthorizationService) {
 
-  def execute(c: CreateUser): Future[User Or Every[AppError]] = {
-    val user = CreateUser.toUser(c)
-    val password = hash(user.password.toCharArray)
-    userRepository.create(user.copy(password = password))
+  def execute(c: CreateUser)(executorAgentId: UUID): Future[User Or Every[AppError]] = {
+    AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateUserUseCase.permission.id) {
+      val user = CreateUser.toUser(c)
+      val password = hash(user.password.toCharArray)
+      userRepository.create(user.copy(password = password))
+    }
   }
 }
 

@@ -7,7 +7,6 @@ import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.domain.service.{ActionExecutor, ExecutionFailure, ExecutionResult}
-import wotgraph.app.user.domain.entity.User
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,12 +15,12 @@ import scala.util.{Failure, Success, Try}
 
 class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(id: String, actionName: String)(userId: User.Id): Future[ExecutionResult Or Every[AppError]] = {
+  def execute(id: String, actionName: String)(executorAgentId: UUID): Future[ExecutionResult Or Every[AppError]] = {
 
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
       case Success(uuid) =>
-        AuthorizationService.executeAsync(authorizationService, userId, ExecuteThingActionUseCase.permission.id) {
+        AuthorizationService.asyncExecute(authorizationService, executorAgentId, ExecuteThingActionUseCase.permission.id) {
           thingRepository.findById(uuid).flatMap {
             case Some(thing) =>
               val action = thing.actions.find(_.actionName == actionName)

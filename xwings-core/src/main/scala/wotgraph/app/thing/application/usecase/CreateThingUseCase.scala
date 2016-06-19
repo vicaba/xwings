@@ -4,11 +4,10 @@ import java.util.UUID
 
 import org.scalactic._
 import wotgraph.app.authorization.application.service.AuthorizationService
-import wotgraph.app.error.{AppError, AuthorizationError}
+import wotgraph.app.error.AppError
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.domain.repository.ThingRepository
-import wotgraph.app.user.domain.entity.User
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -16,8 +15,8 @@ import scala.concurrent.Future
 
 class CreateThingUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(c: CreateThing)(userId: User.Id): Future[Thing Or Every[AppError]] =
-    AuthorizationService.executeAsync(authorizationService, userId, CreateThingUseCase.permission.id) {
+  def execute(c: CreateThing)(executorAgentId: UUID): Future[Thing Or Every[AppError]] =
+    AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateThingUseCase.permission.id) {
       thingRepository.create(CreateThing.toThing(c)).map(Good(_))
     }
 }

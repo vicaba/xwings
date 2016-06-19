@@ -9,7 +9,6 @@ import wotgraph.app.error.AppError
 import wotgraph.app.thing.application.usecase.dto.GetThings
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.domain.repository.ThingRepository
-import wotgraph.app.user.domain.entity.User
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -18,13 +17,13 @@ import scala.concurrent.Future
 
 class ListThingsUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(g: GetThings = GetThings(0, 100))(userId: User.Id): Future[List[Thing] Or Every[AppError]] =
-    AuthorizationService.executeAsync(authorizationService, userId, ListThingsUseCase.permission.id) {
+  def execute(g: GetThings = GetThings(0, 100))(executorAgentId: UUID): Future[List[Thing] Or Every[AppError]] =
+    AuthorizationService.asyncExecute(authorizationService, executorAgentId, ListThingsUseCase.permission.id) {
       thingRepository.getAll(g.itemPerPage * g.pageNumber, g.itemPerPage).map(Good(_))
     }
 
-  def executeAsStream(userId: User.Id): Future[Enumerator[Thing] Or Every[AppError]] =
-    AuthorizationService.execute(authorizationService, userId, ListThingsUseCase.permission.id) {
+  def executeAsStream(executorAgentId: UUID): Future[Enumerator[Thing] Or Every[AppError]] =
+    AuthorizationService.execute(authorizationService, executorAgentId, ListThingsUseCase.permission.id) {
       Good(thingRepository.getAllAsStream)
     }
 

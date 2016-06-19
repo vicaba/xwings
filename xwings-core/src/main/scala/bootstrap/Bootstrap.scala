@@ -149,7 +149,7 @@ object UserHelper {
         CreateUser("Nadia", "nadie", roles.filter(_.name == RoleHelper.Freemium).head.id) ::
         Nil
 
-    Future.sequence(users.map(useCase.execute))
+    Future.sequence(users.map(useCase.execute(_)(AuthorizationService.BypassUUID)))
 
   }
 
@@ -219,10 +219,6 @@ object Query {
     //val f4 = UserHelper.repo.delete(UUID.fromString("395e11a7-79e6-40b0-8e33-0388b4f9c586"))
 
     //Await.ready(f4, Duration.Inf)
-
-    val f5 = UserHelper.updateUseCase.execute("55eec6fe-6a64-4b31-b671-25bb5cb0157f", CreateUser("name", "pass", UUID.fromString("ece51b67-158c-411c-9aeb-a90376462389")))
-
-    Await.ready(f5, Duration.Inf)
 
     val f6 = AuthorizationHelper.service.execute(
       UUID.fromString("00a38644-8e72-4f85-ba7a-8f4730124d16"),

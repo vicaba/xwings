@@ -104,17 +104,21 @@ object DependencyInjector {
 
     bind[CreateUserUseCase] identifiedBy 'CreateUserUseCase to new CreateUserUseCase(
       inject[UserRepository](identified by 'UserRepository),
-      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher)
+      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[UpdateUserUseCase] identifiedBy 'UpdateUserUseCase to new UpdateUserUseCase(
       inject[UserRepository](identified by 'UserRepository),
-      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher)
+      inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[ListUsersUseCase] identifiedBy 'ListUsersUseCase to new ListUsersUseCase(
-      inject[UserRepository](identified by 'UserRepository)
+      inject[UserRepository](identified by 'UserRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[DeleteUserUseCase] identifiedBy 'DeleteUserUseCase to new DeleteUserUseCase(
-      inject[UserRepository](identified by 'UserRepository)
+      inject[UserRepository](identified by 'UserRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
     )
     bind[AuthenticateUserUseCase] identifiedBy 'AuthenticateUserUseCase to new AuthenticateUserUseCase(
       inject[UserRepository](identified by 'UserRepository),

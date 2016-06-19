@@ -17,11 +17,11 @@ import scala.util.{Failure, Success, Try}
 
 class UpdateThingUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(id: String, c: CreateThing)(userId: User.Id): Future[Option[Thing] Or Every[AppError]] = {
+  def execute(id: String, c: CreateThing)(executorAgentId: UUID): Future[Option[Thing] Or Every[AppError]] = {
     Try(UUID.fromString(id)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
       case Success(uuid) =>
-        AuthorizationService.executeAsync(authorizationService, userId, ShowThingUseCase.permission.id) {
+        AuthorizationService.asyncExecute(authorizationService, executorAgentId, ShowThingUseCase.permission.id) {
           val thing = CreateThing.toThing(c).copy(_id = uuid)
           thingRepository.update(thing).map(Good(_))
         }
