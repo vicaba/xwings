@@ -11,11 +11,14 @@ import wotgraph.toolkit.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import wotgraph.app.error.AppError
+import wotgraph.app.permission.application.usecase.{ListPermissionsUseCase, PermissionUseCasePermissionProvider}
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
+import wotgraph.app.role.application.usecase.{CreateRoleUseCase, ListRolesUseCase, RoleUseCasePermissionProvider}
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
-import wotgraph.app.user.application.usecase.{CreateUserUseCase, UpdateUserUseCase}
+import wotgraph.app.thing.application.usecase.{ListThingsUseCase, ThingUseCasePermissionProvider}
+import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.application.usecase.dto.CreateUser
 import wotgraph.app.user.domain.entity.User
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
@@ -79,15 +82,14 @@ object PermissionHelper {
 
   def createNodes(): Future[List[Permission]] = {
 
-    val p = Permission(desc = "Create a Thing")
-    val p2 = Permission(desc = "Delete a Thing")
+    val perms =
+      (ThingUseCasePermissionProvider ::
+        RoleUseCasePermissionProvider ::
+        PermissionUseCasePermissionProvider ::
+        UserUseCasePermissionProvider ::
+        Nil).flatMap(_.permissions)
 
-    for {
-      fp <- repo.create(p).map(_ => List(p))
-      fp2 <- repo.create(p2).map(_ => List(p2))
-    } yield {
-      fp ::: fp2
-    }
+    Future.sequence(perms.map(repo.create))
 
   }
 
@@ -99,12 +101,30 @@ object PermissionHelper {
 
 object RoleHelper {
 
+  val Admin = "admin"
+
+  val Registered = "registered"
+
+  val Freemium = "freemium"
+
   val repo: RoleNeo4jRepository = inject[RoleNeo4jRepository](identified by 'RoleNeo4jRepository)
 
   def createNodes(perms: List[Permission]): Future[List[Role]] = {
 
-    val r = Role(name = "admin", permissions = perms.toSet)
-    repo.create(r).map(_ => List(r))
+    val adminOnlyPerms =
+      (UserUseCasePermissionProvider ::
+        RoleUseCasePermissionProvider ::
+        PermissionUseCasePermissionProvider ::
+        Nil).flatMap(_.permissions).toSet
+
+    val roles =
+      Role(name = Admin, permissions = perms.toSet) ::
+        Role(name = Registered, permissions = perms.toSet -- adminOnlyPerms) ::
+        Role(name = Freemium, permissions = (ListThingsUseCase :: Nil).map(_.permission).toSet) ::
+        Nil
+
+    Future.sequence(roles.map(repo.create))
+
   }
 
   def deleteNodes() = repo.deleteAll
@@ -117,11 +137,18 @@ object UserHelper {
 
   val updateUseCase = inject[UpdateUserUseCase](identified by 'UpdateUserUseCase)
 
-  def createNodes(role: Role): Future[User Or Every[AppError]] = {
+  def createNodes(roles: List[Role]) = {
 
     val useCase = inject[CreateUserUseCase](identified by 'CreateUserUseCase)
 
-    useCase.execute(CreateUser("Xavi", "hey", role.id))
+
+    val users =
+      CreateUser("Xavi", "xavier", roles.filter(_.name == RoleHelper.Admin).head.id) ::
+        CreateUser("Vic", "victor", roles.filter(_.name == RoleHelper.Registered).head.id) ::
+        CreateUser("Nadia", "nadie", roles.filter(_.name == RoleHelper.Freemium).head.id) ::
+        Nil
+
+    Future.sequence(users.map(useCase.execute))
 
   }
 
@@ -147,11 +174,13 @@ object Bootstrap {
 
     val f2 = f.flatMap(RoleHelper.createNodes)
 
-    f2.map { r =>
-      UserHelper.createNodes(r.head)
-      UserHelper.createNodes(r.head)
+    val f3 = f2.flatMap { r =>
+      UserHelper.createNodes(r)
+    } recover {
+      case e: Throwable => println(e)
     }
 
+    Await.ready(f3, Duration.Inf)
 
   }
 

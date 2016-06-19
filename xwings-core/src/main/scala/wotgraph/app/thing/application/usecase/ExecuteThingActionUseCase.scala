@@ -6,6 +6,7 @@ import wotgraph.app.exceptions.ClientFormatException
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.domain.service.{ActionExecutor, ExecutionFailure, ExecutionResult}
 import wotgraph.app.user.domain.entity.User
+import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -33,3 +34,10 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository) {
   }
 
 }
+
+object ExecuteThingActionUseCase extends PermissionProvider {
+  override protected val permissionId: UUID = UUID.fromString("9948d838-c3b2-4d47-b442-8c30c29dcd9d")
+}
+
+
+

@@ -7,6 +7,7 @@ import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.user.application.usecase.dto.CreateUser
 import wotgraph.app.user.domain.entity.User
 import wotgraph.app.user.domain.repository.UserRepository
+import wotgraph.toolkit.application.usecase.PermissionProvider
 import wotgraph.toolkit.crypt.Hasher
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,4 +26,8 @@ class UpdateUserUseCase(userRepository: UserRepository, hash: Hasher.Preconfigur
     }
   }
 
+}
+
+object UpdateUserUseCase extends PermissionProvider {
+  override protected val permissionId: UUID = UUID.fromString("0f086e95-03d5-4669-8295-3b5cc44ee772")
 }

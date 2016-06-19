@@ -136,7 +136,6 @@ case class UserNeo4jRepository(
 
     Future {
       val r = createQuery()
-      println("a")
       if (r.queryStatistics().getNodesCreated == 1) Good(user) else Bad(One(Storage(s"Can't create User with id: ${user.id}")))
     }
   }
