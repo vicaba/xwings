@@ -1,1 +1,1 @@
-import wotgraph.app.thing.infrastructure.service.action.contexts._
+import wotgraph.app.thing.infrastructure.service.action.context._

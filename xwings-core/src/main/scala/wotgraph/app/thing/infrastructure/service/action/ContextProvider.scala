@@ -4,7 +4,7 @@ import java.util.UUID
 
 import scaldi.Module
 import wotgraph.app.thing.application.service.action.{ActionContext, UUIDCanBeIdentifier}
-import wotgraph.app.thing.infrastructure.service.action.contexts.http.HttpContext
+import wotgraph.app.thing.infrastructure.service.action.context.http.HttpContext
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

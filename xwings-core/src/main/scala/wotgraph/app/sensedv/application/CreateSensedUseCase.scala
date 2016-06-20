@@ -1,4 +1,5 @@
 package wotgraph.app.sensedv.application
+/*
 
 import java.util.UUID
 
@@ -27,3 +28,4 @@ class CreateSensedUseCase(sensedRepository: SensedRepository, authorizationServi
 object CreateSensedUseCase extends PermissionProvider {
   override protected val permissionId: UUID = UUID.fromString("bdb1d552-80af-4a9f-958b-f779e492a4b2")
 }
+*/

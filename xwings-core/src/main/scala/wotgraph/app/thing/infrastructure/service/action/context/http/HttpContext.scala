@@ -1,4 +1,4 @@
-package wotgraph.app.thing.infrastructure.service.action.contexts.http
+package wotgraph.app.thing.infrastructure.service.action.context.http
 
 import java.util.UUID
 

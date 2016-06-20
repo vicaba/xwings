@@ -20,7 +20,6 @@ class LoginController extends Controller with PredefJsonMessages {
 
   lazy val encrypt: String => String = inject[String => String](identified by 'SessionEncrypter)
 
-
   def execute = Action.async(parse.json) { implicit r =>
 
     val res = r.body.validate[UserCredentials]

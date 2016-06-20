@@ -11,8 +11,6 @@ POST          /api/v1/things/search                 wotgraph.app.thing.infrastru
 
 GET           /api/v1/things/:id                    wotgraph.app.thing.infrastructure.http.api.controller.ShowThingController.execute(id: String)
 
-PUT           /api/v1/things/:id                    wotgraph.app.thing.infrastructure.http.api.controller.UpdateThingController.execute(id: String)
-
 DELETE        /api/v1/things/:id                    wotgraph.app.thing.infrastructure.http.api.controller.DeleteThingController.execute(id: String)
 
 POST          /api/v1/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.ExecuteThingActionController.execute(id: String, actionName: String)
