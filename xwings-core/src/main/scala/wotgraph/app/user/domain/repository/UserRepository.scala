@@ -12,9 +12,9 @@ trait UserRepository {
 
   def create(user: User):  Future[User Or Every[StorageError]]
 
-  def update(user: User): Future[User Or Every[AppError]]
+  def update(user: User): Future[User Or Every[StorageError]]
 
-  def delete(id: UUID): Future[UUID Or Every[AppError]]
+  def delete(id: UUID): Future[UUID Or Every[StorageError]]
 
   def findById(id: UUID): Future[Option[User]]
 

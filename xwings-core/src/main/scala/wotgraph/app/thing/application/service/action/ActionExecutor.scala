@@ -17,11 +17,13 @@ object UUIDCanBeIdentifier extends CanBeIdentifier[UUID] {
 
 object ActionExecutor {
 
-  def executeAction(thingId: UUID, a: Action)(contextProvider: Module) = {
+  def executeAction(ta: ThingAndAction)(contextProvider: Module) = {
 
     implicit val cp = contextProvider
 
     import UUIDCanBeIdentifier._
+
+    val a = ta.action
 
     Try(inject[ActionContext[_]](identified by a.contextId)).toOption match {
       case Some(c) =>
@@ -29,7 +31,7 @@ object ActionExecutor {
         val contextValue = Json.parse(a.contextValue).asOpt[Map[String, String]] getOrElse
           Json.obj("rawData" -> a.contextValue).as[Map[String, String]]
 
-        c.executeAction(thingId, contextValue)
+        c.executeAction(ta, contextValue)
 
       case None => Future.successful(ExecutionFailure(List("Context Not Found")))
     }
@@ -42,7 +44,7 @@ trait ActionContext[Context] {
 
   val context: Context
 
-  def executeAction(thingId: UUID, contextValue: Map[String, String]): Future[ExecutionResult]
+  def executeAction(thingId: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult]
 
 }
 

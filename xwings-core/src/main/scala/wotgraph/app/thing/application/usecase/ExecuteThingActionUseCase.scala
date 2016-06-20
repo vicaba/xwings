@@ -5,7 +5,7 @@ import java.util.UUID
 import org.scalactic._
 import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.error.{AppError, ValidationError}
-import wotgraph.app.thing.application.service.action.{ActionExecutor, ExecutionFailure, ExecutionResult}
+import wotgraph.app.thing.application.service.action.{ActionExecutor, ExecutionFailure, ExecutionResult, ThingAndAction}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.service.action.ContextProvider
 import wotgraph.toolkit.application.usecase.PermissionProvider
@@ -26,7 +26,7 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationS
             case Some(thing) =>
               val action = thing.actions.find(_.actionName == actionName)
               action match {
-                case Some(a) => ActionExecutor.executeAction(uuid, a)(ContextProvider.injector).map(Good(_))
+                case Some(a) => ActionExecutor.executeAction(ThingAndAction(uuid, a))(ContextProvider.injector).map(Good(_))
                 case _ => Future.successful(Good(ExecutionFailure(List("Action not found"))))
               }
             case None => Future(Good(ExecutionFailure(List("Thing not found"))))

@@ -14,12 +14,9 @@ import wotgraph.app.thing.infrastructure.serialization.keys.ThingKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
-/**
-  * Created by vicaba on 11/06/16.
-  */
 case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
-  val mongoService: MongoCRUDService[Thing, UUID] = {
+  val mongoService: MongoCRUDService[Thing, UUID] =
     new MongoCRUDService[Thing, UUID]() {
 
       override val collection: JSONCollection = db.collection("thing")
@@ -28,7 +25,6 @@ case class ThingMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
       override val identityName: String = ThingKeys.Id
 
-    }
   }
 
   def findById(id: UUID) = mongoService.findById(id) recover {

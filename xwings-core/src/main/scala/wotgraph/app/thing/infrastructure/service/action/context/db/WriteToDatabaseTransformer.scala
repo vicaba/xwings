@@ -11,5 +11,5 @@ class WriteToDatabaseTransformer extends ActionTransformer {
 
   override val contextId: UUID = AvailableContexts.WriteToDatabaseContext
 
-  override def transform(ta: ThingAndAction): List[Action] = ReadFromDatabaseContext.createAction(ta)
+  override def transform(ta: ThingAndAction): List[Action] = ta.action :: ReadFromDatabaseContext.createAction(ta)
 }

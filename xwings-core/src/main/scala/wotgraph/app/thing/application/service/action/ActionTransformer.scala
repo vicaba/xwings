@@ -4,9 +4,6 @@ import java.util.UUID
 
 import wotgraph.app.thing.domain.entity.Action
 
-case class ThingAndAction(thingId: UUID, action: Action)
-
-
 trait ActionTransformer extends PartialFunction[ThingAndAction, List[Action]] {
 
   val contextId: UUID
