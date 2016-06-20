@@ -8,16 +8,20 @@ import wotgraph.app.error.AppError
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.domain.repository.ThingRepository
+import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class CreateThingUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
+class CreateThingUseCase(
+                          thingRepository: ThingRepository,
+                          authorizationService: AuthorizationService,
+                          thingTransformer: ThingTransformer) {
 
   def execute(c: CreateThing)(executorAgentId: UUID): Future[Thing Or Every[AppError]] =
     AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateThingUseCase.permission.id) {
-      thingRepository.create(CreateThing.toThing(c)).map(Good(_))
+      thingRepository.create(thingTransformer(CreateThing.toThing(c))).map(Good(_))
     }
 }
 

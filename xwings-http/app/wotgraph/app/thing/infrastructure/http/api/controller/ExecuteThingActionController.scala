@@ -6,7 +6,7 @@ import play.api.mvc._
 import scaldi.Injectable._
 import wotgraph.app.error.infrastructure.http.api.ErrorHelper
 import wotgraph.app.session.infrastructure.http.AuthenticatedAction
-import wotgraph.app.thing.application.service.{ExecutionFailure, ExecutionSuccess}
+import wotgraph.app.thing.application.service.action.{ExecutionFailure, ExecutionSuccess}
 import wotgraph.app.thing.application.usecase.ExecuteThingActionUseCase
 import wotgraph.toolkit.DependencyInjector._
 

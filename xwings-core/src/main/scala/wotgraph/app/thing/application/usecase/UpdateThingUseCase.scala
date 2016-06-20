@@ -8,14 +8,17 @@ import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.domain.repository.ThingRepository
-import wotgraph.app.user.domain.entity.User
+import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-class UpdateThingUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
+class UpdateThingUseCase(
+                          thingRepository: ThingRepository,
+                          authorizationService: AuthorizationService,
+                          thingTransformer: ThingTransformer) {
 
   def execute(id: String, c: CreateThing)(executorAgentId: UUID): Future[Option[Thing] Or Every[AppError]] = {
     Try(UUID.fromString(id)) match {
@@ -23,7 +26,7 @@ class UpdateThingUseCase(thingRepository: ThingRepository, authorizationService:
       case Success(uuid) =>
         AuthorizationService.asyncExecute(authorizationService, executorAgentId, UpdateThingUseCase.permission.id) {
           val thing = CreateThing.toThing(c).copy(_id = uuid)
-          thingRepository.update(thing).map(Good(_))
+          thingRepository.update(thingTransformer(thing)).map(Good(_))
         }
     }
   }

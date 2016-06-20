@@ -1,25 +1,27 @@
-package wotgraph.app.thing.application.service
+package wotgraph.app.thing.application.service.action
 
 import java.util.UUID
 
 import play.api.libs.json.Json
+import scaldi.Injectable._
 import scaldi.{CanBeIdentifier, Identifier, Module}
 import wotgraph.app.thing.domain.entity.Action
-import scaldi.Injectable._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.Try
 
 object UUIDCanBeIdentifier extends CanBeIdentifier[UUID] {
   override def toIdentifier(target: UUID): Identifier = target.toString
+  implicit val uuidIdentifier = UUIDCanBeIdentifier
 }
 
 object ActionExecutor {
 
-  def executeAction(a: Action)(contextProvider: Module) = {
+  def executeAction(thingId: UUID, a: Action)(contextProvider: Module) = {
 
     implicit val cp = contextProvider
-    implicit val uuidIdentifier = UUIDCanBeIdentifier
+
+    import UUIDCanBeIdentifier._
 
     Try(inject[ActionContext[_]](identified by a.contextId)).toOption match {
       case Some(c) =>
@@ -27,7 +29,7 @@ object ActionExecutor {
         val contextValue = Json.parse(a.contextValue).asOpt[Map[String, String]] getOrElse
           Json.obj("rawData" -> a.contextValue).as[Map[String, String]]
 
-        c.executeAction(contextValue)
+        c.executeAction(thingId, contextValue)
 
       case None => Future.successful(ExecutionFailure(List("Context Not Found")))
     }
@@ -40,7 +42,7 @@ trait ActionContext[Context] {
 
   val context: Context
 
-  def executeAction(contextValue: Map[String, String]): Future[ExecutionResult]
+  def executeAction(thingId: UUID, contextValue: Map[String, String]): Future[ExecutionResult]
 
 }
 

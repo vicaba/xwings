@@ -11,7 +11,8 @@ import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRe
 import wotgraph.app.role.application.usecase.RoleUseCasePermissionProvider
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
-import wotgraph.app.thing.application.usecase.{ListThingsUseCase, ThingUseCasePermissionProvider}
+import wotgraph.app.thing.application.usecase.dto.CreateThing
+import wotgraph.app.thing.application.usecase.{CreateThingUseCase, ListThingsUseCase, ThingUseCasePermissionProvider}
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
@@ -27,13 +28,18 @@ import scala.concurrent.{Await, Future}
 
 object ThingHelper {
 
+  val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
+
+  val createThingUseCase = inject[CreateThingUseCase](identified by 'CreateThingUseCase)
+
+
   def createThing(identifier: Int): Thing = {
 
     val id = UUID.randomUUID()
     val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
     val actions = Set(
       Action(
-        "getConsume", UUID.fromString(AvailableContexts.HttpContext), Json.toJson(contextValue).as[JsObject].toString()
+        "getConsume", AvailableContexts.WriteToDatabaseContext, Json.toJson(contextValue).as[JsObject].toString()
       )
     )
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
@@ -43,7 +49,21 @@ object ThingHelper {
 
   }
 
-  val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
+  def createThingWithActions(identifier: Int): CreateThing = {
+
+    val id = UUID.randomUUID()
+    val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
+    val actions = Set(
+      Action(
+        "getConsume", AvailableContexts.WriteToDatabaseContext, Json.toJson(contextValue).as[JsObject].toString()
+      )
+    )
+    val metadata = Json.parse("""{}""")
+    val t = new CreateThing(Metadata(metadata.as[JsObject]), actions)
+
+    t
+
+  }
 
   def createNodes() = {
     var i = 0
@@ -65,6 +85,9 @@ object ThingHelper {
       Await.result(f3, 6.seconds)
       val f4 = repo.create(tWithChildren)
       Await.result(f4, 6.seconds)
+      val f6 = createThingUseCase.execute(createThingWithActions(6))(AuthorizationService.BypassUUID)
+      Await.result(f6, 6.seconds)
+
     }
   }
 

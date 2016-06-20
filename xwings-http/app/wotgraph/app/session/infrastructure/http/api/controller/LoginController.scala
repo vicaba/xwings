@@ -26,7 +26,7 @@ class LoginController extends Controller with PredefJsonMessages {
     val res = r.body.validate[UserCredentials]
     res match {
       case JsSuccess(userCredentials, _) => authenticateUserUseCase.execute(userCredentials).map {
-        case Some(u) => println("created"); Created("").addingToSession(AuthenticatedAction.tokenKey -> encrypt(u.id.toString))
+        case Some(u) => Created("").addingToSession(AuthenticatedAction.tokenKey -> encrypt(u.id.toString))
         case None => NotFound("")
       }
       case e: JsError => Future.successful(BadRequest(e.toString))

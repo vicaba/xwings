@@ -22,6 +22,7 @@ import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
 import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
+import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
@@ -46,6 +47,8 @@ object DependencyInjector {
     bind[String => String] identifiedBy 'SessionDecrypter to
       ((new MyCypher).decrypt(">rvPoorzLD@n{`s1880R6Ph80;zw1}", _: String))
 
+    bind[ThingTransformer] identifiedBy 'ThingTransformer to new ThingTransformer
+
     bind[Neo4jConf.Config] identifiedBy 'Neo4jConfig to {
       val configuration = new Configuration()
       configuration.set("driver", conf.getString("neo4j.ogm.driver"))
@@ -67,11 +70,13 @@ object DependencyInjector {
 
     bind[CreateThingUseCase] identifiedBy 'CreateThingUseCase to new CreateThingUseCase(
       inject[ThingRepository](identified by 'ThingRepository),
-      inject[AuthorizationService](identified by 'AuthorizationService)
+      inject[AuthorizationService](identified by 'AuthorizationService),
+      inject[ThingTransformer](identified by 'ThingTransformer)
     )
     bind[UpdateThingUseCase] identifiedBy 'UpdateThingUseCase to new UpdateThingUseCase(
       inject[ThingRepository](identified by 'ThingRepository),
-      inject[AuthorizationService](identified by 'AuthorizationService)
+      inject[AuthorizationService](identified by 'AuthorizationService),
+      inject[ThingTransformer](identified by 'ThingTransformer)
     )
     bind[ShowThingUseCase] identifiedBy 'ShowThingUseCase to new ShowThingUseCase(
       inject[ThingRepository](identified by 'ThingRepository),
