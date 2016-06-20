@@ -2,31 +2,26 @@ package bootstrap
 
 import java.util.UUID
 
-import org.apache.commons.codec.binary.Hex
-import org.scalactic.{Every, Or}
-import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
-import wotgraph.app.thing.domain.repository.ThingRepository
-import wotgraph.app.thing.domain.service.ContextProvider
-import wotgraph.toolkit.DependencyInjector._
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import wotgraph.app.authorization.application.service.AuthorizationService
-import wotgraph.app.error.AppError
-import wotgraph.app.permission.application.usecase.{ListPermissionsUseCase, PermissionUseCasePermissionProvider}
+import wotgraph.app.permission.application.usecase.PermissionUseCasePermissionProvider
 import wotgraph.app.permission.domain.entity.Permission
 import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRepository
-import wotgraph.app.role.application.usecase.{CreateRoleUseCase, ListRolesUseCase, RoleUseCasePermissionProvider}
+import wotgraph.app.role.application.usecase.RoleUseCasePermissionProvider
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
 import wotgraph.app.thing.application.usecase.{ListThingsUseCase, ThingUseCasePermissionProvider}
+import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
+import wotgraph.app.thing.domain.repository.ThingRepository
+import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
 import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.application.usecase.dto.CreateUser
-import wotgraph.app.user.domain.entity.User
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
-import wotgraph.toolkit.crypt.{Hasher, PBKDF2WithHmacSHA512}
+import wotgraph.toolkit.DependencyInjector._
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 
@@ -38,7 +33,7 @@ object ThingHelper {
     val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
     val actions = Set(
       Action(
-        "getConsume", UUID.fromString(ContextProvider.HTTP_CONTEXT), Json.toJson(contextValue).as[JsObject].toString()
+        "getConsume", UUID.fromString(AvailableContexts.HttpContext), Json.toJson(contextValue).as[JsObject].toString()
       )
     )
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")

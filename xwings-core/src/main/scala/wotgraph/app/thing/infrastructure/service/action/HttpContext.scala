@@ -1,13 +1,15 @@
-package wotgraph.app.thing.domain.service
+package wotgraph.app.thing.infrastructure.service.action
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.apache.commons.validator.routines.UrlValidator
+import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
+import wotgraph.app.thing.application.service._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[AhcWSClient] {
+case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WSClient] {
 
   val HTTP_METHOD_KEY = "httpMethod"
 
@@ -17,7 +19,7 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[Ah
 
   val BODY_KEY = "body"
 
-  override val context: AhcWSClient = AhcWSClient()(ActorMaterializer()(ActorSystem()))
+  override val context: WSClient = AhcWSClient()(ActorMaterializer()(ActorSystem()))
 
   override def executeAction(contextValue: Map[String, String]): Future[ExecutionResult] = {
 

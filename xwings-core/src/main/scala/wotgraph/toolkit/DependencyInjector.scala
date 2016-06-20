@@ -26,7 +26,7 @@ import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.UserRepositoryImpl
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
-import wotgraph.toolkit.crypt.{Cypher, Hasher, MyCypher, PBKDF2WithHmacSHA512}
+import wotgraph.toolkit.crypt.{Hasher, MyCypher, PBKDF2WithHmacSHA512}
 import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
 import wotgraph.toolkit.repository.neo4j.Neo4jConf
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
