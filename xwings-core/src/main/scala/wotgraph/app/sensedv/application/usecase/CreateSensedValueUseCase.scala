@@ -8,16 +8,14 @@ import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.sensedv.application.usecase.dto.CreateSensedValue
 import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.domain.repository.SensedValueRepository
-import wotgraph.app.thing.application.service.action.ThingAndAction
 import wotgraph.toolkit.application.usecase.PermissionProvider
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-/**
-  * Created by vicaba on 20/06/16.
-  */
-class CreateSensedValueUseCase(sensedValueRepository: SensedValueRepository, authorizationService: AuthorizationService) {
+class CreateSensedValueUseCase(
+                                sensedValueRepository: SensedValueRepository,
+                                authorizationService: AuthorizationService) {
 
   def execute(c: CreateSensedValue,
               thingId: String,

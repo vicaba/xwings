@@ -7,7 +7,7 @@ import akka.stream.ActorMaterializer
 import org.apache.commons.validator.routines.UrlValidator
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
-import wotgraph.app.thing.application.service.action.{ActionContext, ExecutionFailure, ExecutionResult, ExecutionSuccess}
+import wotgraph.app.thing.application.service.action._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,7 +23,9 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WS
 
   override val context: WSClient = AhcWSClient()(ActorMaterializer()(ActorSystem()))
 
-  override def executeAction(thingId: UUID, contextValue: Map[String, String]): Future[ExecutionResult] = {
+  override def executeAction(ta: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult] = {
+
+    val thingId = ta.thingId
 
     val requestOpt = for {
       httpMethod <- contextValue get HttpMethodKey if AllowedHttpMethods contains httpMethod

@@ -17,6 +17,10 @@ import wotgraph.app.role.application.usecase.{CreateRoleUseCase, ListRolesUseCas
 import wotgraph.app.role.domain.repository.RoleRepository
 import wotgraph.app.role.infrastructure.repository.RoleRepositoryImpl
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
+import wotgraph.app.sensedv.application.CreateSensedValueUseCase
+import wotgraph.app.sensedv.domain.repository.SensedValueRepository
+import wotgraph.app.sensedv.infrastructure.repository.SensedValueRepositoryImpl
+import wotgraph.app.sensedv.infrastructure.repository.mongodb.SensedValueMongoDbRepository
 import wotgraph.app.thing.application.usecase._
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
@@ -40,7 +44,7 @@ object DependencyInjector {
 
     implicit val ec = scala.concurrent.ExecutionContext.global
 
-    val thingMongoEnvironment = ThingMongoEnvironment(conf)
+    val mongoEnvironment = ThingMongoEnvironment(conf)
 
     bind[String => String] identifiedBy 'SessionEncrypter to
       ((new MyCypher).encrypt(">rvPoorzLD@n{`s1880R6Ph80;zw1}", _: String))
@@ -62,7 +66,9 @@ object DependencyInjector {
     bind[ThingNeo4jRepository] identifiedBy 'ThingNeo4jRepository to ThingNeo4jRepository(
       inject[Neo4jSession](identified by 'Neo4jSession)
     )
-    bind[ThingMongoDbRepository] identifiedBy 'ThingMongoDbRepository to ThingMongoDbRepository(thingMongoEnvironment.db)
+    bind[ThingMongoDbRepository] identifiedBy 'ThingMongoDbRepository to ThingMongoDbRepository(
+      mongoEnvironment.db
+    )
     bind[ThingRepository] identifiedBy 'ThingRepository to ThingRepositoryImpl(
       inject[ThingNeo4jRepository](identified by 'ThingNeo4jRepository),
       inject[ThingMongoDbRepository](identified by 'ThingMongoDbRepository)
@@ -174,6 +180,19 @@ object DependencyInjector {
     bind[AuthorizationService] identifiedBy 'AuthorizationService to new AuthorizationService(
       inject[AuthorizationRepository](identified by 'AuthorizationRepository)
     )
+
+    bind[SensedValueMongoDbRepository] identifiedBy 'SensedValueMongoDbRepository to SensedValueMongoDbRepository(
+      mongoEnvironment.db
+    )
+    bind[SensedValueRepository] identifiedBy 'SensedValueRepository to SensedValueRepositoryImpl(
+      inject[SensedValueMongoDbRepository](identified by 'SensedValueMongoDbRepository)
+    )
+
+    bind[CreateSensedValueUseCase] identifiedBy 'CreateSensedValueUseCase to new CreateSensedValueUseCase(
+      inject[SensedValueRepository](identified by 'SensedValueRepository),
+      inject[AuthorizationService](identified by 'AuthorizationService)
+    )
+
 
   }
 

@@ -12,4 +12,3 @@ object CreateSensedValue {
   def toSensedValue(c: CreateSensedValue, thingId: UUID, actionName: String): SensedValue =
     SensedValue(namespace = ThingAndAction.namespace(thingId, actionName), data = c.data)
 }
-

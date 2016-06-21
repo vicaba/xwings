@@ -20,7 +20,6 @@ object ContextProvider {
 
     import UUIDCanBeIdentifier._
 
-
     bind[ActionContext[_]] identifiedBy AvailableContexts.HttpContext to HttpContext()
 
   }

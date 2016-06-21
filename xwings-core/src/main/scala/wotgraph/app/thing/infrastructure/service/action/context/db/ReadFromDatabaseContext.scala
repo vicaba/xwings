@@ -28,5 +28,5 @@ class ReadFromDatabaseContext(sensedRepository: SensedValueRepository) extends A
 
   override val context: SensedValueRepository = sensedRepository
 
-  override def executeAction(thingId: UUID, contextValue: Map[String, String]): Future[ExecutionResult] = ???
+  override def executeAction(ta: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult] = ???
 }

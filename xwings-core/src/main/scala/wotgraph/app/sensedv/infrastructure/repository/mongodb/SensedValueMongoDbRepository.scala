@@ -10,6 +10,7 @@ import reactivemongo.api.{DB, ReadPreference}
 import reactivemongo.play.json.collection.JSONCollection
 import wotgraph.app.error.{Storage, StorageError}
 import wotgraph.app.sensedv.domain.SensedValue
+import wotgraph.app.sensedv.infrastructure.serialization.format.json.Implicits._
 import wotgraph.app.sensedv.infrastructure.serialization.keys.SensedValueKeys
 import wotgraph.toolkit.repository.mongodb.MongoCRUDService
 
@@ -22,7 +23,7 @@ case class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
   val mongoService: MongoCRUDService[SensedValue, UUID] =
     new MongoCRUDService[SensedValue, UUID]() {
 
-      override val collection: JSONCollection = db.collection("thing")
+      override val collection: JSONCollection = db.collection("sensed")
 
       override def getIdFromEntity(entity: SensedValue): UUID = entity.id
 

@@ -11,6 +11,8 @@ import wotgraph.app.permission.infrastructure.repository.neo4j.PermissionNeo4jRe
 import wotgraph.app.role.application.usecase.RoleUseCasePermissionProvider
 import wotgraph.app.role.domain.entity.Role
 import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
+import wotgraph.app.sensedv.domain.SensedValue
+import wotgraph.app.sensedv.domain.repository.SensedValueRepository
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.application.usecase.{CreateThingUseCase, ListThingsUseCase, ThingUseCasePermissionProvider}
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
@@ -180,6 +182,21 @@ object UserHelper {
 object AuthorizationHelper {
   val service = inject[AuthorizationService](identified by 'AuthorizationService)
 }
+
+object SensedValueHelper {
+
+  val repo: SensedValueRepository = inject[SensedValueRepository](identified by 'SensedValueRepository)
+
+  def createSensedValues = {
+    val sv1 = SensedValue(namespace = "sv1", data = Json.obj())
+    repo.create(sv1)
+  }
+
+  def main(args: Array[String]) {
+    createSensedValues
+  }
+}
+
 
 object Bootstrap {
 

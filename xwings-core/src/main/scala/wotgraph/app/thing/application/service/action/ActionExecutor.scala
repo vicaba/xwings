@@ -5,7 +5,6 @@ import java.util.UUID
 import play.api.libs.json.Json
 import scaldi.Injectable._
 import scaldi.{CanBeIdentifier, Identifier, Module}
-import wotgraph.app.thing.domain.entity.Action
 
 import scala.concurrent.Future
 import scala.util.Try
