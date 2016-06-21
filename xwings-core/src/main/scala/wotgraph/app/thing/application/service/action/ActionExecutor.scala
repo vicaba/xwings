@@ -27,8 +27,10 @@ object ActionExecutor {
     Try(inject[ActionContext[_]](identified by a.contextId)).toOption match {
       case Some(c) =>
 
-        val contextValue = Json.parse(a.contextValue).asOpt[Map[String, String]] getOrElse
-          Json.obj("rawData" -> a.contextValue).as[Map[String, String]]
+        val jsContextValue = Try(Json.parse(a.contextValue)).getOrElse(Json.obj())
+
+        val contextValue = jsContextValue.asOpt[Map[String, String]]
+          .getOrElse(Json.obj("rawData" -> a.contextValue).as[Map[String, String]])
 
         c.executeAction(ta, contextValue)
 

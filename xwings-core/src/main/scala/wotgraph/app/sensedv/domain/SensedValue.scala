@@ -1,8 +1,8 @@
 package wotgraph.app.sensedv.domain
 
-import java.time.Instant
-import java.util.{Date, UUID}
+import java.util.UUID
 
+import org.joda.time.DateTime
 import play.api.libs.json.JsObject
 
-case class SensedValue(id: UUID = UUID.randomUUID(), namespace: String, date: Date = Date.from(Instant.now()), data: JsObject)
+case class SensedValue(id: UUID = UUID.randomUUID(), namespace: String, date: DateTime = DateTime.now(), data: JsObject)

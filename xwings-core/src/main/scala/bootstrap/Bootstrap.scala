@@ -41,7 +41,7 @@ object ThingHelper {
     val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
     val actions = Set(
       Action(
-        "getConsume", AvailableContexts.WriteToDatabaseContext, Json.toJson(contextValue).as[JsObject].toString()
+        "getConsume", AvailableContexts.HttpContext, Json.toJson(contextValue).as[JsObject].toString()
       )
     )
     val metadata = Json.parse("""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[42.6,32.1]},"properties":{"name":"Dinagat Islands"}},"ip":"192.168.22.19"}""")
@@ -54,10 +54,9 @@ object ThingHelper {
   def createThingWithActions(identifier: Int): CreateThing = {
 
     val id = UUID.randomUUID()
-    val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
     val actions = Set(
       Action(
-        "getConsume", AvailableContexts.WriteToDatabaseContext, Json.toJson(contextValue).as[JsObject].toString()
+        "getConsume", AvailableContexts.WriteToDatabaseContext, ""
       )
     )
     val metadata = Json.parse("""{}""")
@@ -190,10 +189,19 @@ object SensedValueHelper {
   def createSensedValues = {
     val sv1 = SensedValue(namespace = "sv1", data = Json.obj())
     repo.create(sv1)
+    Thread.sleep(400)
+    val sv2 = SensedValue(namespace = "sv1", data = Json.obj())
+    repo.create(sv2)
   }
 
   def main(args: Array[String]) {
-    createSensedValues
+    Thread.sleep(400)
+    val f = createSensedValues
+    Await.result(f, Duration.Inf)
+    val f2 = SensedValueHelper.repo.getAll("sv1")
+    f2.foreach(println)
+    Await.result(f2, Duration.Inf)
+
   }
 }
 

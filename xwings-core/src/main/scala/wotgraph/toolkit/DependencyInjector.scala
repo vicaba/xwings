@@ -21,11 +21,15 @@ import wotgraph.app.sensedv.application.CreateSensedValueUseCase
 import wotgraph.app.sensedv.domain.repository.SensedValueRepository
 import wotgraph.app.sensedv.infrastructure.repository.SensedValueRepositoryImpl
 import wotgraph.app.sensedv.infrastructure.repository.mongodb.SensedValueMongoDbRepository
+import wotgraph.app.thing.application.service.action.{ActionContext, UUIDCanBeIdentifier}
 import wotgraph.app.thing.application.usecase._
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
 import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
+import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
+import wotgraph.app.thing.infrastructure.service.action.context.db.WriteToDatabaseContext
+import wotgraph.app.thing.infrastructure.service.action.context.http.HttpContext
 import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.domain.repository.UserRepository
@@ -181,7 +185,7 @@ object DependencyInjector {
       inject[AuthorizationRepository](identified by 'AuthorizationRepository)
     )
 
-    bind[SensedValueMongoDbRepository] identifiedBy 'SensedValueMongoDbRepository to SensedValueMongoDbRepository(
+    bind[SensedValueMongoDbRepository] identifiedBy 'SensedValueMongoDbRepository to new SensedValueMongoDbRepository(
       mongoEnvironment.db
     )
     bind[SensedValueRepository] identifiedBy 'SensedValueRepository to SensedValueRepositoryImpl(
@@ -192,6 +196,14 @@ object DependencyInjector {
       inject[SensedValueRepository](identified by 'SensedValueRepository),
       inject[AuthorizationService](identified by 'AuthorizationService)
     )
+
+    import UUIDCanBeIdentifier._
+
+    bind[ActionContext[_]] identifiedBy AvailableContexts.HttpContext to HttpContext()
+    bind[ActionContext[_]] identifiedBy AvailableContexts.WriteToDatabaseContext to new WriteToDatabaseContext(
+      inject[SensedValueRepository](identified by 'SensedValueRepository)
+    )
+
 
 
   }

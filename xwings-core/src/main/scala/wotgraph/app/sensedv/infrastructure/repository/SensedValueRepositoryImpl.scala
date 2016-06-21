@@ -10,10 +10,10 @@ import wotgraph.app.sensedv.infrastructure.repository.mongodb.SensedValueMongoDb
 import scala.concurrent.{ExecutionContext, Future}
 
 
-case class SensedValueRepositoryImpl (
-                                  sensedValueMongoDbRepository: SensedValueMongoDbRepository
-                                )
-                                (implicit ec: ExecutionContext)
+case class SensedValueRepositoryImpl(
+                                      sensedValueMongoDbRepository: SensedValueMongoDbRepository
+                                    )
+                                    (implicit ec: ExecutionContext)
   extends SensedValueRepository {
   override def create(sensed: SensedValue): Future[Or[SensedValue, Every[StorageError]]] =
     sensedValueMongoDbRepository.create(sensed)
