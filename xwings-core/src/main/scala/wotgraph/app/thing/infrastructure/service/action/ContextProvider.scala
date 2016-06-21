@@ -4,7 +4,6 @@ import java.util.UUID
 
 import scaldi.Module
 import wotgraph.app.thing.application.service.action.{ActionContext, UUIDCanBeIdentifier}
-import wotgraph.app.thing.infrastructure.service.action.context.db.WriteToDatabaseContext
 import wotgraph.app.thing.infrastructure.service.action.context.http.HttpContext
 import wotgraph.toolkit.DependencyInjector
 
@@ -17,6 +16,7 @@ object AvailableContexts {
 }
 
 object ContextProvider {
+
 
   val injector = DependencyInjector.injector
 

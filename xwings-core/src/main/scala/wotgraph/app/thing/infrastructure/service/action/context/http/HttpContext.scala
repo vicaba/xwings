@@ -5,6 +5,7 @@ import java.util.UUID
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import org.apache.commons.validator.routines.UrlValidator
+import play.api.libs.json.JsObject
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSClient
 import wotgraph.app.thing.application.service.action._
@@ -23,7 +24,10 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WS
 
   override val context: WSClient = AhcWSClient()(ActorMaterializer()(ActorSystem()))
 
-  override def executeAction(ta: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult] = {
+  override def executeAction(ta: ThingAndAction,
+                             contextValue: Map[String, String],
+                             actinopayload: JsObject
+                            ): Future[ExecutionResult] = {
 
     val thingId = ta.thingId
 
@@ -40,11 +44,9 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WS
 
     requestOpt.fold[Future[ExecutionResult]] {
       Future(ExecutionFailure(List("HttpMethod and URL fields are mandatory")))
-    } { req =>
-      req.execute().map { resp =>
-        ExecutionSuccess(resp.body)
-      } recover {
-        case e: Throwable => ExecutionFailure(List(e.getMessage))
+    } {
+      _.execute().map(r => ExecutionSuccess(r.body)).recover {
+        case e: Throwable => ExecutionFailure(List("Cannot fulfill HTTP request"))
       }
     }
 

@@ -3,6 +3,7 @@ package wotgraph.app.thing.application.usecase
 import java.util.UUID
 
 import org.scalactic._
+import play.api.libs.json.{JsObject, Json}
 import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.error.{AppError, ValidationError}
 import wotgraph.app.thing.application.service.action.{ActionExecutor, ExecutionFailure, ExecutionResult, ThingAndAction}
@@ -16,7 +17,10 @@ import scala.util.{Failure, Success, Try}
 
 class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(thingId: String, actionName: String)(executorAgentId: UUID): Future[ExecutionResult Or Every[AppError]] = {
+  def execute(thingId: String,
+              actionName: String,
+              actionPayload: JsObject = Json.obj())
+             (executorAgentId: UUID): Future[ExecutionResult Or Every[AppError]] = {
 
     Try(UUID.fromString(thingId)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
@@ -26,8 +30,10 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationS
             case Some(thing) =>
               val action = thing.actions.find(_.actionName == actionName)
               action match {
-                case Some(a) => ActionExecutor.executeAction(ThingAndAction(uuid, a))(ContextProvider.injector).map(Good(_))
-                case _ => Future.successful(Good(ExecutionFailure(List("Action not found"))))
+                case Some(a) =>
+                  ActionExecutor.executeAction(ThingAndAction(uuid, a), actionPayload)(ContextProvider.injector).map(Good(_))
+                case _ =>
+                  Future.successful(Good(ExecutionFailure(List("Action not found"))))
               }
             case None => Future(Good(ExecutionFailure(List("Thing not found"))))
           }

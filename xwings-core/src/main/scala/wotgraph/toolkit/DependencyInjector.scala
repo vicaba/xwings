@@ -28,7 +28,7 @@ import wotgraph.app.thing.infrastructure.repository.ThingRepositoryImpl
 import wotgraph.app.thing.infrastructure.repository.mongodb.ThingMongoDbRepository
 import wotgraph.app.thing.infrastructure.repository.neo4j.ThingNeo4jRepository
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
-import wotgraph.app.thing.infrastructure.service.action.context.db.WriteToDatabaseContext
+import wotgraph.app.thing.infrastructure.service.action.context.db.{ReadFromDatabaseContext, WriteToDatabaseContext}
 import wotgraph.app.thing.infrastructure.service.action.context.http.HttpContext
 import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.app.user.application.usecase._
@@ -203,6 +203,10 @@ object DependencyInjector {
     bind[ActionContext[_]] identifiedBy AvailableContexts.WriteToDatabaseContext to new WriteToDatabaseContext(
       inject[SensedValueRepository](identified by 'SensedValueRepository)
     )
+    bind[ActionContext[_]] identifiedBy AvailableContexts.ReadFromDatabaseContext to new ReadFromDatabaseContext(
+      inject[SensedValueRepository](identified by 'SensedValueRepository)
+    )
+
 
 
 

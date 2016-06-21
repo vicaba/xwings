@@ -28,8 +28,8 @@ class CreateThingController extends Controller with PredefJsonMessages {
         case Good(t) => Created(Json.obj(ThingKeys.Id -> t._id))
         case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
         } recover {
-          case e: DatabaseException => InternalServerError(Json.obj(MessageKey -> e.msg))
-          case e: CoherenceException => UnprocessableEntity(Json.obj(MessageKey -> e.msg))
+          case e: DatabaseException => InternalServerError(Json.obj(MessagesKey -> e.msg))
+          case e: CoherenceException => UnprocessableEntity(Json.obj(MessagesKey -> e.msg))
         }
       case e: JsError => Future.successful(BadRequest(e.toString))
     }

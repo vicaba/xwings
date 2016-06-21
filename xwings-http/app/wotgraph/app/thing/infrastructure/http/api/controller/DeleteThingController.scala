@@ -22,8 +22,8 @@ class DeleteThingController extends Controller with PredefJsonMessages {
       case Good(_id) => Ok(Json.obj(ThingKeys.Id -> _id))
       case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
     } recover {
-      case e: ClientFormatException => BadRequest(Json.obj(MessageKey -> e.msg))
-      case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
+      case e: ClientFormatException => BadRequest(Json.obj(MessagesKey -> e.msg))
+      case e: DatabaseException => BadGateway(Json.obj(MessagesKey -> e.msg))
     }
   }
 

@@ -2,7 +2,7 @@ package wotgraph.app.thing.application.service.action
 
 import java.util.UUID
 
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import scaldi.{CanBeIdentifier, Identifier, Module}
 
@@ -16,7 +16,7 @@ object UUIDCanBeIdentifier extends CanBeIdentifier[UUID] {
 
 object ActionExecutor {
 
-  def executeAction(ta: ThingAndAction)(contextProvider: Module) = {
+  def executeAction(ta: ThingAndAction, actionPayload: JsObject)(contextProvider: Module) = {
 
     implicit val cp = contextProvider
 
@@ -32,7 +32,7 @@ object ActionExecutor {
         val contextValue = jsContextValue.asOpt[Map[String, String]]
           .getOrElse(Json.obj("rawData" -> a.contextValue).as[Map[String, String]])
 
-        c.executeAction(ta, contextValue)
+        c.executeAction(ta, contextValue, actionPayload)
 
       case None => Future.successful(ExecutionFailure(List("Context Not Found")))
     }
@@ -45,7 +45,7 @@ trait ActionContext[Context] {
 
   val context: Context
 
-  def executeAction(thingId: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult]
+  def executeAction(thingId: ThingAndAction, contextValue: Map[String, String], actionPayload: JsObject): Future[ExecutionResult]
 
 }
 

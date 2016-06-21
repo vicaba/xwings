@@ -24,7 +24,7 @@ class DeleteUserController extends Controller with PredefJsonMessages {
       case Good(u) => Created(Json.obj(UserKeys.Id -> u))
       case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
     } recover {
-      case e: DatabaseException => InternalServerError(Json.obj(MessageKey -> e.msg))
+      case e: DatabaseException => InternalServerError(Json.obj(MessagesKey -> e.msg))
     }
 
   }

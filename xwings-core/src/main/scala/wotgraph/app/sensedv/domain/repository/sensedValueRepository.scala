@@ -10,6 +10,8 @@ import scala.concurrent.Future
 
 trait SensedValueRepository {
 
+  def findLastByNamespace(namespace: String): Future[Or[Option[SensedValue], Every[StorageError]]]
+
   def create(sensed: SensedValue):  Future[SensedValue Or Every[StorageError]]
 
   def getAll(namespace: String): Future[List[SensedValue] Or Every[StorageError]]

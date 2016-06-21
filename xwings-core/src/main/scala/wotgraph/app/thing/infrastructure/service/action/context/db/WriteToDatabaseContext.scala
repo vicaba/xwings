@@ -27,22 +27,17 @@ class WriteToDatabaseContext(sensedRepository: SensedValueRepository) extends Ac
 
   override val context: SensedValueRepository = sensedRepository
 
-  override def executeAction(ta: ThingAndAction, contextValue: Map[String, String]): Future[ExecutionResult] = {
+  override def executeAction(
+                              ta: ThingAndAction,
+                              contextValue: Map[String, String],
+                              actionPayload: JsObject
+                            ): Future[ExecutionResult] = {
 
-    contextValue.get("data").fold[Future[ExecutionResult]] {
-      Future.successful(ExecutionFailure(List("""No "data" field found""")))
-    } {
-      Json.parse(_).asOpt[JsObject].fold[Future[ExecutionResult]] {
-        Future.successful(ExecutionFailure(List(""""data" is not a json object""")))
-      } {
-        data =>
-          val sv = toSensedValue(data, ta)
-          val result = sensedRepository.create(sv)
-          result.map {
-            case Good(s) => ExecutionSuccess("Inserted")
-            case Bad(l) => ExecutionFailure(ErrorHelper.every2List(l).map(_.toString))
-          }
-      }
+    val sv = toSensedValue(actionPayload, ta)
+    val result = sensedRepository.create(sv)
+    result.map {
+      case Good(s) => ExecutionSuccess("Inserted")
+      case Bad(l) => ExecutionFailure(ErrorHelper.every2List(l).map(_.toString))
     }
   }
 

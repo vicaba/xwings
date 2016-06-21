@@ -15,6 +15,10 @@ case class SensedValueRepositoryImpl(
                                     )
                                     (implicit ec: ExecutionContext)
   extends SensedValueRepository {
+
+  override def findLastByNamespace(namespace: String): Future[Or[Option[SensedValue], Every[StorageError]]] =
+    sensedValueMongoDbRepository.findLastByNamespace(namespace)
+
   override def create(sensed: SensedValue): Future[Or[SensedValue, Every[StorageError]]] =
     sensedValueMongoDbRepository.create(sensed)
 

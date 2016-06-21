@@ -19,6 +19,16 @@ class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
   def collection: BSONCollection = db.collection("sensed")
 
+  def findLastByNamespace(namespace: String): Future[Option[SensedValue] Or Every[StorageError]] = {
+    val criteria = namespaceCriteria(namespace)
+    val sortOrder = sortOrderCriteria(-1)
+    collection
+      .find(criteria)
+      .sort(sortOrder)
+      .one[SensedValue]
+      .map(Good(_))
+  }
+
   def create(sensed: SensedValue): Future[SensedValue Or Every[StorageError]] = {
     collection.insert(sensed).map {
       case wr if wr.ok => Good(sensed)

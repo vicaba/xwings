@@ -32,8 +32,8 @@ class UpdateThingController extends Controller with PredefJsonMessages {
         }
           case Bad(errors) => ErrorHelper.errorToHttpResponse(errors)
         } recover {
-          case e: DatabaseException => BadGateway(Json.obj(MessageKey -> e.msg))
-          case e: CoherenceException => UnprocessableEntity(Json.obj(MessageKey -> e.msg))
+          case e: DatabaseException => BadGateway(Json.obj(MessagesKey -> e.msg))
+          case e: CoherenceException => UnprocessableEntity(Json.obj(MessagesKey -> e.msg))
         }
       case e: JsError => Future.successful(BadRequest(BadJsonFormatMessage))
     }

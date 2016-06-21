@@ -5,8 +5,8 @@ import play.api.libs.json.Json
 
 trait PredefJsonMessages {
 
-  val MessageKey = "msg"
+  val MessagesKey = "msg"
 
-  val BadJsonFormatMessage = Json.obj(MessageKey -> "bad json format")
+  val BadJsonFormatMessage = Json.obj(MessagesKey -> "bad json format")
 
 }
