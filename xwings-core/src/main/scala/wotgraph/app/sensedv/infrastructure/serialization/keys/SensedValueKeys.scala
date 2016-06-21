@@ -7,8 +7,8 @@ object SensedValueKeys {
 
   val Namespace = "nspace"
 
-  val Date = "Date"
+  val Date = "tstamp"
 
-  val Data = "Data"
+  val Data = "data"
 
 }
