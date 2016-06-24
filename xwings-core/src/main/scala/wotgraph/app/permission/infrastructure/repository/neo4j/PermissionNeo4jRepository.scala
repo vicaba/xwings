@@ -27,20 +27,23 @@ case class PermissionNeo4jRepository(
 
   import Neo4jHelper._
   import PermissionNeo4jRepository.Keys._
+  import scala.concurrent._
 
   val logger = LoggerFactory.getLogger(classOf[PermissionNeo4jRepository]);
 
 
   def findById(id: UUID): Future[Option[Permission]] = {
 
-    Future {
+    val query =
+      s"""MATCH (n:$PermLabel { $Id: "$id" }) RETURN n.$Id AS $Id, n.$Desc AS $Desc"""
 
-      val query =
-        s"""MATCH (n:$PermLabel { $Id: "$id" }) RETURN n.$Id AS $Id, n.$Desc AS $Desc"""
+    (Future {
+      blocking(session.query(query, emptyMap))
+    } recover {
+      case e: Throwable => throw new ReadException(s"Neo4j: Can't get Permission with id: $id")
+    }).map { qr =>
 
-      val queryResult = session.query(query, emptyMap)
-
-      val result = resultCollectionAsScalaCollection(queryResult)
+      val result = resultCollectionAsScalaCollection(qr)
 
       result.headOption.map { head =>
 
@@ -50,8 +53,7 @@ case class PermissionNeo4jRepository(
         Permission(permId, permDesc)
 
       }
-
-    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Permission with id: $id") }
+    }
 
   }
 
@@ -65,12 +67,14 @@ case class PermissionNeo4jRepository(
 
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
-      Future {
-        val queryResult = session.query(query, emptyMap)
-        val result = resultCollectionAsScalaCollection(queryResult).map(mapAsPermission)
+      (Future {
+        blocking(session.query(query, emptyMap))
+      } recover {
+        case e: Throwable => throw new ReadException("Can't get Things")
+      }).map { qr =>
+        val result = resultCollectionAsScalaCollection(qr).map(mapAsPermission)
         result
-
-      } recover { case e: Throwable => throw new ReadException("Can't get Things") }
+      }
     }
 
     perms match {
@@ -87,10 +91,11 @@ case class PermissionNeo4jRepository(
 
     val query = s"""MATCH (n:$PermLabel { $Id: "$permId" }) SET n.$Desc = "$permDesc""""
 
-    Future {
-      session.query(query, emptyMap)
-      perm
-    } recover { case e: Throwable => throw new SaveException(s"sCan't update Permission with id: $permId") }
+    (Future {
+      blocking(session.query(query, emptyMap))
+    } recover {
+      case e: Throwable => throw new SaveException(s"sCan't update Permission with id: $permId")
+    }).map(_ => perm)
 
   }
 
@@ -102,10 +107,11 @@ case class PermissionNeo4jRepository(
     val createQuery =
       s"""CREATE (p:$PermLabel { $Id: "$permId", $Desc: "$permDesc" })"""
 
-    Future {
-      session.query(createQuery, emptyMap)
-      perm
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create Permission with id: $permId") }
+    (Future {
+      blocking(session.query(createQuery, emptyMap))
+    } recover {
+      case e: Throwable => throw new SaveException(s"sCan't create Permission with id: $permId")
+    }).map(_ => perm)
 
   }
 
@@ -114,7 +120,7 @@ case class PermissionNeo4jRepository(
     val query = s"""MATCH (n:$PermLabel { $Id: "$id" }) DETACH DELETE n"""
 
     Future {
-      session.query(query, emptyMap)
+      blocking(session.query(query, emptyMap))
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
@@ -129,17 +135,13 @@ case class PermissionNeo4jRepository(
     val query = s"""${Keywords.Match} (n:$PermLabel) RETURN n.$Id AS $Id, n.$Desc AS $Desc"""
 
     Future {
+      blocking(session.query(query, emptyMap))
+    }.map(resultCollectionAsScalaCollection(_).map(mapAsPermission).toList)
 
-      val queryResult = session.query(query, emptyMap)
-      val result = resultCollectionAsScalaCollection(queryResult)
-      result.map(mapAsPermission).toList
-
-
-    }
   }
 
   def deleteAll(): Unit = Future {
-    session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap)
+    blocking(session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap))
   }
 
 }
