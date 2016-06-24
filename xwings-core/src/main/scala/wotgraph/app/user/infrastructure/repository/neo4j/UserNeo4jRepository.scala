@@ -37,6 +37,7 @@ case class UserNeo4jRepository(
   extends Neo4jOGMHelper {
 
   import UserNeo4jRepository.Keys._
+  import scala.concurrent._
 
   val logger = LoggerFactory.getLogger(classOf[UserNeo4jRepository])
 
@@ -51,27 +52,30 @@ case class UserNeo4jRepository(
     val roleIdKey = s"r${RoleKeys.Id}"
     val roleNameKey = s"r${RoleKeys.Name}"
 
-    Future {
+    val query =
+      s"""
+         |${Keywords.Match} (n:$UserLabel { $Id: ${n(Id)} })-[r:$RoleRelKey]->(n2)
+         |RETURN n.$Id AS $Id, n.$Name AS $Name,
+         |n2.${RoleKeys.Id} AS $roleIdKey n2.${RoleKeys.Name} AS $roleNameKey
+         |""".stripMargin
 
-      val query =
-        s"""${Keywords.Match} (n:$UserLabel { $Id: ${n(Id)} })-[r:$RoleRelKey]->(n2)
-           | RETURN n.$Id AS $Id, n.$Name AS $Name,
-           | n2.${RoleKeys.Id} AS $roleIdKey n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
+    (Future {
+      blocking {
+        session.query(query, Map(Id -> s"$id").asJava)
+      }
+    } recover {
+      case e: Throwable => throw new ReadException(s"Neo4j: Can't get User with id: $id")
+    }).map { qr =>
 
-      val queryResult = session.query(query, Map(Id -> s"$id").asJava)
-      val result = queryResult.queryResults().asScala.map(_.asScala)
-
+      val result = qr.queryResults().asScala.map(_.asScala)
       result.headOption.map { head =>
 
         val roleId = UUID.fromString(head.get(roleIdKey).get.asInstanceOf[String])
         val roleName = head.get(roleNameKey).get.asInstanceOf[String]
-
         Neo4jHelper.mapAsUser(head)(Role(roleId, roleName))
 
       }
-
-    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get User with id: $id") }
-
+    }
   }
 
   def findByCredentials(name: String, password: String): Future[Option[User]] = {
@@ -79,31 +83,35 @@ case class UserNeo4jRepository(
     val roleIdKey = s"r${RoleKeys.Id}"
     val roleNameKey = s"r${RoleKeys.Name}"
 
-    Future {
+    val query =
+      s"""
+         |${Keywords.Match} (n:$UserLabel { $Name: ${n(Name)}, $Password: ${n(Password)} })-[r:$RoleRelKey]->(n2)
+         |RETURN n.$Id AS $Id, n.$Name AS $Name,
+         |n2.${RoleKeys.Id} AS $roleIdKey, n2.${RoleKeys.Name} AS $roleNameKey
+         |""".stripMargin
 
-      val query =
-        s"""${Keywords.Match} (n:$UserLabel { $Name: ${n(Name)}, $Password: ${n(Password)} })-[r:$RoleRelKey]->(n2)
-           | RETURN n.$Id AS $Id, n.$Name AS $Name,
-           | n2.${RoleKeys.Id} AS $roleIdKey, n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
+    val params = Map(
+      Name -> name,
+      Password -> password
+    )
 
-      val params = Map(
-        Name -> name,
-        Password -> password
-      )
-
-      val queryResult = session.query(query, params.asJava)
-      val result = queryResult.queryResults().asScala.map(_.asScala)
+    (Future {
+      blocking {
+        session.query(query, params.asJava)
+      }
+    } recover {
+      case e: Throwable => throw new ReadException(s"Neo4j: Can't execute query")
+    }).map { qr =>
+      val result = qr.queryResults().asScala.map(_.asScala)
 
       result.headOption.map { head =>
 
         val roleId = UUID.fromString(head.get(roleIdKey).get.asInstanceOf[String])
         val roleName = head.get(roleNameKey).get.asInstanceOf[String]
-
         Neo4jHelper.mapAsUser(head)(Role(roleId, roleName))
 
       }
-
-    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't execute query") }
+    }
 
   }
 
@@ -135,8 +143,12 @@ case class UserNeo4jRepository(
     }
 
     Future {
-      val r = createQuery()
-      if (r.queryStatistics().getNodesCreated == 1) Good(user) else Bad(One(Storage(s"Can't create User with id: ${user.id}")))
+      blocking {
+        createQuery()
+      }
+    }.map { result =>
+      if (result.queryStatistics().getNodesCreated == 1) Good(user)
+      else Bad(One(Storage(s"Can't create User with id: ${user.id}")))
     }
   }
 
@@ -166,8 +178,10 @@ case class UserNeo4jRepository(
       val relationshipCreate = s"""(n)-[r:$RoleRelKey]->(n2)"""
 
       val query =
-        s"""${Keywords.Match} $currentUserMatch, $roleMatch
-           |${Keywords.Create} $relationshipCreate SET n.$Name = ${n(Name)}, n.$Password = ${n(Password)} """.stripMargin
+        s"""
+           |${Keywords.Match} $currentUserMatch, $roleMatch
+           |${Keywords.Create} $relationshipCreate SET n.$Name = ${n(Name)}, n.$Password = ${n(Password)}
+           |""".stripMargin
 
       val params = Map(
         Id -> userId.toString,
@@ -178,19 +192,30 @@ case class UserNeo4jRepository(
       () => session.query(query, params.asJava)
     }
 
-    lazy val deleteRoleRelF = Future {
-      val r = deleteRoleRelationQuery()
-      val stats = r.queryStatistics()
+    lazy val deleteRoleRelF = (Future {
+      blocking {
+        deleteRoleRelationQuery()
+      }
+    } recover {
+      case e: Throwable => throw new DeleteException(s"Can't delete relationships of User with id: $userId")
+    }).map { result =>
+      val stats = result.queryStatistics()
       if (stats.getRelationshipsDeleted > 0 && stats.getRelationshipsCreated > 0)
         Good(user)
       else
         Bad(One(Storage("Role not updated")))
-    } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of User with id: $userId") }
+    }
 
-    lazy val createRoleAndUserF = Future {
-      val r = createRoleRelationAndUpdateUserQuery()
-      if (r.queryStatistics().getPropertiesSet > 0) Good(user) else Bad(One(Storage("Role not updated")))
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of User with id: $userId") }
+
+    lazy val createRoleAndUserF = (Future {
+      blocking {
+        createRoleRelationAndUpdateUserQuery()
+      }
+    } recover {
+      case e: Throwable => throw new SaveException(s"sCan't create relationships of User with id: $userId")
+    }).map { result =>
+      if (result.queryStatistics().getPropertiesSet > 0) Good(user) else Bad(One(Storage("Role not updated")))
+    }
 
     deleteRoleRelF.flatMap {
       case Good(user) => createRoleAndUserF
@@ -211,7 +236,9 @@ case class UserNeo4jRepository(
     val params = Map(Id -> id.toString)
 
     Future {
-      session.query(query, params.asJava)
+      blocking {
+        session.query(query, params.asJava)
+      }
     } map { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Good(id)
@@ -232,8 +259,11 @@ case class UserNeo4jRepository(
          | n2.${RoleKeys.Id} AS $roleIdKey, n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
 
     Future {
-      val queryResult = session.query(query, emptyMap)
-      val result = resultCollectionAsScalaCollection(queryResult)
+      blocking {
+        session.query(query, emptyMap)
+      }
+    }.map { qr =>
+      val result = resultCollectionAsScalaCollection(qr)
 
       result.map { e =>
 
@@ -242,12 +272,14 @@ case class UserNeo4jRepository(
 
         Neo4jHelper.mapAsUser(e)(Role(roleId, roleName))
       }.toList
-    }
 
+    }
   }
 
   def deleteAll: Unit = Future {
-    session.query(s"""MATCH (n:$UserLabel) DETACH DELETE n""", emptyMap)
+    blocking {
+      session.query(s"""MATCH (n:$UserLabel) DETACH DELETE n""", emptyMap)
+    }
   }
 
 }
