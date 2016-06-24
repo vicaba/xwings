@@ -63,4 +63,11 @@ object XWingsBuild extends Build {
     scalactic
   ))
 
+  lazy val boostrap = Project(
+    id = "xwings-bootstrap",
+    base = file("xwings-bootstrap"),
+    settings = commonSettings,
+    dependencies = Seq(core)
+  )
+
 }

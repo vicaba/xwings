@@ -1,4 +1,4 @@
-package bootstrap
+package wotgraph.bootstrap
 
 import java.util.UUID
 
