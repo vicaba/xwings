@@ -20,7 +20,8 @@ object PermissionNeo4jRepository {
 }
 
 case class PermissionNeo4jRepository(
-                                      session: Session
+                                      session: Session,
+                                      ioEctx: ExecutionContext
                                     )
                                     (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -39,7 +40,7 @@ case class PermissionNeo4jRepository(
 
     (Future {
       blocking(session.query(query, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new ReadException(s"Neo4j: Can't get Permission with id: $id")
     }).map { qr =>
 
@@ -69,7 +70,7 @@ case class PermissionNeo4jRepository(
 
       (Future {
         blocking(session.query(query, emptyMap))
-      } recover {
+      }(ioEctx) recover {
         case e: Throwable => throw new ReadException("Can't get Things")
       }).map { qr =>
         val result = resultCollectionAsScalaCollection(qr).map(mapAsPermission)
@@ -93,7 +94,7 @@ case class PermissionNeo4jRepository(
 
     (Future {
       blocking(session.query(query, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't update Permission with id: $permId")
     }).map(_ => perm)
 
@@ -109,7 +110,7 @@ case class PermissionNeo4jRepository(
 
     (Future {
       blocking(session.query(createQuery, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't create Permission with id: $permId")
     }).map(_ => perm)
 
@@ -121,7 +122,7 @@ case class PermissionNeo4jRepository(
 
     Future {
       blocking(session.query(query, emptyMap))
-    } flatMap { r =>
+    }(ioEctx) flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
       else
@@ -136,12 +137,12 @@ case class PermissionNeo4jRepository(
 
     Future {
       blocking(session.query(query, emptyMap))
-    }.map(resultCollectionAsScalaCollection(_).map(mapAsPermission).toList)
+    }(ioEctx).map(resultCollectionAsScalaCollection(_).map(mapAsPermission).toList)
 
   }
 
   def deleteAll(): Unit = Future {
     blocking(session.query(s"""MATCH (n:$PermLabel) DETACH DELETE n""", emptyMap))
-  }
+  }(ioEctx)
 
 }

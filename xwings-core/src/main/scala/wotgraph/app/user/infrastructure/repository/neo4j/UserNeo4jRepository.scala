@@ -31,7 +31,8 @@ object UserNeo4jRepository {
 }
 
 case class UserNeo4jRepository(
-                                session: Session
+                                session: Session,
+                                ioEctx: ExecutionContext
                               )
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -61,7 +62,7 @@ case class UserNeo4jRepository(
 
     (Future {
       blocking(session.query(query, Map(Id -> s"$id").asJava))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new ReadException(s"Neo4j: Can't get User with id: $id")
     }).map { qr =>
 
@@ -95,7 +96,7 @@ case class UserNeo4jRepository(
 
     (Future {
       blocking(session.query(query, params.asJava))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new ReadException(s"Neo4j: Can't execute query")
     }).map { qr =>
       val result = qr.queryResults().asScala.map(_.asScala)
@@ -141,8 +142,8 @@ case class UserNeo4jRepository(
     }
 
     Future {
-        blocking(createQuery())
-    }.map { result =>
+      blocking(createQuery())
+    }(ioEctx).map { result =>
       if (result.queryStatistics().getNodesCreated == 1) Good(user)
       else Bad(One(Storage(s"Can't create User with id: ${user.id}")))
     }
@@ -189,10 +190,8 @@ case class UserNeo4jRepository(
     }
 
     lazy val deleteRoleRelF = (Future {
-      blocking {
-        deleteRoleRelationQuery()
-      }
-    } recover {
+      blocking(deleteRoleRelationQuery())
+    }(ioEctx) recover {
       case e: Throwable => throw new DeleteException(s"Can't delete relationships of User with id: $userId")
     }).map { result =>
       val stats = result.queryStatistics()
@@ -204,10 +203,8 @@ case class UserNeo4jRepository(
 
 
     lazy val createRoleAndUserF = (Future {
-      blocking {
-        createRoleRelationAndUpdateUserQuery()
-      }
-    } recover {
+      blocking(createRoleRelationAndUpdateUserQuery())
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't create relationships of User with id: $userId")
     }).map { result =>
       if (result.queryStatistics().getPropertiesSet > 0) Good(user) else Bad(One(Storage("Role not updated")))
@@ -232,10 +229,8 @@ case class UserNeo4jRepository(
     val params = Map(Id -> id.toString)
 
     Future {
-      blocking {
-        session.query(query, params.asJava)
-      }
-    } map { r =>
+      blocking(session.query(query, params.asJava))
+    }(ioEctx).map { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Good(id)
       else
@@ -255,8 +250,8 @@ case class UserNeo4jRepository(
          |n2.${RoleKeys.Id} AS $roleIdKey, n2.${RoleKeys.Name} AS $roleNameKey""".stripMargin
 
     Future {
-        blocking(session.query(query, emptyMap))
-    }.map { qr =>
+      blocking(session.query(query, emptyMap))
+    }(ioEctx).map { qr =>
       val result = resultCollectionAsScalaCollection(qr)
 
       result.map { e =>
@@ -271,7 +266,7 @@ case class UserNeo4jRepository(
   }
 
   def deleteAll: Unit = Future {
-      blocking(session.query(s"""MATCH (n:$UserLabel) DETACH DELETE n""", emptyMap))
-  }
+    blocking(session.query(s"""MATCH (n:$UserLabel) DETACH DELETE n""", emptyMap))
+  }(ioEctx)
 
 }

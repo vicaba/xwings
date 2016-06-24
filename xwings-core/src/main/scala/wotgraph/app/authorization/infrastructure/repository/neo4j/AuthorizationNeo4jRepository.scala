@@ -14,7 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 case class AuthorizationNeo4jRepository(
-                                         session: Session
+                                         session: Session,
+                                         ioEctx: ExecutionContext
                                        )
                                        (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -44,7 +45,7 @@ case class AuthorizationNeo4jRepository(
 
     Future {
       blocking(session.query(query, params.asJava))
-    }.map { qr =>
+    }(ioEctx).map { qr =>
       val result = resultCollectionAsScalaCollection(qr)
       result.headOption.fold(false) { map =>
         map.get(permIdKey) match {

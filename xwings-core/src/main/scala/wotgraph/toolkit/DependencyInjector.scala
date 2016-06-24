@@ -1,6 +1,8 @@
 package wotgraph.toolkit
 
 
+import java.util.concurrent.Executors
+
 import org.apache.commons.codec.binary.Hex
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
@@ -40,6 +42,8 @@ import wotgraph.toolkit.repository.mongodb.ThingMongoEnvironment
 import wotgraph.toolkit.repository.neo4j.Neo4jConf
 import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 
+import scala.concurrent.ExecutionContext
+
 object DependencyInjector {
 
   val conf = AppConfig.defaultConf
@@ -47,6 +51,8 @@ object DependencyInjector {
   implicit val injector = new Module {
 
     implicit val ec = scala.concurrent.ExecutionContext.global
+
+    val ioEctx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
     val mongoEnvironment = ThingMongoEnvironment(conf)
 
@@ -68,7 +74,8 @@ object DependencyInjector {
     )
 
     bind[ThingNeo4jRepository] identifiedBy 'ThingNeo4jRepository to ThingNeo4jRepository(
-      inject[Neo4jSession](identified by 'Neo4jSession)
+      inject[Neo4jSession](identified by 'Neo4jSession),
+      ioEctx
     )
     bind[ThingMongoDbRepository] identifiedBy 'ThingMongoDbRepository to ThingMongoDbRepository(
       mongoEnvironment.db
@@ -106,7 +113,8 @@ object DependencyInjector {
     )
 
     bind[UserNeo4jRepository] identifiedBy 'UserNeo4jRepository to UserNeo4jRepository(
-      inject[Neo4jSession](identified by 'Neo4jSession)
+      inject[Neo4jSession](identified by 'Neo4jSession),
+      ioEctx
     )
     bind[UserRepository] identifiedBy 'UserRepository to UserRepositoryImpl(
       inject[UserNeo4jRepository](identified by 'UserNeo4jRepository)
@@ -142,7 +150,8 @@ object DependencyInjector {
 
 
     bind[PermissionNeo4jRepository] identifiedBy 'PermissionNeo4jRepository to PermissionNeo4jRepository(
-      inject[Neo4jSession](identified by 'Neo4jSession)
+      inject[Neo4jSession](identified by 'Neo4jSession),
+      ioEctx
     )
 
     bind[PermissionRepository] identifiedBy 'PermissionRepository to PermissionRepositoryImpl(
@@ -156,7 +165,8 @@ object DependencyInjector {
 
 
     bind[RoleNeo4jRepository] identifiedBy 'RoleNeo4jRepository to RoleNeo4jRepository(
-      inject[Neo4jSession](identified by 'Neo4jSession)
+      inject[Neo4jSession](identified by 'Neo4jSession),
+      ioEctx
     )
     bind[RoleRepository] identifiedBy 'RoleRepository to RoleRepositoryImpl(
       inject[RoleNeo4jRepository](identified by 'RoleNeo4jRepository)
@@ -174,7 +184,8 @@ object DependencyInjector {
 
 
     bind[AuthorizationNeo4jRepository] identifiedBy 'AuthorizationNeo4jRepository to AuthorizationNeo4jRepository(
-      inject[Neo4jSession](identified by 'Neo4jSession)
+      inject[Neo4jSession](identified by 'Neo4jSession),
+      ioEctx
     )
     bind[AuthorizationRepository] identifiedBy 'AuthorizationRepository to AuthorizationRepositoryImpl(
       inject[AuthorizationNeo4jRepository](identified by 'AuthorizationNeo4jRepository)

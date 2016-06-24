@@ -28,7 +28,8 @@ object RoleNeo4jRepository {
 
 
 case class RoleNeo4jRepository(
-                                session: Session
+                                session: Session,
+                                ioEctx: ExecutionContext
                               )
                               (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -53,7 +54,7 @@ case class RoleNeo4jRepository(
 
     (Future {
       blocking(session.query(query, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new ReadException(s"Neo4j: Can't get Role with id: $id")
     }).map { qr =>
       val result = resultCollectionAsScalaCollection(qr)
@@ -91,7 +92,7 @@ case class RoleNeo4jRepository(
 
     (Future {
       blocking(session.query(createQuery, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't create Role with id: $roleId")
     }).map(_ => role)
   }
@@ -102,7 +103,7 @@ case class RoleNeo4jRepository(
 
     Future {
       blocking(session.query(query, emptyMap))
-    } flatMap { r =>
+    }(ioEctx) flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
       else
@@ -115,7 +116,7 @@ case class RoleNeo4jRepository(
 
     Future {
       blocking(session.query(query, emptyMap))
-    }.map { qr =>
+    }(ioEctx).map { qr =>
 
       val result = resultCollectionAsScalaCollection(qr)
 
@@ -130,6 +131,6 @@ case class RoleNeo4jRepository(
 
   def deleteAll: Unit = Future {
     blocking(session.query(s"""MATCH (n:$RoleLabel) DETACH DELETE n""", emptyMap))
-  }
+  }(ioEctx)
 
 }

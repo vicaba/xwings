@@ -14,7 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 case class ThingNeo4jRepository(
-                                 session: Session
+                                 session: Session,
+                                 ioEctx: ExecutionContext
                                )
                                (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
@@ -41,7 +42,7 @@ case class ThingNeo4jRepository(
 
     (Future {
         blocking(session.query(query, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new ReadException(s"Neo4j: Can't get Thing with id: $id")
     }).map { qr =>
 
@@ -71,7 +72,7 @@ case class ThingNeo4jRepository(
 
     (Future {
       blocking(session.query(createQuery, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}")
     }).map(_ => thing)
   }
@@ -95,13 +96,13 @@ case class ThingNeo4jRepository(
 
     lazy val deleteChildrenF = (Future {
       blocking(session.query(deleteChildrenQuery, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new DeleteException(s"Can't delete relationships of Thing with id: ${thing._id}")
     }).map(_ => thing)
 
     lazy val createChildrenF = (Future {
       blocking(session.query(linkToChildrenQuery, emptyMap))
-    } recover {
+    }(ioEctx) recover {
       case e: Throwable => throw new SaveException(s"sCan't create relationships of Thing with id: ${thing._id}")
     }).map(_ => thing)
 
@@ -124,7 +125,7 @@ case class ThingNeo4jRepository(
 
       (Future {
         blocking(session.query(classOf[Neo4jThing], query, emptyMap))
-      } recover {
+      }(ioEctx) recover {
         case e: Throwable => throw new ReadException("Can't get Things")
       }).map(iterableToList(_).map(Neo4jThingHelper.neo4jThingAsThingView))
     }
@@ -142,7 +143,7 @@ case class ThingNeo4jRepository(
 
     Future {
       blocking(session.query(query, emptyMap))
-    } flatMap { r =>
+    }(ioEctx) flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
       else
@@ -152,6 +153,6 @@ case class ThingNeo4jRepository(
 
   def deleteAll(): Unit = Future {
     blocking(session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", emptyMap))
-  }
+  }(ioEctx)
 
 }
