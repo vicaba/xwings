@@ -12,7 +12,7 @@ object XWingsBuild extends Build {
   lazy val commonSettings = Seq(
     organization := "LaSalle",
     scalaVersion := "2.11.8",
-    version := "2.0-RC2"
+    version := "2.0-RC2",
   )
 
   lazy val aggregatedProjects: Seq[ProjectReference] = Seq(core)

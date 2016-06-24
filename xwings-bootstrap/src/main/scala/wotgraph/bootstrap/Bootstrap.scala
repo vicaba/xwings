@@ -22,6 +22,7 @@ import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.application.usecase.dto.CreateUser
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
 import wotgraph.toolkit.DependencyInjector._
+import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -193,22 +194,12 @@ object SensedValueHelper {
     val sv2 = SensedValue(namespace = "sv1", data = Json.obj())
     repo.create(sv2)
   }
-
-  def main(args: Array[String]) {
-    Thread.sleep(400)
-    val f = createSensedValues
-    Await.result(f, Duration.Inf)
-    val f2 = SensedValueHelper.repo.getAll("sv1")
-    f2.foreach(println)
-    Await.result(f2, Duration.Inf)
-
-  }
 }
 
 
 object Bootstrap {
 
-  def main(args: Array[String]) {
+  def apply(): Unit = {
 
     ThingHelper.deleteNodes()
     UserHelper.deleteNodes()
@@ -234,7 +225,7 @@ object Bootstrap {
 
 }
 
-object Query {
+/*object Query {
 
   def main(args: Array[String]) {
     val f = RoleHelper.repo.findById(UUID.fromString("76b0cfe5-07fc-4c23-a855-72e8088f6222"))
@@ -291,4 +282,4 @@ object Query {
 
   }
 
-}
+}*/
