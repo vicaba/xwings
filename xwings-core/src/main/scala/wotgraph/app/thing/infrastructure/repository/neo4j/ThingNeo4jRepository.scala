@@ -19,6 +19,8 @@ case class ThingNeo4jRepository(
                                (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
+  import scala.concurrent._
+
   val DefaultQueryDepth = 1
 
   val ThingLabel = "Thing"
@@ -31,16 +33,19 @@ case class ThingNeo4jRepository(
 
   def findById(id: UUID): Future[Option[Thing]] = {
 
-    Future {
+    val query =
+      s"""
+         |MATCH (n:$ThingLabel {$IdKey: "$id"}) OPTIONAL MATCH (n)-[r:$ChildRelKey]->(n2)
+         |RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey
+         |""".stripMargin
 
-      val query =
-        s"""
-           |MATCH (n:$ThingLabel {$IdKey: "$id"}) OPTIONAL MATCH (n)-[r:$ChildRelKey]->(n2)
-           | RETURN n.$IdKey AS $IdKey, n2._id AS $ChildrenKey""".stripMargin
+    (Future {
+        blocking(session.query(query, emptyMap))
+    } recover {
+      case e: Throwable => throw new ReadException(s"Neo4j: Can't get Thing with id: $id")
+    }).map { qr =>
 
-      val queryResult = session.query(query, emptyMap)
-      val result = resultCollectionAsScalaCollection(queryResult)
-
+      val result = resultCollectionAsScalaCollection(qr)
       result.headOption.map { head =>
 
         val thingId = UUID.fromString(head.get(IdKey).get.asInstanceOf[String])
@@ -49,9 +54,7 @@ case class ThingNeo4jRepository(
         Thing(_id = thingId, children = children.toSet)
 
       }
-
-    } recover { case e: Throwable => throw new ReadException(s"Neo4j: Can't get Thing with id: $id") }
-
+    }
   }
 
 
@@ -66,10 +69,11 @@ case class ThingNeo4jRepository(
         s"""(n)-[r$i:$ChildRelKey]->(n$i)"""
     )
 
-    Future {
-      session.query(createQuery, emptyMap)
-      thing
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}") }
+    (Future {
+      blocking(session.query(createQuery, emptyMap))
+    } recover {
+      case e: Throwable => throw new SaveException(s"sCan't create Thing with id: ${thing._id}")
+    }).map(_ => thing)
   }
 
   def update(thing: Thing): Future[Thing] = {
@@ -81,7 +85,7 @@ case class ThingNeo4jRepository(
       s"""${Keywords.Match} $thingMatch-[r:$ChildRelKey]->() DELETE r"""
 
     val linkToChildrenQuery = matchAndLink1QueryFactory(
-      nodeDefinition =  thingMatch,
+      nodeDefinition = thingMatch,
       relatees = thingChildren,
       relateeQueryMatchDefinition = (i: Int, t: Thing) =>
         s"""(n$i:$ThingLabel {$IdKey: "${t._id}"})""",
@@ -89,15 +93,17 @@ case class ThingNeo4jRepository(
         s"""(n)-[r$i:$ChildRelKey]->(n$i)"""
     )
 
-    lazy val deleteChildrenF = Future {
-      session.query(deleteChildrenQuery, emptyMap)
-      thing
-    } recover { case e: Throwable => throw new DeleteException(s"Can't delete relationships of Thing with id: ${thing._id}") }
+    lazy val deleteChildrenF = (Future {
+      blocking(session.query(deleteChildrenQuery, emptyMap))
+    } recover {
+      case e: Throwable => throw new DeleteException(s"Can't delete relationships of Thing with id: ${thing._id}")
+    }).map(_ => thing)
 
-    lazy val createChildrenF = Future {
-      session.query(linkToChildrenQuery, emptyMap)
-      thing
-    } recover { case e: Throwable => throw new SaveException(s"sCan't create relationships of Thing with id: ${thing._id}") }
+    lazy val createChildrenF = (Future {
+      blocking(session.query(linkToChildrenQuery, emptyMap))
+    } recover {
+      case e: Throwable => throw new SaveException(s"sCan't create relationships of Thing with id: ${thing._id}")
+    }).map(_ => thing)
 
     if (thingChildren.isEmpty)
       deleteChildrenF
@@ -116,9 +122,11 @@ case class ThingNeo4jRepository(
 
       val query = s"$firstQueryPart $queryFilters $queryEnd"
 
-      Future {
-        iterableToList(session.query(classOf[Neo4jThing], query, emptyMap)) map Neo4jThingHelper.neo4jThingAsThingView
-      } recover { case e: Throwable => throw new ReadException("Can't get Things") }
+      (Future {
+        blocking(session.query(classOf[Neo4jThing], query, emptyMap))
+      } recover {
+        case e: Throwable => throw new ReadException("Can't get Things")
+      }).map(iterableToList(_).map(Neo4jThingHelper.neo4jThingAsThingView))
     }
 
     things match {
@@ -133,7 +141,7 @@ case class ThingNeo4jRepository(
     val query = s"""MATCH (n:$ThingLabel { $IdKey: "${id.toString}"}) DETACH DELETE (n)"""
 
     Future {
-      session.query(query, emptyMap)
+      blocking(session.query(query, emptyMap))
     } flatMap { r =>
       if (r.queryStatistics.getNodesDeleted == 1)
         Future.successful(id)
@@ -143,7 +151,7 @@ case class ThingNeo4jRepository(
   }
 
   def deleteAll(): Unit = Future {
-    session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", emptyMap)
+    blocking(session.query(s"""MATCH (n:$ThingLabel) DETACH DELETE n""", emptyMap))
   }
 
 }
