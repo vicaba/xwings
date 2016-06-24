@@ -19,6 +19,8 @@ case class AuthorizationNeo4jRepository(
                                        (implicit ec: ExecutionContext)
   extends Neo4jOGMHelper {
 
+  import scala.concurrent._
+
   def isUserAllowedToExecuteUseCase(nodeId: UUID, useCaseId: UUID): Future[Boolean] = {
 
     val permLabel = PermissionNeo4jRepository.Keys.PermLabel
@@ -41,15 +43,16 @@ case class AuthorizationNeo4jRepository(
     )
 
     Future {
-      val queryResult = session.query(query, params.asJava)
-      val result = resultCollectionAsScalaCollection(queryResult)
+      blocking(session.query(query, params.asJava))
+    }.map { qr =>
+      val result = resultCollectionAsScalaCollection(qr)
       result.headOption.fold(false) { map =>
         map.get(permIdKey) match {
           case Some(p) => if (p == null) false else true
           case None => false
         }
       }
-    } recover { case e: Throwable => throw e }
+    }
   }
 
 }
