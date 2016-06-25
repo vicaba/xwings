@@ -12,7 +12,7 @@ object Main {
 
     val a = Action(actionName = "getConsume", contextId = AvailableContexts.WriteToDatabaseContext)
 
-    val r = actionTransformer(ThingAndAction(UUID.randomUUID(), a))
+    val r = defaultActionTransformer(UUID.randomUUID(), List(a))
 
     println(r)
 

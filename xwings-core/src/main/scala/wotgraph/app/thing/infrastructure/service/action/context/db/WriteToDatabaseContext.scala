@@ -18,9 +18,13 @@ import scala.concurrent.Future
 
 class WriteToDatabaseTransformer extends ActionTransformer {
 
-  override val contextId: UUID = AvailableContexts.WriteToDatabaseContext
+  val contextId: UUID = AvailableContexts.WriteToDatabaseContext
 
-  override def transform(ta: ThingAndAction): List[Action] = ta.action :: ReadFromDatabaseContext.createAction(ta)
+  override def transform(ta: ThingAndAction): List[Action] =
+    if (ta.action.contextId == contextId)
+      ReadFromDatabaseContext.createAction(ta)
+    else
+      Nil
 }
 
 class WriteToDatabaseContext(sensedRepository: SensedValueRepository) extends ActionContext[SensedValueRepository] {

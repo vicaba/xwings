@@ -4,25 +4,43 @@ import java.util.UUID
 
 import wotgraph.app.thing.domain.entity.Action
 
-trait ActionTransformer extends PartialFunction[ThingAndAction, List[Action]] {
+import scala.annotation.tailrec
 
-  val contextId: UUID
-
-  private var result: List[ThingAndAction] = Nil
-
-  private var produced = false
-
-  protected[action] def aroundTransform(ta: ThingAndAction): List[Action] = {
-    if (ta.action.contextId != contextId)
-      Nil
-    else
-      transform(ta)
-  }
+trait ActionTransformer extends (ThingAndAction => List[Action]) {
 
   def transform(ta: ThingAndAction): List[Action]
 
-  @throws[Exception]
-  override def apply(v1: ThingAndAction): List[Action] = aroundTransform(v1)
+  override def apply(ta: ThingAndAction): List[Action] = transform(ta)
 
-  override def isDefinedAt(x: ThingAndAction): Boolean = aroundTransform(x).nonEmpty
+}
+
+object ActionTransformer {
+
+  def transform(
+                 initialActions: List[ThingAndAction],
+                 transformers: List[ActionTransformer]
+               ): List[Action] =
+    transform(initialActions, Nil, transformers.iterator)
+
+  def transform(
+                 thingId: UUID,
+                 initialActions: List[Action],
+                 transformers: List[ActionTransformer]
+               ): List[Action] = {
+    transform(initialActions.map(ThingAndAction(thingId, _)), transformers)
+  }
+
+  @tailrec private def transform(
+                          initialActions: List[ThingAndAction],
+                          acc: List[Action],
+                          transformers: Iterator[ActionTransformer]
+                        ): List[Action] = {
+
+    val at = transformers.next()
+    val accumulated = initialActions.flatMap(at) ::: acc
+
+    if (transformers.hasNext) transform(initialActions, accumulated, transformers)
+    else accumulated
+
+  }
 }
