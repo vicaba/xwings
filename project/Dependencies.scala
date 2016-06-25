@@ -10,6 +10,8 @@ object Dependencies {
 
   lazy val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 
+  lazy val akkaStreams = "com.typesafe.akka" %% "akka-stream" % akkaVersion
+
   lazy val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % akkaVersion
 
   lazy val playJson = "com.typesafe.play" %% "play-json" % playVersion

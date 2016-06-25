@@ -40,7 +40,7 @@ class WriteToDatabaseContext(sensedRepository: SensedValueRepository) extends Ac
     val sv = toSensedValue(actionPayload, ta)
     val result = sensedRepository.create(sv)
     result.map {
-      case Good(s) => ExecutionSuccess("Inserted")
+      case Good(s) => StringExecutionSuccess("Inserted")
       case Bad(l) => ExecutionFailure(ErrorHelper.every2List(l).map(_.toString))
     }
   }

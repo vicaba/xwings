@@ -31,6 +31,7 @@ object XWingsBuild extends Build {
   ).settings(coreDependencies: _*)
 
   lazy val coreDependencies = Seq(libraryDependencies ++= Seq(
+    akkaStreams,
     scalaReflect,
     scaldi,
     playWS,

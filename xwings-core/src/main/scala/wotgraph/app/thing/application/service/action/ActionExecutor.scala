@@ -2,6 +2,7 @@ package wotgraph.app.thing.application.service.action
 
 import java.util.UUID
 
+import akka.stream.scaladsl.{Flow, Source}
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import scaldi.{CanBeIdentifier, Identifier, Module}
@@ -51,9 +52,15 @@ trait ActionContext[Context] {
 
 sealed trait ExecutionResult
 
-sealed case class ExecutionSuccess(message: String) extends ExecutionResult
+trait ExecutionSuccess[T] extends ExecutionResult {
+  val value: T
+}
 
-sealed case class ExecutionFailure(errors: List[String] = Nil) extends ExecutionResult {
+case class StringExecutionSuccess(override val value: String) extends ExecutionSuccess[String]
+
+case class StreamExecutionSuccess(override val value: Source[String, akka.NotUsed]) extends ExecutionSuccess[Source[String, akka.NotUsed]]
+
+case class ExecutionFailure(errors: List[String] = Nil) extends ExecutionResult {
 
   def +(error: String) = this.copy(this.errors.::(error))
 

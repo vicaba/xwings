@@ -45,7 +45,7 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WS
     requestOpt.fold[Future[ExecutionResult]] {
       Future(ExecutionFailure(List("HttpMethod and URL fields are mandatory")))
     } {
-      _.execute().map(r => ExecutionSuccess(r.body)).recover {
+      _.execute().map(r => StringExecutionSuccess(r.body)).recover {
         case e: Throwable => ExecutionFailure(List("Cannot fulfill HTTP request"))
       }
     }

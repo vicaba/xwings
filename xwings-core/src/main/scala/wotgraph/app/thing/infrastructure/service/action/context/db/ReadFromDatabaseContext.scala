@@ -1,7 +1,12 @@
 package wotgraph.app.thing.infrastructure.service.action.context.db
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
 import org.scalactic.{Bad, Good}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.iteratee.Enumerator
+import play.api.libs.json._
+import play.api.libs.streams.Streams
+import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.domain.repository.SensedValueRepository
 import wotgraph.app.sensedv.infrastructure.serialization.keys.SensedValueKeys
 import wotgraph.app.thing.application.service.action._
@@ -10,7 +15,6 @@ import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
 import wotgraph.toolkit.scalactic.ErrorHelper
 
 import scala.concurrent.Future
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object ReadFromDatabaseContext {
@@ -38,12 +42,43 @@ class ReadFromDatabaseContext(sensedRepository: SensedValueRepository) extends A
                             ): Future[ExecutionResult] = {
 
     contextValue.get(SensedValueKeys.Namespace).fold[Future[ExecutionResult]] {
-      Future.successful(ExecutionSuccess(""))
+      Future.successful(StringExecutionSuccess(""))
     } { nspace =>
-      sensedRepository.findLastByNamespace(nspace).map {
-        case Good(svOpt) => svOpt.map(v => ExecutionSuccess(v.data.toString)).getOrElse(ExecutionSuccess(""))
-        case Bad(errors) => ExecutionFailure(ErrorHelper.every2List(errors).map(_.toString))
+      (actionPayload \ "query").asOpt[String] match {
+        case Some(query) => query match {
+          case "allStream" => getAllAsStream(nspace)
+          case "all" => getAll(nspace)
+          case _ => getLast(nspace)
+        }
+        case None => getLast(nspace)
       }
     }
+
   }
+
+  private def getLast(namespace: String): Future[ExecutionResult] = {
+    sensedRepository.findLastByNamespace(namespace).map {
+      case Good(svOpt) => svOpt.map(v => StringExecutionSuccess(v.data.toString)).getOrElse(StringExecutionSuccess(""))
+      case Bad(errors) => ExecutionFailure(ErrorHelper.every2List(errors).map(_.toString))
+    }
+  }
+
+  private def getAll(namespace: String) = {
+    sensedRepository.getAll(namespace) map {
+      case Good(l) => StringExecutionSuccess(Writes.list[JsValue].writes(l.map(v => v.data)).toString)
+      case Bad(errors) => ExecutionFailure(ErrorHelper.every2List(errors).map(_.toString))
+    }
+  }
+
+  private def getAllAsStream(namespace: String): Future[ExecutionResult] = {
+
+    def enumeratorToStream(e: Enumerator[SensedValue]): Source[SensedValue, NotUsed] =
+      Source.fromPublisher(Streams.enumeratorToPublisher(e))
+
+    Future.successful(sensedRepository.getAllAsStream(namespace) match {
+      case Good(e) => StreamExecutionSuccess(enumeratorToStream(e).map(_.data.toString))
+      case Bad(errors) => ExecutionFailure(ErrorHelper.every2List(errors).map(_.toString))
+    })
+  }
+
 }
