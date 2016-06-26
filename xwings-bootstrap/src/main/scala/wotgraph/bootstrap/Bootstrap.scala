@@ -16,7 +16,7 @@ import wotgraph.app.role.infrastructure.repository.neo4j.RoleNeo4jRepository
 import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.domain.repository.SensedValueRepository
 import wotgraph.app.thing.application.usecase.dto.CreateThing
-import wotgraph.app.thing.application.usecase.{CreateThingUseCase, ListThingsUseCase, ThingUseCasePermissionProvider}
+import wotgraph.app.thing.application.usecase.{CreateThingUseCase, ExecuteThingActionUseCase, ListThingsUseCase, ThingUseCasePermissionProvider}
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
@@ -54,6 +54,10 @@ object ThingHelper {
       inject[ThingTransformer](identified by 'ThingTransformer)
     )
 
+  val executeThingActionUseCase = new ExecuteThingActionUseCase(
+    repo,
+    Mocks.authorizationService
+  )
 
   def createThing(identifier: Int): Thing = {
 
@@ -73,7 +77,6 @@ object ThingHelper {
 
   def createThingWithActions(identifier: Int): CreateThing = {
 
-    val id = UUID.randomUUID()
     val actions = Set(
       Action(
         "getConsume", AvailableContexts.WriteToDatabaseContext, ""
@@ -223,7 +226,7 @@ object Bootstrap {
 
   def apply(): Unit = {
 
-    ThingHelper.deleteNodes()
+    //ThingHelper.deleteNodes()
     UserHelper.deleteNodes()
     RoleHelper.deleteNodes()
     PermissionHelper.deleteNodes()

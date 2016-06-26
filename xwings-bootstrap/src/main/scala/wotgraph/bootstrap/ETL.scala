@@ -2,26 +2,37 @@ package wotgraph.bootstrap
 
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util
+import java.util.{Calendar, UUID}
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{FileIO, Framing}
+import akka.actor.Actor.Receive
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.stream.{ActorMaterializer, ThrottleMode}
+import akka.stream.scaladsl.{FileIO, Framing, Sink}
 import akka.util.ByteString
 import org.joda.time.DateTime
+import org.scalactic.{Bad, Good}
+import play.api.libs.json.{JsObject, Json}
+import play.api.libs.ws.{WSClient, WSRequest}
+import play.api.libs.ws.ahc.AhcWSClient
+import wotgraph.app.thing.application.usecase.dto.CreateThing
+import wotgraph.app.thing.domain.entity.{Action, Metadata}
+import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
 
+import scala.collection.immutable.Queue
 import scala.concurrent.duration._
 
 case class MeterValue(meterId: String, date: DateTime, value: String)
 
 object ETL {
 
+  implicit val sys = ActorSystem()
+  implicit val mat = ActorMaterializer()
+  val splitter = sys.actorOf(Props(new DeviceTransformer))
+
   def apply() = {
 
     val regex = "(.+) (.+) (.+)".r
-
-    implicit val sys = ActorSystem()
-    implicit val mat = ActorMaterializer()
 
     val file = new File("/Users/vicaba/Desktop/VICTOR/File1.txt")
 
@@ -53,17 +64,104 @@ object ETL {
       case regex(id, time, value) => parseRawMeterValues(id, time, value)
     }
 
-    FileIO.fromFile(file)
+    val f = FileIO.fromFile(file)
       .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
       .map(_.utf8String)
       .map(parseMeterValueLine)
-      .runForeach(println)
+      .runWith(
+        Sink.actorRefWithAck[MeterValue](
+          splitter,
+          onInitMessage = "start",
+          ackMessage = "ack",
+          onCompleteMessage = "completed",
+          onFailureMessage = (t) => println(t))
+      )
 
   }
 
   def main(args: Array[String]) {
     ETL.apply()
   }
+}
+
+class DeviceTransformer extends Actor {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  val meterValueTransformer = context.actorOf(Props(new MeterValueTransformer))
+
+  def receiveWithParams(device2Thing: Map[String, UUID]): Actor.Receive = {
+    case "start" => sender ! "ack"
+    case mv@MeterValue(id, time, value) =>
+      val _sender = sender
+      val _deviceId = id
+      if (!device2Thing.contains(id)) {
+        ThingHelper.createThingUseCase.execute(createThing(id))(UUID.randomUUID()).map {
+          case Good(t) =>
+            _sender ! "ack"
+            meterValueTransformer !(_deviceId, t._id)
+            context.become(receiveWithParams(device2Thing + (id -> t._id)));
+          case Bad(e) =>
+        } recover {
+          case _ => self.!(mv)(_sender)
+        }
+      } else {
+        meterValueTransformer ! mv
+        _sender ! "ack"
+      }
+  }
+
+  override def receive: Receive = receiveWithParams(Map[String, UUID]())
+
+  def createThing(id: String): CreateThing = {
+    val actions = Set(
+      Action(
+        "putConsume", AvailableContexts.WriteToDatabaseContext, ""
+      )
+    )
+    val metadata = Json.obj("deviceId" -> id)
+    new CreateThing(Metadata(metadata.as[JsObject]), actions)
+  }
+}
+
+class MeterValueTransformer extends Actor {
+
+  val store = context.actorOf(Props(new Store))
+
+  def receiveWithParams(
+                         device2Thing: Map[String, UUID]
+                       ): Actor.Receive = {
+    case mv: MeterValue =>
+      device2Thing.get(mv.meterId) match {
+        case Some(id) =>
+          ThingHelper.executeThingActionUseCase.execute(
+            id.toString, "putConsume", Json.obj("value" -> mv.value, "date" -> mv.date)
+          )(
+            UUID.randomUUID()
+          )
+        case None => store ! mv
+      }
+    case id: (String, UUID) =>
+      store ! "dequeueAll"
+      context.become(receiveWithParams(device2Thing + id))
+  }
 
 
+  override def receive: Receive = receiveWithParams(Map[String, UUID]())
+}
+
+class Store extends Actor {
+
+  def receiveWithParams(store: Queue[MeterValue]): Actor.Receive = {
+    case mv: MeterValue => context.become(receiveWithParams(store :+ mv))
+    case "dequeueAll" => store.dequeueOption match {
+      case Some((mv, q)) =>
+        context.parent ! mv
+        self ! "dequeueAll"
+        context.become(receiveWithParams(q))
+      case None =>
+    }
+  }
+
+  override def receive: Receive = receiveWithParams(Queue[MeterValue]())
 }
