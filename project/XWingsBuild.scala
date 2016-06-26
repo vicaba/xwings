@@ -70,5 +70,10 @@ object XWingsBuild extends Build {
     settings = commonSettings,
     dependencies = Seq(core)
   )
+    .settings(bootstrapDependencies)
+
+  lazy val bootstrapDependencies = Seq(libraryDependencies ++= Seq(
+    scalamock
+  ))
 
 }

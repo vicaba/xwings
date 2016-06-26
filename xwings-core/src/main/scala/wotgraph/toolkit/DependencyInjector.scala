@@ -1,14 +1,10 @@
 package wotgraph.toolkit
 
 
-import java.util.concurrent.Executors
-
 import akka.actor.ActorSystem
-import akka.stream.ActorAttributes.Dispatcher
 import org.apache.commons.codec.binary.Hex
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.{Session => Neo4jSession}
-import play.api.libs.concurrent.Akka
 import scaldi.Module
 import wotgraph.app.authorization.application.service.AuthorizationService
 import wotgraph.app.authorization.domain.repository.AuthorizationRepository

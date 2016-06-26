@@ -11,14 +11,11 @@ import scala.concurrent.Future
 
 class AuthorizationService(authorizationRepository: AuthorizationRepository) {
   def execute(executorAgentId: UUID, useCaseId: UUID): Future[Boolean] = {
-    if (executorAgentId == AuthorizationService.BypassUUID) Future.successful(true)
-    else authorizationRepository.isNodeAllowedToExecuteUseCase(executorAgentId, useCaseId)
+    authorizationRepository.isNodeAllowedToExecuteUseCase(executorAgentId, useCaseId)
   }
 }
 
 object AuthorizationService {
-
-  val BypassUUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
 
   def asyncExecute[T](authorizationService: AuthorizationService,
                       nodeId: UUID,

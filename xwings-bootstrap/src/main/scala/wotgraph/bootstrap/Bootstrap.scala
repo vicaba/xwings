@@ -2,6 +2,8 @@ package wotgraph.bootstrap
 
 import java.util.UUID
 
+import org.scalamock.scalatest.MockFactory
+import org.scalatest.FlatSpec
 import play.api.libs.json.{JsObject, Json}
 import scaldi.Injectable._
 import wotgraph.app.authorization.application.service.AuthorizationService
@@ -18,22 +20,39 @@ import wotgraph.app.thing.application.usecase.{CreateThingUseCase, ListThingsUse
 import wotgraph.app.thing.domain.entity.{Action, Metadata, Thing}
 import wotgraph.app.thing.domain.repository.ThingRepository
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
+import wotgraph.app.thing.infrastructure.service.thing.ThingTransformer
 import wotgraph.app.user.application.usecase._
 import wotgraph.app.user.application.usecase.dto.CreateUser
+import wotgraph.app.user.domain.repository.UserRepository
 import wotgraph.app.user.infrastructure.repository.neo4j.UserNeo4jRepository
 import wotgraph.toolkit.DependencyInjector._
-import wotgraph.toolkit.repository.neo4j.helpers.Neo4jOGMHelper
+import wotgraph.toolkit.crypt.Hasher
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
+
+object Mocks extends FlatSpec with MockFactory {
+
+  class AuthorizationServiceNoArgs extends AuthorizationService(null)
+
+  val authorizationService = mock[AuthorizationServiceNoArgs]
+
+  authorizationService.execute _ expects(*, *) returning Future.successful(true) anyNumberOfTimes
+
+}
 
 
 object ThingHelper {
 
   val repo: ThingRepository = inject[ThingRepository](identified by 'ThingRepository)
 
-  val createThingUseCase = inject[CreateThingUseCase](identified by 'CreateThingUseCase)
+  val createThingUseCase =
+    new CreateThingUseCase(
+      repo,
+      Mocks.authorizationService,
+      inject[ThingTransformer](identified by 'ThingTransformer)
+    )
 
 
   def createThing(identifier: Int): Thing = {
@@ -87,7 +106,7 @@ object ThingHelper {
       Await.result(f3, 6.seconds)
       val f4 = repo.create(tWithChildren)
       Await.result(f4, 6.seconds)
-      val f6 = createThingUseCase.execute(createThingWithActions(6))(AuthorizationService.BypassUUID)
+      val f6 = createThingUseCase.execute(createThingWithActions(6))(UUID.randomUUID())
       Await.result(f6, 6.seconds)
 
     }
@@ -156,12 +175,15 @@ object UserHelper {
 
   val repo: UserNeo4jRepository = inject[UserNeo4jRepository](identified by 'UserNeo4jRepository)
 
-  val updateUseCase = inject[UpdateUserUseCase](identified by 'UpdateUserUseCase)
+  val createUserUseCase = new CreateUserUseCase(
+    inject[UserRepository](identified by 'UserRepository),
+    inject[Hasher.PreconfiguredHash](identified by 'PrebuiltPasswordHasher),
+    Mocks.authorizationService
+  )
+
+    inject[CreateUserUseCase](identified by 'CreateUserUseCase)
 
   def createNodes(roles: List[Role]) = {
-
-    val useCase = inject[CreateUserUseCase](identified by 'CreateUserUseCase)
-
 
     val users =
       CreateUser("Xavi", "xavier", roles.filter(_.name == RoleHelper.Admin).head.id) ::
@@ -169,7 +191,7 @@ object UserHelper {
         CreateUser("Nadia", "nadie", roles.filter(_.name == RoleHelper.Freemium).head.id) ::
         Nil
 
-    Future.sequence(users.map(useCase.execute(_)(AuthorizationService.BypassUUID)))
+    Future.sequence(users.map(createUserUseCase.execute(_)(UUID.randomUUID())))
 
   }
 
