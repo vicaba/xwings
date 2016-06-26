@@ -11,6 +11,7 @@ object Main {
 
     program match {
       case "bootstrap" => Bootstrap()
+      case "etl" => ETL()
     }
   }
 
