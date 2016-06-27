@@ -53,6 +53,7 @@ object XWingsBuild extends Build {
     .enablePlugins(PlayScala)
     .settings(httpDependencies: _*)
     .settings(routesGenerator := InjectedRoutesGenerator, fork in sbt.Keys.run := true)
+    .settings(httpSettings)
 
   lazy val httpDependencies = Seq(libraryDependencies ++= Seq(
     jdbc,
@@ -63,6 +64,8 @@ object XWingsBuild extends Build {
     akkaRemote,
     scalactic
   ))
+
+  lazy val httpSettings = Seq(PlayKeys.devSettings := Seq("play.server.https.port" -> "9443"))
 
   lazy val boostrap = Project(
     id = "xwings-bootstrap",
