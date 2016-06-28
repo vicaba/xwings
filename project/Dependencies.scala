@@ -42,6 +42,8 @@ object Dependencies {
 
   lazy val scalactic = "org.scalactic" %% "scalactic" % "2.2.6"
 
+  lazy val scalatest = "org.scalatest" %% "scalatest" % "2.2.6"
+
   lazy val scalamock = "org.scalamock" %% "scalamock-scalatest-support" % "3.2.2"
 
 }

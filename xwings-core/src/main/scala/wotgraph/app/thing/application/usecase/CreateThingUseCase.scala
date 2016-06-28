@@ -19,10 +19,11 @@ class CreateThingUseCase(
                           authorizationService: AuthorizationService,
                           thingTransformer: ThingTransformer) {
 
-  def execute(c: CreateThing)(executorAgentId: UUID): Future[Thing Or Every[AppError]] =
+  def execute(c: CreateThing)(executorAgentId: UUID): Future[Thing Or Every[AppError]] = {
     AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateThingUseCase.permission.id) {
       thingRepository.create(thingTransformer(CreateThing.toThing(c))).map(Good(_))
     }
+  }
 }
 
 object CreateThingUseCase extends PermissionProvider {

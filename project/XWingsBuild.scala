@@ -41,7 +41,9 @@ object XWingsBuild extends Build {
     neo4jHttpDriver,
     apacheValidator,
     logback,
-    scalactic
+    scalactic,
+    scalamock % Test,
+    scalatest % Test
   ))
 
   lazy val http = Project(
