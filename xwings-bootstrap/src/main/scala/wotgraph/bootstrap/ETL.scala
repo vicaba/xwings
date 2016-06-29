@@ -5,10 +5,11 @@ import java.text.SimpleDateFormat
 import java.util
 import java.util.{Calendar, UUID}
 
+import akka.NotUsed
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.stream.{ActorMaterializer, ThrottleMode}
-import akka.stream.scaladsl.{FileIO, Framing, Sink}
+import akka.stream.{ActorMaterializer, ClosedShape, ThrottleMode}
+import akka.stream.scaladsl.{Concat, FileIO, Flow, Framing, GraphDSL, RunnableGraph, Sink}
 import akka.util.ByteString
 import org.joda.time.DateTime
 import org.scalactic.{Bad, Good}
@@ -33,8 +34,6 @@ object ETL {
   def apply() = {
 
     val regex = "(.+) (.+) (.+)".r
-
-    val file = new File("/Users/vicaba/Desktop/VICTOR/File1.txt")
 
     def baseCalendar: Calendar = {
       val startTime = "Jan 01 2009"
@@ -64,7 +63,50 @@ object ETL {
       case regex(id, time, value) => parseRawMeterValues(id, time, value)
     }
 
-    val f = FileIO.fromFile(file)
+
+    val file = new File("/Users/vicaba/Desktop/VICTOR/File1.txt")
+
+    val file1 = new File("/Users/vicaba/Desktop/VICTOR/File1ex.txt")
+    val file2 = new File("/Users/vicaba/Desktop/VICTOR/File2ex.txt")
+
+    val flow = Flow[ByteString]
+      .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
+      .map(_.utf8String)
+      .map(parseMeterValueLine)
+
+
+    val sink = Sink.actorRefWithAck[MeterValue](
+      splitter,
+      onInitMessage = "start",
+      ackMessage = "ack",
+      onCompleteMessage = "completed",
+      onFailureMessage = (t) => println(t))
+
+    val g = RunnableGraph.fromGraph(GraphDSL.create() { implicit builder: GraphDSL.Builder[NotUsed] =>
+      import GraphDSL.Implicits._
+
+      val in = FileIO.fromFile(file)
+      val in1 = FileIO.fromFile(file1)
+      val in2 = FileIO.fromFile(file2)
+
+      //val concat = builder.add(Concat[ByteString](2))
+
+      //in1 ~> concat.in(0)
+      //in2 ~> concat.in(1)
+
+      //concat.out ~> flow ~> sink
+
+      in ~> flow ~> sink
+
+      ClosedShape
+    })
+
+    // Sleep for a while till all services are up
+    Thread.sleep(100)
+
+    g.run()
+
+/*    val f = FileIO.fromFile(file)
       .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
       .map(_.utf8String)
       .map(parseMeterValueLine)
@@ -75,7 +117,7 @@ object ETL {
           ackMessage = "ack",
           onCompleteMessage = "completed",
           onFailureMessage = (t) => println(t))
-      )
+      )*/
 
   }
 
