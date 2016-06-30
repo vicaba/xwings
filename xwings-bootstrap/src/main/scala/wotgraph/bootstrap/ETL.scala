@@ -8,6 +8,7 @@ import java.util.{Calendar, UUID}
 import akka.NotUsed
 import akka.actor.Actor.Receive
 import akka.actor.{Actor, ActorSystem, Props}
+import akka.stream.actor.ActorPublisher
 import akka.stream.{ActorMaterializer, ClosedShape, ThrottleMode}
 import akka.stream.scaladsl.{Concat, FileIO, Flow, Framing, GraphDSL, RunnableGraph, Sink}
 import akka.util.ByteString
@@ -73,7 +74,6 @@ object ETL {
       .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
       .map(_.utf8String)
       .map(parseMeterValueLine)
-
 
     val sink = Sink.actorRefWithAck[MeterValue](
       splitter,
@@ -181,7 +181,9 @@ class MeterValueTransformer extends Actor {
           )(
             UUID.randomUUID()
           )
-        case None => store ! mv
+        case None =>
+          println("fail")
+          store ! mv
       }
     case id: (String, UUID) =>
       store ! "dequeueAll"

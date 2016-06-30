@@ -1,4 +1,4 @@
-package wotgraph.app.thing.infrastructure.http.api.controller
+package wotgraph.app.thing.infrastructure.http.api.controller.executethingaction
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -11,6 +11,7 @@ import wotgraph.app.error.infrastructure.http.api.ErrorHelper
 import wotgraph.app.session.infrastructure.http.AuthenticatedAction
 import wotgraph.app.thing.application.service.action.{ExecutionFailure, ExecutionSuccess, StreamExecutionSuccess, StringExecutionSuccess}
 import wotgraph.app.thing.application.usecase.ExecuteThingActionUseCase
+import wotgraph.app.thing.infrastructure.http.api.controller.PredefJsonMessages
 import wotgraph.toolkit.DependencyInjector._
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,9 +25,9 @@ class ExecuteThingActionController extends Controller with PredefJsonMessages {
 
     r.body.asOpt[JsObject] match {
       case None => Future.successful(BadRequest(Json.obj(MessagesKey -> "No JSON Object found")))
-      case Some(cValue) =>
+      case Some(actionPayload) =>
 
-        executeThingActionUseCase.execute(id, actionName, cValue)(r.userId) flatMap {
+        executeThingActionUseCase.execute(id, actionName, actionPayload)(r.userId) flatMap {
           case Good(result) => result match {
             case success: ExecutionSuccess[_] => handleExecutionSuccess(success)
             case failure: ExecutionFailure => Future.successful(BadRequest(Json.obj("message" -> failure.errors)))

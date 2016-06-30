@@ -3,34 +3,36 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET           /api/v1/things                        wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.execute
+GET           /api/v1/things                           wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.execute
 
-POST          /api/v1/things                        wotgraph.app.thing.infrastructure.http.api.controller.CreateThingController.execute
+POST          /api/v1/things                           wotgraph.app.thing.infrastructure.http.api.controller.CreateThingController.execute
 
-POST          /api/v1/things/search                 wotgraph.app.thing.infrastructure.http.api.controller.SearchThingController.execute
+POST          /api/v1/things/search                    wotgraph.app.thing.infrastructure.http.api.controller.SearchThingController.execute
 
-GET           /api/v1/things/:id                    wotgraph.app.thing.infrastructure.http.api.controller.ShowThingController.execute(id: String)
+GET           /api/v1/things/:id                       wotgraph.app.thing.infrastructure.http.api.controller.ShowThingController.execute(id: String)
 
-DELETE        /api/v1/things/:id                    wotgraph.app.thing.infrastructure.http.api.controller.DeleteThingController.execute(id: String)
+DELETE        /api/v1/things/:id                       wotgraph.app.thing.infrastructure.http.api.controller.DeleteThingController.execute(id: String)
 
-POST          /api/v1/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.ExecuteThingActionController.execute(id: String, actionName: String)
+POST          /api/v1/things/:id/:actionName           wotgraph.app.thing.infrastructure.http.api.controller.executethingaction.ExecuteThingActionController.execute(id: String, actionName: String)
 
-GET           /api/v1/stream/things                 wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
+GET           /api/v1/ws/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.executethingaction.ExecuteThingActionWebSocketController.execute(id: String, actionName: String)
 
-GET           /api/v1/permissions                   wotgraph.app.permission.infrastructure.http.api.controller.ListPermissionsController.execute
+GET           /api/v1/stream/things                    wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
 
-GET           /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.ListRolesController.execute
+GET           /api/v1/permissions                      wotgraph.app.permission.infrastructure.http.api.controller.ListPermissionsController.execute
 
-POST          /api/v1/roles                         wotgraph.app.role.infrastructure.http.api.controller.CreateRoleController.execute
+GET           /api/v1/roles                            wotgraph.app.role.infrastructure.http.api.controller.ListRolesController.execute
 
-GET           /api/v1/users                         wotgraph.app.user.infrastructure.http.api.controller.ListUsersController.execute
+POST          /api/v1/roles                            wotgraph.app.role.infrastructure.http.api.controller.CreateRoleController.execute
 
-POST          /api/v1/users                         wotgraph.app.user.infrastructure.http.api.controller.CreateUserController.execute
+GET           /api/v1/users                            wotgraph.app.user.infrastructure.http.api.controller.ListUsersController.execute
 
-PUT           /api/v1/users/:id                     wotgraph.app.user.infrastructure.http.api.controller.UpdateUserController.execute(id: String)
+POST          /api/v1/users                            wotgraph.app.user.infrastructure.http.api.controller.CreateUserController.execute
 
-DELETE        /api/v1/users/:id                     wotgraph.app.user.infrastructure.http.api.controller.DeleteUserController.execute(id: String)
+PUT           /api/v1/users/:id                        wotgraph.app.user.infrastructure.http.api.controller.UpdateUserController.execute(id: String)
 
-POST          /api/v1/session                       wotgraph.app.session.infrastructure.http.api.controller.LoginController.execute
+DELETE        /api/v1/users/:id                        wotgraph.app.user.infrastructure.http.api.controller.DeleteUserController.execute(id: String)
 
-DELETE        /api/v1/session                       wotgraph.app.session.infrastructure.http.api.controller.LogoutController.execute
+POST          /api/v1/session                          wotgraph.app.session.infrastructure.http.api.controller.LoginController.execute
+
+DELETE        /api/v1/session                          wotgraph.app.session.infrastructure.http.api.controller.LogoutController.execute

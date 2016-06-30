@@ -2,6 +2,7 @@ package wotgraph.app.session.infrastructure.http
 
 import java.util.UUID
 
+import org.scalactic.{Bad, Good, One, Or}
 import play.api.mvc._
 import scaldi.Injectable._
 import wotgraph.app.user.domain.entity.User
@@ -25,19 +26,21 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] with Cont
       case Right(ur) => Future.successful(Unauthorized(""))
     }
 
-  private def authenticate[A](request: Request[A]): Future[AuthenticatedRequest[A] Either Request[A]] =
-    request.session.get(tokenKey)
-      .fold[Future[AuthenticatedRequest[A] Either Request[A]]] {
-      println(request.session)
-      Future.successful(Right(request))
+  def sessionAuthenticate(request: RequestHeader): Future[UUID Either String] = {
+    request.session.get(tokenKey).fold[Future[UUID Either String]] {
+      Future.successful(Right("Can't authenticate"))
     } {
-      tokenValue =>
-        getUserId(tokenValue).map { id =>
-          Left(AuthenticatedRequest(request, id))
-        } recover { case _ => Right(request) }
+      token: String => getUserId(token).map(Left(_))
+    }
+  }
+
+  def authenticate[A](request: Request[A]): Future[AuthenticatedRequest[A] Either Request[A]] =
+    sessionAuthenticate(request).map {
+      case Left(id) => Left(AuthenticatedRequest(request, id))
+      case Right(m) => Right(request)
     }
 
-  def getUserId(hash: String): Future[User.Id] = Future {
+  private def getUserId(hash: String): Future[UUID] = Future {
     UUID.fromString(decrypt(hash))
   }
 
