@@ -4,7 +4,7 @@ import java.util.UUID
 import wotgraph.app.thing.application.service.action.ThingAndAction
 import wotgraph.app.thing.domain.entity.Action
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
-import wotgraph.app.thing.infrastructure.service.action.context.db.WriteToDatabaseTransformer
+import wotgraph.app.thing.infrastructure.service.action.context.db.write.WriteToDatabaseTransformer
 
 object Main {
 

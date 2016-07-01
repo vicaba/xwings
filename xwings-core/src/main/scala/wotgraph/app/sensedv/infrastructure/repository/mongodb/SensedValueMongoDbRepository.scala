@@ -2,6 +2,7 @@ package wotgraph.app.sensedv.infrastructure.repository.mongodb
 
 import org.scalactic._
 import play.api.libs.iteratee.Enumerator
+import play.api.libs.json.{JsObject, Json}
 import reactivemongo.api.{DB, ReadPreference}
 import reactivemongo.api.collections.bson.BSONCollection
 import reactivemongo.bson.BSONDocument
@@ -9,6 +10,7 @@ import wotgraph.app.error.{Storage, StorageError}
 import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.infrastructure.serialization.keys.SensedValueKeys
 import reactivemongo.bson._
+import wotgraph.app.sensedv.domain.repository.{FieldOrdering, Order}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,6 +18,13 @@ import scala.concurrent.{ExecutionContext, Future}
 class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
 
   import wotgraph.app.sensedv.infrastructure.serialization.format.bson.Implicits._
+
+  def ordering2MongoDbOrder(ordering: FieldOrdering): Int = ordering match {
+    case FieldOrdering.Ascendant => 1
+    case FieldOrdering.Descendant => -1
+  }
+
+  implicit def order2Criteria(order: Order): BSONDocument = BSONDocument(order.field -> ordering2MongoDbOrder(order.order))
 
   def collection: BSONCollection = db.collection("sensed")
 
@@ -52,6 +61,15 @@ class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
     Good(collection
       .find(criteria)
       .sort(sortOrder)
+      .cursor[SensedValue](readPreference = ReadPreference.primary)
+      .enumerate())
+  }
+
+  def getAllAsStream(namespace: String, orderedBy: Order): Enumerator[SensedValue] Or Every[StorageError] = {
+    val criteria = namespaceCriteria(namespace)
+    Good(collection
+      .find(criteria)
+      .sort(orderedBy)
       .cursor[SensedValue](readPreference = ReadPreference.primary)
       .enumerate())
   }

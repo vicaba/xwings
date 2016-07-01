@@ -1,18 +1,18 @@
-package wotgraph.app.thing.infrastructure.service.action.context.db
+package wotgraph.app.thing.infrastructure.service.action.context.db.write
 
 import java.util.UUID
 
 import org.scalactic.{Bad, Good}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.JsObject
 import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.domain.repository.SensedValueRepository
 import wotgraph.app.thing.application.service.action._
 import wotgraph.app.thing.domain.entity.Action
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
+import wotgraph.app.thing.infrastructure.service.action.context.db.read.ReadFromDatabaseContext
 import wotgraph.toolkit.scalactic.ErrorHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import scala.concurrent.Future
 
 

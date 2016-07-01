@@ -4,7 +4,7 @@ import org.scalactic.{Every, Or}
 import play.api.libs.iteratee.Enumerator
 import wotgraph.app.error.StorageError
 import wotgraph.app.sensedv.domain.SensedValue
-import wotgraph.app.sensedv.domain.repository.SensedValueRepository
+import wotgraph.app.sensedv.domain.repository.{Order, SensedValueRepository}
 import wotgraph.app.sensedv.infrastructure.repository.mongodb.SensedValueMongoDbRepository
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,4 +27,7 @@ case class SensedValueRepositoryImpl(
 
   override def getAllAsStream(namespace: String): Or[Enumerator[SensedValue], Every[StorageError]] =
     sensedValueMongoDbRepository.getAllAsStream(namespace)
+
+  override def getAllAsStream(namespace: String, orderedBy: Order): Or[Enumerator[SensedValue], Every[StorageError]] =
+    sensedValueMongoDbRepository.getAllAsStream(namespace, orderedBy)
 }
