@@ -70,9 +70,12 @@ class StreamActor(
             case _ => self ! PoisonPill
           }
         case _ =>
-          out ! "arghhh"
           self ! PoisonPill
       }
+  }
+
+  override def postStop(): Unit = {
+    println("websocket closed")
   }
 
 }

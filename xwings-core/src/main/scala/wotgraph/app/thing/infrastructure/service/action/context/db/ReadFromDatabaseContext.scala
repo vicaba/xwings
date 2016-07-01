@@ -21,6 +21,11 @@ object ReadFromDatabaseContext {
 
   private val GetWordPrefix = "getOf"
 
+  private val Query = "query"
+  private val AllStream = "allStream"
+  private val All = "all"
+
+
   def createAction(ta: ThingAndAction): List[Action] = {
     val a = ta.action
     val aName = GetWordPrefix + a.actionName.capitalize
@@ -34,6 +39,8 @@ object ReadFromDatabaseContext {
 
 class ReadFromDatabaseContext(sensedRepository: SensedValueRepository) extends ActionContext[SensedValueRepository] {
 
+  import ReadFromDatabaseContext._
+
   override val context: SensedValueRepository = sensedRepository
 
   override def executeAction(ta: ThingAndAction,
@@ -44,17 +51,19 @@ class ReadFromDatabaseContext(sensedRepository: SensedValueRepository) extends A
     contextValue.get(SensedValueKeys.Namespace).fold[Future[ExecutionResult]] {
       Future.successful(StringExecutionSuccess(""))
     } { nspace =>
-      (actionPayload \ "query").asOpt[String] match {
+      (actionPayload \ Query).asOpt[String] match {
         case Some(query) => query match {
-          case "allStream" => getAllAsStream(nspace)
-          case "all" => getAll(nspace)
-          case _ => getLast(nspace)
+          case AllStream => getAllAsStream(nspace)
+          case All => getAll(nspace)
+          case _ => defaultQuery(nspace)
         }
-        case None => getLast(nspace)
+        case None => defaultQuery(nspace)
       }
     }
 
   }
+
+  private def defaultQuery(nspace: String) = getLast(nspace)
 
   private def getLast(namespace: String): Future[ExecutionResult] = {
     sensedRepository.findLastByNamespace(namespace).map {
