@@ -69,13 +69,8 @@ class StreamActor(
               stream.value.runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
             case _ => self ! PoisonPill
           }
-        case _ =>
-          self ! PoisonPill
+        case _ => self ! PoisonPill
       }
-  }
-
-  override def postStop(): Unit = {
-    println("websocket closed")
   }
 
 }
