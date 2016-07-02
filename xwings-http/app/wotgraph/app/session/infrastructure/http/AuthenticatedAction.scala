@@ -19,7 +19,6 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] with Cont
 
   lazy val decrypt: String => String = inject[String => String](identified by 'SessionDecrypter)
 
-
   override def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[Result]): Future[Result] =
     authenticate(request).flatMap {
       case Left(ar) => block(ar)
@@ -40,7 +39,7 @@ object AuthenticatedAction extends ActionBuilder[AuthenticatedRequest] with Cont
       case Right(m) => Right(request)
     }
 
-  private def getUserId(hash: String): Future[UUID] = Future {
+  private def getUserId(hash: String): Future[UUID] = Future.successful {
     UUID.fromString(decrypt(hash))
   }
 

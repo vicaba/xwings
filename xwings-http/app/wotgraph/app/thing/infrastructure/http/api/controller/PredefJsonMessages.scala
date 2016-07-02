@@ -9,4 +9,6 @@ trait PredefJsonMessages {
 
   val BadJsonFormatMessage = Json.obj(MessagesKey -> "bad json format")
 
+  val DataKey = "data"
+
 }

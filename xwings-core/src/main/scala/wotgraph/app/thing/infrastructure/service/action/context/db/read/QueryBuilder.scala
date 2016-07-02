@@ -2,7 +2,7 @@ package wotgraph.app.thing.infrastructure.service.action.context.db.read
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import org.scalactic.{Bad, Every, Good}
+import org.scalactic.{Bad, Every, Good, Or}
 import play.api.libs.iteratee.Enumerator
 import play.api.libs.json.{JsValue, Writes}
 import play.api.libs.streams.Streams
@@ -32,7 +32,9 @@ trait QueryBuilder[Q <: QueryBuilder[_]] {
 
 object QueryBuilder {
   def apply(query: String, namespace: String): QueryQueryBuilder = QueryQueryBuilder(query, namespace)
+
   def apply(namespace: String): QueryQueryBuilder = QueryQueryBuilder("", namespace)
+
   def apply(): (String, String) => QueryQueryBuilder = QueryQueryBuilder(_: String, _: String)
 }
 
@@ -77,7 +79,7 @@ trait SortQueryBuilder extends QueryBuilder[SortQueryBuilder] {
   override def execute(sensedValueRepository: SensedValueRepository): Future[ExecutionResult] = {
     queryQueryBuilder.query match {
       case AllStream => getAllAsStream(sensedValueRepository, queryQueryBuilder.namespace, _order)
-      case All => queryQueryBuilder.execute(sensedValueRepository)
+      case All => getAll(sensedValueRepository, queryQueryBuilder.namespace, _order)
       case _ => queryQueryBuilder.execute(sensedValueRepository)
     }
   }
@@ -93,32 +95,55 @@ private object Queries {
   }
 
   def getAll(sensedValueRepository: SensedValueRepository, namespace: String) = {
-    sensedValueRepository.getAll(namespace) map {
-      case Good(l) => StringExecutionSuccess(Writes.list[JsValue].writes(l.map(v => v.data)).toString)
-      case Bad(errors) => errors2Failure(errors)
-    }
+    mapAsyncResult(sensedValueRepository.getAll(namespace))(_.data)
+
+  }
+
+  def getAll(sensedValueRepository: SensedValueRepository, namespace: String, order: Order) = {
+    mapAsyncResult(sensedValueRepository.getAll(namespace, order))(_.data)
   }
 
   def getAllAsStream(sensedValueRepository: SensedValueRepository, namespace: String): Future[ExecutionResult] = {
-
-    Future.successful(sensedValueRepository.getAllAsStream(namespace) match {
-      case Good(e) => StreamExecutionSuccess(enumeratorToStream(e).map(_.data.toString))
-      case Bad(errors) => errors2Failure(errors)
-    })
+    mapEnumeratorResult(sensedValueRepository.getAllAsStream(namespace))(_.data.toString)
   }
 
   def getAllAsStream(sensedValueRepository: SensedValueRepository, namespace: String, order: Order): Future[ExecutionResult] = {
+    mapEnumeratorResult(sensedValueRepository.getAllAsStream(namespace, order))(_.data.toString)
+  }
 
-    Future.successful(sensedValueRepository.getAllAsStream(namespace, order) match {
-      case Good(e) => StreamExecutionSuccess(enumeratorToStream(e).map(_.data.toString))
+  private def mapAsyncResult[T](
+                                 res: => Future[Seq[T] Or Every[StorageError]]
+                               )
+                               (
+                                 f: T => JsValue
+                               ): Future[ExecutionResult] = {
+    res.map {
+      case Good(l) => StringExecutionSuccess(Writes.seq[JsValue].writes(l.map(f)).toString)
+      case Bad(errors) => errors2Failure(errors)
+    }
+
+
+  }
+
+  private def mapEnumeratorResult[T](
+                                      res: => Enumerator[T] Or Every[StorageError]
+                                    )
+                                    (
+                                      f: T => String
+                                    ): Future[ExecutionResult] = {
+
+    Future.successful(res match {
+      case Good(e) => StreamExecutionSuccess(enumeratorToStream(e).map(f))
       case Bad(errors) => errors2Failure(errors)
     })
+
   }
+
 
   private def errors2Failure(errors: Every[StorageError]): ExecutionFailure =
     ExecutionFailure(ErrorHelper.every2List(errors).map(_.toString))
 
-  private def enumeratorToStream(e: Enumerator[SensedValue]): Source[SensedValue, NotUsed] =
+  private def enumeratorToStream[T](e: Enumerator[T]): Source[T, NotUsed] =
     Source.fromPublisher(Streams.enumeratorToPublisher(e))
 
 }

@@ -20,7 +20,7 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationS
   def execute(thingId: String,
               actionName: String,
               actionPayload: JsObject = Json.obj())
-             (executorAgentId: UUID): Future[ExecutionResult Or Every[AppError]] = {
+             (executorAgentId: UUID): Future[Option[ExecutionResult] Or Every[AppError]] = {
 
     Try(UUID.fromString(thingId)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
@@ -31,11 +31,13 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationS
               val action = thing.actions.find(_.actionName == actionName)
               action match {
                 case Some(a) =>
-                  ActionExecutor.executeAction(ThingAndAction(uuid, a), actionPayload)(ContextProvider.injector).map(Good(_))
+                  ActionExecutor.executeAction(
+                    ThingAndAction(uuid, a), actionPayload)(ContextProvider.injector
+                  ).map(r => Good(Some(r)))
                 case _ =>
-                  Future.successful(Good(ExecutionFailure(List("Action not found"))))
+                  Future.successful(Good(None))
               }
-            case None => Future(Good(ExecutionFailure(List("Thing not found"))))
+            case None => Future.successful(Good(None))
           }
         }
     }
