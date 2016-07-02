@@ -10,7 +10,8 @@ import wotgraph.app.error.{Storage, StorageError}
 import wotgraph.app.sensedv.domain.SensedValue
 import wotgraph.app.sensedv.infrastructure.serialization.keys.SensedValueKeys
 import reactivemongo.bson._
-import wotgraph.app.sensedv.domain.repository.{FieldOrdering, Order}
+import wotgraph.app.exceptions.DeleteException
+import wotgraph.toolkit.repository.dsl._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,6 +56,15 @@ class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
       .collect[List]().map(Good(_))
   }
 
+  def getAll(namespace: String, orderedBy: Order): Future[List[SensedValue] Or Every[StorageError]] = {
+    val criteria = namespaceCriteria(namespace)
+    collection
+      .find(criteria)
+      .sort(orderedBy)
+      .cursor[SensedValue](readPreference = ReadPreference.primary)
+      .collect[List]().map(Good(_))
+  }
+
   def getAllAsStream(namespace: String): Enumerator[SensedValue] Or Every[StorageError] = {
     val criteria = namespaceCriteria(namespace)
     val sortOrder = sortOrderCriteria(-1)
@@ -72,6 +82,15 @@ class SensedValueMongoDbRepository(db: DB)(implicit ec: ExecutionContext) {
       .sort(orderedBy)
       .cursor[SensedValue](readPreference = ReadPreference.primary)
       .enumerate())
+  }
+
+  def deleteAll(namespace: String): Future[Boolean Or Every[StorageError]] = {
+    collection.remove(namespaceCriteria(namespace)).map {
+      case wr if wr.ok => Good(true)
+      case wr => Bad(One(Storage("Error deleting entity")))
+    } recover {
+      case t: Throwable => throw new DeleteException("MongoDB error, cannot delete sensed values that belong to " + namespace)
+    }
   }
 
   private def namespaceCriteria(namespace: String): BSONDocument = BSONDocument(SensedValueKeys.Namespace -> namespace)

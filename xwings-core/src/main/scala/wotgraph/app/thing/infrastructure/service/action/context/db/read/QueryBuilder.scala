@@ -8,8 +8,9 @@ import play.api.libs.json.{JsValue, Writes}
 import play.api.libs.streams.Streams
 import wotgraph.app.error.StorageError
 import wotgraph.app.sensedv.domain.SensedValue
-import wotgraph.app.sensedv.domain.repository.{Order, SensedValueRepository}
-import wotgraph.app.thing.application.service.action.{ExecutionFailure, ExecutionResult, StreamExecutionSuccess, StringExecutionSuccess}
+import wotgraph.app.sensedv.domain.repository.SensedValueRepository
+import wotgraph.app.thing.application.service.action._
+import wotgraph.toolkit.repository.dsl._
 import wotgraph.toolkit.scalactic.ErrorHelper
 
 import scala.concurrent.ExecutionContext.Implicits.global
