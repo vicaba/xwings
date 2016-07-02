@@ -65,7 +65,7 @@ class StreamActor(
       Try(Json.parse(s).as[JsObject]) match {
         case Success(jsObj) =>
           executeThingActionUseCase.execute(payload.thingId, payload.actionName, jsObj)(payload.executorAgentId) map {
-            case Good(stream: StreamExecutionSuccess) =>
+            case Good(Some(stream: StreamExecutionSuccess)) =>
               stream.value.runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
             case _ => self ! PoisonPill
           }
