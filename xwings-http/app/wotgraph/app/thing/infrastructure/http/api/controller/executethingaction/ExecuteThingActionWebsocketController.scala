@@ -3,7 +3,7 @@ package wotgraph.app.thing.infrastructure.http.api.controller.executethingaction
 import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
-import akka.stream.Materializer
+import akka.stream.{Materializer, ThrottleMode}
 import akka.stream.scaladsl.Sink
 import com.google.inject.Inject
 import org.scalactic.Good
@@ -20,6 +20,7 @@ import wotgraph.toolkit.DependencyInjector._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Try}
+import scala.concurrent.duration._
 
 class ExecuteThingActionWebSocketController @Inject()(id: String, actionName: String)(implicit system: ActorSystem, materializer: Materializer) extends Controller with PredefJsonMessages {
 
@@ -66,7 +67,7 @@ class StreamActor(
         case Success(jsObj) =>
           executeThingActionUseCase.execute(payload.thingId, payload.actionName, jsObj)(payload.executorAgentId) map {
             case Good(Some(stream: StreamExecutionSuccess)) =>
-              stream.value.runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
+              stream.value.throttle(50, 1 milli, 1, ThrottleMode.Shaping).runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
             case _ => self ! PoisonPill
           }
         case _ => self ! PoisonPill

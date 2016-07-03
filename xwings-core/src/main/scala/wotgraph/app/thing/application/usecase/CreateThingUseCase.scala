@@ -4,7 +4,7 @@ import java.util.UUID
 
 import org.scalactic._
 import wotgraph.app.authorization.application.service.AuthorizationService
-import wotgraph.app.error.AppError
+import wotgraph.app.error.{AppError, Validation}
 import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.domain.entity.Thing
 import wotgraph.app.thing.domain.repository.ThingRepository
@@ -21,7 +21,11 @@ class CreateThingUseCase(
 
   def execute(c: CreateThing)(executorAgentId: UUID): Future[Thing Or Every[AppError]] = {
     AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateThingUseCase.permission.id) {
-      thingRepository.create(thingTransformer(CreateThing.toThing(c))).map(Good(_))
+      val transformedThing = thingTransformer(CreateThing.toThing(c))
+      Thing.ensureCorrect(transformedThing) match {
+        case Good(_) => thingRepository.create(transformedThing).map(Good(_))
+        case b: Bad[_, _] => Future.successful(b)
+      }
     }
   }
 }

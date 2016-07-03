@@ -63,6 +63,7 @@ class ReadFromDatabaseContext(sensedValueRepository: SensedValueRepository) exte
           order <- (sort \ SortOrder).asOpt[String].flatMap(o => Try(Integer.parseInt(o)).toOption)
         } yield {
           val ordering = if (order == 1) FieldOrdering.Ascendant else FieldOrdering.Descendant
+          println("SORT")
           Order(s"${SensedValueKeys.Data}.$field", ordering)
         }).fold(queryBuilder.execute(sensedValueRepository))(queryBuilder.sort(_).execute(sensedValueRepository))
 
