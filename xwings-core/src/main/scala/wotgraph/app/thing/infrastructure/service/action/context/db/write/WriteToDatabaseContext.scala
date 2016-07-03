@@ -22,7 +22,7 @@ class WriteToDatabaseTransformer extends ActionTransformer {
 
   override def transform(ta: ThingAndAction): List[Action] =
     if (ta.action.contextId == contextId)
-      ReadFromDatabaseContext.createAction(ta)
+      ta.action :: ReadFromDatabaseContext.createAction(ta)
     else
       Nil
 }

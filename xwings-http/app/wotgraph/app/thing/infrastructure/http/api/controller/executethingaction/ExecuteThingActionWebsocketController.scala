@@ -73,4 +73,8 @@ class StreamActor(
       }
   }
 
+  override def postStop(): Unit = {
+    out ! PoisonPill
+  }
+
 }

@@ -14,7 +14,7 @@ import scala.concurrent.Future
 class ListRolesUseCase(roleRepository: RoleRepository, authorizationService: AuthorizationService) {
 
   def execute()(executorAgentId: UUID): Future[List[Role] Or Every[AppError]] =
-    AuthorizationService.asyncExecute(authorizationService, executorAgentId, CreateRoleUseCase.permission.id) {
+    AuthorizationService.asyncExecute(authorizationService, executorAgentId, ListRolesUseCase.permission.id) {
       roleRepository.getAll.map(Good(_))
     }
 

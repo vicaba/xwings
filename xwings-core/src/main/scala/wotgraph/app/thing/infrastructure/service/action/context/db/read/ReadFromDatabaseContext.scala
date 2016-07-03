@@ -29,7 +29,7 @@ object ReadFromDatabaseContext {
       actionName = aName,
       contextId = AvailableContexts.ReadFromDatabaseContext,
       contextValue = Json.obj(SensedValueKeys.Namespace -> ta.namespace).toString)
-    a :: action :: Nil
+    action :: Nil
   }
 }
 

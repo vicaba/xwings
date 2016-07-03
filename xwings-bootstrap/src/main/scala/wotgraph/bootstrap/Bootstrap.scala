@@ -62,7 +62,7 @@ object ThingHelper {
   def createThing(identifier: Int): Thing = {
 
     val id = UUID.randomUUID()
-    val contextValue = Map("httpMethod" -> "GET", "url" -> "https://es.wikipedia.org/wiki/Wikipedia:Portada")
+    val contextValue = Map("httpMethod" -> "GET", "url" -> "https://api.jcdecaux.com/vls/v1/contracts?apiKey=d4aa6737f4b8a819d48b9dc6eaf3b7b63604bf6e")
     val actions = Set(
       Action(
         "getConsume", AvailableContexts.HttpContext, Json.toJson(contextValue).as[JsObject].toString()

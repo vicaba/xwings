@@ -21,8 +21,10 @@ import wotgraph.app.thing.application.usecase.dto.CreateThing
 import wotgraph.app.thing.domain.entity.{Action, Metadata}
 import wotgraph.app.thing.infrastructure.service.action.AvailableContexts
 
+import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.concurrent.duration._
+import scala.util.Random
 
 case class MeterValue(meterId: String, date: DateTime, value: String)
 
@@ -106,18 +108,18 @@ object ETL {
 
     g.run()
 
-/*    val f = FileIO.fromFile(file)
-      .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
-      .map(_.utf8String)
-      .map(parseMeterValueLine)
-      .runWith(
-        Sink.actorRefWithAck[MeterValue](
-          splitter,
-          onInitMessage = "start",
-          ackMessage = "ack",
-          onCompleteMessage = "completed",
-          onFailureMessage = (t) => println(t))
-      )*/
+    /*    val f = FileIO.fromFile(file)
+          .via(Framing.delimiter(ByteString(System.lineSeparator), maximumFrameLength = 256, allowTruncation = true))
+          .map(_.utf8String)
+          .map(parseMeterValueLine)
+          .runWith(
+            Sink.actorRefWithAck[MeterValue](
+              splitter,
+              onInitMessage = "start",
+              ackMessage = "ack",
+              onCompleteMessage = "completed",
+              onFailureMessage = (t) => println(t))
+          )*/
 
   }
 
@@ -138,7 +140,7 @@ class DeviceTransformer extends Actor {
       val _sender = sender
       val _deviceId = id
       if (!device2Thing.contains(id)) {
-        ThingHelper.createThingUseCase.execute(createThing(id))(UUID.randomUUID()).map {
+        ThingHelper.createThingUseCase.execute(CreateThingHelper.createThing(id))(UUID.randomUUID()).map {
           case Good(t) =>
             _sender ! "ack"
             meterValueTransformer !(_deviceId, t._id)
@@ -155,15 +157,6 @@ class DeviceTransformer extends Actor {
 
   override def receive: Receive = receiveWithParams(Map[String, UUID]())
 
-  def createThing(id: String): CreateThing = {
-    val actions = Set(
-      Action(
-        "putConsume", AvailableContexts.WriteToDatabaseContext, ""
-      )
-    )
-    val metadata = Json.obj("deviceId" -> id)
-    new CreateThing(Metadata(metadata.as[JsObject]), actions)
-  }
 }
 
 class MeterValueTransformer extends Actor {
@@ -182,7 +175,6 @@ class MeterValueTransformer extends Actor {
             UUID.randomUUID()
           )
         case None =>
-          println("fail")
           store ! mv
       }
     case id: (String, UUID) =>
@@ -208,4 +200,60 @@ class Store extends Actor {
   }
 
   override def receive: Receive = receiveWithParams(Queue[MeterValue]())
+}
+
+object CreateThingHelper {
+
+  case class Point(latitude: Double, longitude: Double)
+
+  def randomPointGenerator(
+                            center: Point,
+                            range: Int,
+                            points: Int
+                          ): List[Point] = {
+
+    val CircleDegrees = 360
+
+    val degreesPerPoint =
+      CircleDegrees / (if (points == 0) 1 else points)
+
+    def randomRange: Double = {
+
+      Random.nextInt((range - 1) + 1) + 1
+    }
+
+    def generateCoordinates(
+                             currentAngle: Int,
+                             accum: List[Point]
+                           ): List[Point] = {
+
+      val latitude = Math.cos(currentAngle) * randomRange
+      val longitude = Math.sin(currentAngle) * randomRange
+
+      val points = Point(center.latitude + latitude, center.longitude + longitude) ::
+        accum
+
+      if (currentAngle >= CircleDegrees)  points
+      else generateCoordinates(currentAngle + degreesPerPoint, points)
+    }
+
+    generateCoordinates(0, Nil)
+
+  }
+
+  def createThing(id: String): CreateThing = {
+    val actions = Set(
+      Action(
+        "putConsume", AvailableContexts.WriteToDatabaseContext, ""
+      )
+    )
+
+    val point = randomPointGenerator(Point(40.416775, -3.703790), 4, 3).head
+
+    val metadata = Json.parse(s"""{"position":{"type":"Feature","geometry":{"type":"Point","coordinates":[${point.latitude},${point.longitude}]}}, "ip":"192.168.22.19"}""")
+    val extraMetadata = Json.obj("deviceId" -> id)
+    new CreateThing(Metadata(metadata.as[JsObject] ++ extraMetadata), actions)
+  }
+
+
 }
