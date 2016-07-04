@@ -7,7 +7,7 @@ import akka.stream.{Materializer, ThrottleMode}
 import akka.stream.scaladsl.Sink
 import com.google.inject.Inject
 import org.scalactic.Good
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsArray, JsObject, JsString, Json}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{Controller, WebSocket}
 import wotgraph.app.thing.infrastructure.http.api.controller.PredefJsonMessages
@@ -21,6 +21,8 @@ import wotgraph.toolkit.DependencyInjector._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Try}
 import scala.concurrent.duration._
+import play.api.libs.json.Writes._
+
 
 class ExecuteThingActionWebSocketController @Inject()(id: String, actionName: String)(implicit system: ActorSystem, materializer: Materializer) extends Controller with PredefJsonMessages {
 
@@ -67,8 +69,12 @@ class StreamActor(
         case Success(jsObj) =>
           executeThingActionUseCase.execute(payload.thingId, payload.actionName, jsObj)(payload.executorAgentId) map {
             case Good(Some(stream: StreamExecutionSuccess)) =>
-              stream.value.throttle(50, 1 milli, 1, ThrottleMode.Shaping).runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
+              stream.value
+                .batch(20, s => JsArray(Seq(JsString(s)))) { case (agr, str) => agr.:+(JsString(str)) }
+                .map(arr => Json.obj("chunk" -> arr).toString)
+                .runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
             case _ => self ! PoisonPill
+
           }
         case _ => self ! PoisonPill
       }

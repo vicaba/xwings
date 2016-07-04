@@ -17,10 +17,14 @@ import scala.util.{Failure, Success, Try}
 
 class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationService: AuthorizationService) {
 
-  def execute(thingId: String,
-              actionName: String,
-              actionPayload: JsObject = Json.obj())
-             (executorAgentId: UUID): Future[Option[ExecutionResult] Or Every[AppError]] = {
+  def execute(
+               thingId: String,
+               actionName: String,
+               actionPayload: JsObject = Json.obj()
+             )
+             (
+               executorAgentId: UUID
+             ): Future[Option[ExecutionResult] Or Every[AppError]] = {
 
     Try(UUID.fromString(thingId)) match {
       case Failure(_) => Future.successful(Bad(One(ValidationError.WrongUuidFormat)))
@@ -32,10 +36,11 @@ class ExecuteThingActionUseCase(thingRepository: ThingRepository, authorizationS
               action match {
                 case Some(a) =>
                   ActionExecutor.executeAction(
-                    ThingAndAction(uuid, a), actionPayload)(ContextProvider.injector
+                    ThingAndAction(uuid, a), actionPayload
+                  )(
+                    ContextProvider.injector
                   ).map(r => Good(Some(r)))
-                case _ =>
-                  Future.successful(Good(None))
+                case _ => Future.successful(Good(None))
               }
             case None => Future.successful(Good(None))
           }
