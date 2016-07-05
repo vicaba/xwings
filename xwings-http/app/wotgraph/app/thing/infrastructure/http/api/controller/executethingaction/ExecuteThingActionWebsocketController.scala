@@ -4,7 +4,7 @@ import java.util.UUID
 
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.stream.{Materializer, ThrottleMode}
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import org.scalactic.Good
 import play.api.libs.json.{JsArray, JsObject, JsString, Json}
@@ -34,7 +34,7 @@ class ExecuteThingActionWebSocketController @Inject()(id: String, actionName: St
       case Left(agentId) =>
         val payload = ExecuteThingActionPayload(id, action, agentId)
         val webSocketProps = StreamActor.props(executeThingActionUseCase, payload, materializer) _
-        Right(ActorFlow.actorRef(out => webSocketProps(out)))
+        Right(ActorFlow.actorRef(out => webSocketProps(out), Int.MaxValue))
     }
   }
 
@@ -61,6 +61,8 @@ class StreamActor(
                  (out: ActorRef)
   extends Actor {
 
+  import wotgraph.toolkit.actor.Messages.Shutdown
+
   implicit val mat = streamMaterializer
 
   override def receive: Receive = {
@@ -69,15 +71,18 @@ class StreamActor(
         case Success(jsObj) =>
           executeThingActionUseCase.execute(payload.thingId, payload.actionName, jsObj)(payload.executorAgentId) map {
             case Good(Some(stream: StreamExecutionSuccess)) =>
+              context.become(bridge)
               stream.value
-                .batch(20, s => JsArray(Seq(JsString(s)))) { case (agr, str) => agr.:+(JsString(str)) }
-                .map(arr => Json.obj("chunk" -> arr).toString)
-                .runWith(Sink.actorRef(out, onCompleteMessage = PoisonPill))
+                .runWith(Sink.actorRef(self, onCompleteMessage = Shutdown))
             case _ => self ! PoisonPill
-
           }
         case _ => self ! PoisonPill
       }
+  }
+
+  def bridge: Receive = {
+    case s: String => out ! s
+    case Shutdown => context.system.scheduler.scheduleOnce(3 second, self, PoisonPill)
   }
 
   override def postStop(): Unit = {

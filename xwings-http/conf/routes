@@ -17,7 +17,7 @@ POST          /api/v1/things/:id/:actionName           wotgraph.app.thing.infras
 
 GET           /api/v1/ws/things/:id/:actionName        wotgraph.app.thing.infrastructure.http.api.controller.executethingaction.ExecuteThingActionWebSocketController.execute(id: String, actionName: String)
 
-GET           /api/v1/stream/things                    wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
+GET           /api/v1/ws/things                    wotgraph.app.thing.infrastructure.http.api.controller.ListThingsController.executeAsStream
 
 GET           /api/v1/permissions                      wotgraph.app.permission.infrastructure.http.api.controller.ListPermissionsController.execute
 
