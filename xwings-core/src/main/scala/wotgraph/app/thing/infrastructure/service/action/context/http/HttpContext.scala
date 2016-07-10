@@ -17,7 +17,7 @@ case class HttpContext()(implicit ec: ExecutionContext) extends ActionContext[WS
   val HttpMethodKey = "httpMethod"
 
   val AllowedHttpMethods = List("GET", "POST", "PUT", "DELETE")
-
+  
   val UrlKey = "url"
 
   val BodyKey = "body"

@@ -242,10 +242,18 @@ object CreateThingHelper {
   }
 
   def createThing(id: String): CreateThing = {
+
+    val contextValue = Map("httpMethod" -> "GET", "url" -> "https://api.jcdecaux.com/vls/v1/contracts?apiKey=d4aa6737f4b8a819d48b9dc6eaf3b7b63604bf6e")
+    val httpAction =
+      Action(
+        "jcdecaux", AvailableContexts.HttpContext, Json.toJson(contextValue).as[JsObject].toString()
+    )
+
     val actions = Set(
       Action(
         "putConsume", AvailableContexts.WriteToDatabaseContext, ""
-      )
+      ),
+      httpAction
     )
 
     val point = randomPointGenerator(Point(40.416775, -3.703790), 4, 3).head

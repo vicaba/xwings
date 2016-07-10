@@ -233,7 +233,7 @@ object Bootstrap {
 
 
 
-    ThingHelper.createNodes()
+    //ThingHelper.createNodes()
     val f = PermissionHelper.createNodes()
 
     val f2 = f.flatMap(RoleHelper.createNodes)
